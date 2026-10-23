@@ -1,0 +1,82 @@
+name: Extrair ZIP do projeto
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - '*.zip'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract-zip:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar arquivos do repositório
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extrair ZIP enviado à raiz
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          zips=( *.zip )
+
+          if [ ${#zips[@]} -eq 0 ]; then
+            echo "Nenhum ZIP encontrado na raiz."
+            exit 1
+          fi
+
+          mkdir -p _zip_temp
+
+          for archive in "${zips[@]}"; do
+            echo "Extraindo: $archive"
+            mkdir -p "_zip_temp/$(basename "$archive" .zip)"
+            unzip -oq "$archive" \
+              -d "_zip_temp/$(basename "$archive" .zip)"
+          done
+
+          for folder in _zip_temp/*; do
+            [ -d "$folder" ] || continue
+
+            entries=( "$folder"/* "$folder"/.[!.]* "$folder"/..?* )
+
+            for entry in "${entries[@]}"; do
+              [ -e "$entry" ] || continue
+
+              if [ -d "$entry" ] &&
+                 [ "$(basename "$entry")" = "cadastro-individuos-app" ]; then
+                cp -a "$entry"/. .
+              else
+                cp -a "$entry" .
+              fi
+            done
+          done
+
+          rm -rf _zip_temp
+
+      - name: Salvar arquivos extraídos no GitHub
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração nova para salvar."
+            exit 0
+          fi
+
+          git commit -m "Extrair arquivos do projeto enviado em ZIP"
+          git push
