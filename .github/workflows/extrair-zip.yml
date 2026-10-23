@@ -17,13 +17,17 @@ jobs:
       - name: Baixar arquivos do repositório
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: true
 
       - name: Extrair ZIP enviado à raiz
         run: |
+          set -e
+
           ZIP=$(find . -maxdepth 1 -type f -name "*.zip" | head -n 1)
+
           if [ -z "$ZIP" ]; then
-            echo "Nenhum ZIP encontrado na raiz."
+            echo "Nenhum arquivo ZIP encontrado na raiz."
             exit 1
           fi
 
@@ -38,20 +42,27 @@ jobs:
 
           rm -rf temp_zip
 
-          # Não tentar criar outro workflow automaticamente.
+          # Evita tentar criar um segundo workflow automaticamente.
           rm -f .github/workflows/deploy.yml
 
       - name: Salvar arquivos extraídos no GitHub
         run: |
+          set -e
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add -A
-          git diff --cached --quiet && {
+
+          if git diff --cached --quiet; then
             echo "Nenhuma alteração para salvar."
             exit 0
-          }
+          fi
 
           git commit -m "Adicionar arquivos do aplicativo"
-          git push
+
+          git fetch origin "$GITHUB_REF_NAME"
+          git rebase "origin/$GITHUB_REF_NAME"
+
+          git push origin HEAD:"$GITHUB_REF_NAME"
           
