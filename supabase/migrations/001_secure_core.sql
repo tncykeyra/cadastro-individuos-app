@@ -81,7 +81,7 @@ create index person_vehicle_person_idx on public.person_vehicle_links(person_id)
 create index person_vehicle_vehicle_idx on public.person_vehicle_links(vehicle_id);
 
 create or replace function public.stamp_record_metadata()
-returns trigger language plpgsql set search_path = '' as $
+returns trigger language plpgsql set search_path = '' as $$
 begin
   if new.archived_at is distinct from old.archived_at and not public.is_admin() then
     raise exception 'Apenas administrador pode arquivar ou restaurar registros';
@@ -93,7 +93,7 @@ begin
   new.updated_at := now();
   return new;
 end;
-$;
+$$;
 create trigger stamp_people before update on public.people for each row execute function public.stamp_record_metadata();
 create trigger stamp_vehicles before update on public.vehicles for each row execute function public.stamp_record_metadata();
 
@@ -183,7 +183,7 @@ create trigger audit_vehicles after insert or update or delete on public.vehicle
 create trigger audit_person_vehicle_links after insert or update or delete on public.person_vehicle_links for each row execute function public.log_record_change();
 
 create or replace function public.capture_revision()
-returns trigger language plpgsql security definer set search_path = '' as $
+returns trigger language plpgsql security definer set search_path = '' as $$
 declare record_id uuid; old_row jsonb; new_row jsonb;
 begin
   if tg_op='DELETE' then record_id:=old.id; old_row:=to_jsonb(old); new_row:=null;
@@ -193,13 +193,13 @@ begin
   values((select auth.uid()),lower(tg_op),tg_table_name,record_id,old_row,new_row);
   if tg_op='DELETE' then return old; else return new; end if;
 end;
-$;
+$$;
 create trigger revision_people after insert or update or delete on public.people for each row execute function public.capture_revision();
 create trigger revision_vehicles after insert or update or delete on public.vehicles for each row execute function public.capture_revision();
 create trigger revision_links after insert or update or delete on public.person_vehicle_links for each row execute function public.capture_revision();
 
 create or replace function public.admin_revert_revision(revision_id bigint)
-returns void language plpgsql security definer set search_path = '' as $
+returns void language plpgsql security definer set search_path = '' as $$
 declare r public.record_revisions%rowtype;
 begin
   if (select auth.uid()) is null or not public.is_admin() then raise exception 'Apenas administradores podem restaurar versões'; end if;
@@ -226,7 +226,7 @@ begin
   end if;
   insert into public.audit_events(actor_id,action,entity,entity_id) values((select auth.uid()),'revision_reverted:'||revision_id::text,r.entity,r.entity_id);
 end;
-$;
+$$;
 revoke all on function public.admin_revert_revision(bigint) from public,anon;
 grant execute on function public.admin_revert_revision(bigint) to authenticated;
 
