@@ -162,17 +162,20 @@ Deno.serve(async (request) => {
       if ((count ?? 0) <= 1) return respond({ error: 'Não é possível excluir o último administrador.' }, 409);
     }
 
-    // Preserva os cadastros e substitui apenas a referência de autoria exigida
-    // pelas chaves estrangeiras antes de remover a conta de autenticação.
-    const references: Array<[string, string]> = [
-      ['people', 'created_by'], ['people', 'updated_by'],
-      ['vehicles', 'created_by'], ['vehicles', 'updated_by'],
-      ['person_vehicle_links', 'created_by'], ['record_photos', 'created_by'],
+    // Reassign linked records to the administrator first, preserving the records themselves.
+    // The caller client preserves auth.uid() for update triggers and audit checks.
+    const references: Array<[string, string, boolean]> = [
+      ['people', 'created_by', false], ['people', 'updated_by', false],
+      ['vehicles', 'created_by', false], ['vehicles', 'updated_by', false],
+      ['person_vehicle_links', 'created_by', false],
+      ['record_photos', 'created_by', true],
+      ['person_photos', 'created_by', true], ['person_photos', 'updated_by', true],
+      ['vehicle_photos', 'created_by', true], ['vehicle_photos', 'updated_by', true],
     ];
-    for (const [table, column] of references) {
-      const { error } = await admin.from(table).update({ [column]: user.id }).eq(column, targetId);
-      if (error && table === 'record_photos' && ['42P01', 'PGRST205', 'PGRST204'].includes(error.code ?? '')) continue;
-      if (error) return respond({ error: 'Não foi possível preservar os cadastros vinculados à conta. Nenhuma conta foi excluída.' }, 500);
+    for (const [table, column, optionalPhotoField] of references) {
+      const { error } = await caller.from(table).update({ [column]: user.id }).eq(column, targetId);
+      if (optionalPhotoField && ['42P01', '42703', 'PGRST204', 'PGRST205'].includes(error?.code ?? '')) continue;
+      if (error) return respond({ error: 'Não foi possível preservar a autoria dos registros vinculados à conta: ' + error.message + '. Nenhuma conta foi excluída.' }, 500);
     }
 
     const targetEmail = String(targetResult.user.email ?? '').trim().toLowerCase();
@@ -194,11 +197,42 @@ Deno.serve(async (request) => {
     return respond({ ok: true, deleted: true, access_revoked: Boolean(authorizationRow) });
   }
 
+  if (payload.action === 'create-password-user') {
+    const temporaryPassword = String(payload.temporaryPassword ?? '');
+    if (temporaryPassword.length < 12) return respond({ error: 'A senha temporária precisa ter pelo menos 12 caracteres.' }, 400);
+    const { data: created, error: createError } = await admin.auth.admin.createUser({
+      email,
+      password: temporaryPassword,
+      email_confirm: true,
+      user_metadata: { must_change_password: true },
+    });
+    if (createError || !created.user) {
+      const detail = createError?.message ?? 'Não foi possível criar a conta.';
+      if (/already (been )?registered|already exists|duplicate/i.test(detail)) {
+        return respond({ error: 'Já existe uma conta com este e-mail. Exclua ou reative a conta existente antes de criar outra.' }, 409);
+      }
+      return respond({ error: 'Não foi possível criar a conta: ' + detail }, 400);
+    }
+    const displayName = email.split('@')[0].replace(/[._-]+/g, ' ').trim();
+    const { error: profileError } = await admin.from('profiles').upsert({
+      id: created.user.id,
+      email,
+      display_name: displayName,
+      role: 'operator',
+    }, { onConflict: 'id' });
+    if (profileError) {
+      await admin.auth.admin.deleteUser(created.user.id);
+      return respond({ error: 'A conta não foi finalizada porque não foi possível criar o perfil de Operador: ' + profileError.message }, 500);
+    }
+    return respond({ ok: true, created: true, email, role: 'operator', userId: created.user.id });
+  }
+
   if (payload.action === 'create' || payload.action === 'invite') {
     return respond({
-      error: 'Este projeto usa login pelo Google. Autorize o e-mail; a conta e o perfil serão criados no primeiro acesso.',
+      error: 'Use “Criar conta por e-mail” para gerar uma senha temporária ou autorize uma Conta Google.',
     }, 400);
   }
+
   return respond({ error: 'Ação inválida.' }, 400);
 });
 
