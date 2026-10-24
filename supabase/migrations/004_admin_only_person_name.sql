@@ -10,7 +10,7 @@ begin
   end if;
 
   if tg_table_name = 'people'
-     and new.full_name is distinct from old.full_name
+     and (to_jsonb(new)->>'full_name') is distinct from (to_jsonb(old)->>'full_name')
      and not public.is_admin() then
     raise exception 'Apenas administrador pode alterar o nome do indivíduo';
   end if;
