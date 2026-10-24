@@ -26,8 +26,10 @@ Aplicativo web responsivo para cadastro e pesquisa de indivíduos e veículos, c
    where lower(email) = lower('cykeyra@hotmail.com');
    ```
 
-6. Para cada novo usuário, envie um convite em **Authentication → Users**. A pessoa define a própria senha pelo link. Depois, o administrador libera a pessoa como **Operador** na tela Usuários do app.
-7. Copie a Project URL e a chave **publishable** (ou a chave pública anon legada) para um arquivo local `.env`, usando `.env.example` como modelo. Nunca coloque uma chave `service_role` ou secret no navegador, no GitHub ou neste projeto.
+6. No app, administradores gerenciam acessos na tela **Usuários**: **Cadastrar e-mail** envia um convite para a pessoa definir a senha; **Cadastrar sem convite** cria a conta com senha provisória e obriga a troca no primeiro acesso. Depois, aprove o perfil como **Operador**.
+7. Para publicar automaticamente a função de usuários, adicione o secret `SUPABASE_ACCESS_TOKEN` nas configurações de Actions do GitHub. O fluxo `.github/workflows/deploy-supabase-users.yml` publica a função ao atualizar seu código. O convite por e-mail exige que o provedor SMTP do Supabase consiga enviar mensagens; se falhar, o app oferece um link de uso único ou o cadastro sem convite.
+8. Execute uma vez os arquivos `supabase/migrations/004_admin_only_person_name.sql` e `supabase/migrations/005_search_name_tokens.sql` no SQL Editor do projeto para aplicar a regra de nomes e a busca por todas as partes do nome.
+9. Copie a Project URL e a chave **publishable** (ou a chave pública anon legada) para um arquivo local `.env`, usando `.env.example` como modelo. Nunca coloque uma chave `service_role` ou secret no navegador, no GitHub ou neste projeto.
 
 ## Publicar no GitHub Pages
 
