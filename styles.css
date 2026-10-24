@@ -9,3 +9,11 @@
 .linked-person-photo{display:block;width:100%;height:100%;object-fit:cover;border-radius:12px}.linked-person-icon{display:grid;place-items:center;width:100%;height:100%;color:#50595e}.linked-person-icon svg{width:32px;height:32px;fill:currentColor}
 
 .person-photo-gallery .photo-item{flex-basis:min(100%,300px)}.person-photo-gallery .photo-zoom{height:auto;aspect-ratio:3/4}.person-photo-gallery .photo-zoom img{object-position:center 20%}
+
+.team-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}
+.team-tab{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:#fff;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+.team-tab.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.invite-form .field small{display:block;color:var(--muted);margin-top:6px;line-height:1.45}
+#inviteLinkFallback{margin-top:14px;overflow-wrap:anywhere}
+#inviteLinkFallback input{width:100%;margin:8px 0}
+.field input[readonly]{background:#f0f1f2;color:var(--muted);cursor:not-allowed}
