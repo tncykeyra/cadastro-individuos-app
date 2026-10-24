@@ -64,6 +64,33 @@ Deno.serve(async (request) => {
     return respond({ ok: true, emails: emails ?? [] });
   }
 
+  if (payload.action === 'revoke-google') {
+    const { data: targetProfile, error: targetProfileError } = await admin
+      .from('profiles')
+      .select('id, role')
+      .eq('email', email)
+      .maybeSingle();
+    if (targetProfileError) return respond({ error: 'Não foi possível consultar o perfil deste e-mail.' }, 500);
+    if (targetProfile?.id === user.id) return respond({ error: 'Você não pode revogar o próprio acesso.' }, 400);
+    if (targetProfile?.role === 'admin') {
+      const { count, error: countError } = await admin.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'admin');
+      if (countError) return respond({ error: 'Não foi possível verificar os administradores ativos.' }, 500);
+      if ((count ?? 0) <= 1) return respond({ error: 'Não é possível revogar o último administrador.' }, 409);
+    }
+    if (targetProfile && targetProfile.role !== 'disabled') {
+      const { error } = await caller.rpc('admin_set_user_role', { target_user_id: targetProfile.id, target_role: 'disabled' });
+      if (error) return respond({ error: 'Não foi possível bloquear o perfil deste usuário.' }, 500);
+    }
+    const { data: authorized, error: lookupError } = await admin.from('authorized_emails').select('email,role').eq('email', email).maybeSingle();
+    if (lookupError) return respond({ error: 'Não foi possível consultar a autorização deste e-mail.' }, 500);
+    const { error: revokeError } = await admin.from('authorized_emails').delete().eq('email', email);
+    if (revokeError) {
+      if (targetProfile && targetProfile.role !== 'disabled') await caller.rpc('admin_set_user_role', { target_user_id: targetProfile.id, target_role: targetProfile.role });
+      return respond({ error: 'Não foi possível remover este e-mail da lista autorizada.' }, 500);
+    }
+    return respond({ ok: true, revoked: true, had_authorization: Boolean(authorized) });
+  }
+
   if (payload.action === 'authorize-google') {
     const { data: existing, error: lookupError } = await admin
       .from('authorized_emails')
@@ -148,9 +175,23 @@ Deno.serve(async (request) => {
       if (error) return respond({ error: 'Não foi possível preservar os cadastros vinculados à conta. Nenhuma conta foi excluída.' }, 500);
     }
 
+    const targetEmail = String(targetResult.user.email ?? '').trim().toLowerCase();
+    const { data: authorizationRow, error: authorizationLookupError } = await admin
+      .from('authorized_emails')
+      .select('email, role')
+      .eq('email', targetEmail)
+      .maybeSingle();
+    if (authorizationLookupError) return respond({ error: 'Não foi possível verificar se o e-mail ainda está autorizado.' }, 500);
+    if (authorizationRow) {
+      const { error: revokeError } = await admin.from('authorized_emails').delete().eq('email', targetEmail);
+      if (revokeError) return respond({ error: 'Não foi possível remover a autorização de acesso. Nenhuma conta foi excluída.' }, 500);
+    }
     const { error: deleteError } = await admin.auth.admin.deleteUser(targetId);
-    if (deleteError) return respond({ error: 'Não foi possível excluir a conta: ' + deleteError.message }, 500);
-    return respond({ ok: true, deleted: true });
+    if (deleteError) {
+      if (authorizationRow) await admin.from('authorized_emails').insert(authorizationRow);
+      return respond({ error: 'Não foi possível excluir a conta: ' + deleteError.message }, 500);
+    }
+    return respond({ ok: true, deleted: true, access_revoked: Boolean(authorizationRow) });
   }
 
   if (payload.action === 'create' || payload.action === 'invite') {
@@ -160,3 +201,5 @@ Deno.serve(async (request) => {
   }
   return respond({ error: 'Ação inválida.' }, 400);
 });
+
+
