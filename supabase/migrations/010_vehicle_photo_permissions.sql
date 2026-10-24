@@ -2,6 +2,34 @@
 -- Operators may edit vehicle details and add photos; only admins may change plates,
 -- choose/adjust covers, or delete photo rows and files.
 
+-- Permit an authenticated administrator to reassign authorship before deleting an account.
+-- Operators still cannot change authorship, names, CPF, or vehicle plates.
+create or replace function public.stamp_record_metadata()
+returns trigger
+language plpgsql
+set search_path = ''
+as $
+begin
+  if new.archived_at is distinct from old.archived_at and not public.is_admin() then
+    raise exception 'Apenas administrador pode arquivar ou restaurar registros';
+  end if;
+  if tg_table_name = 'people'
+     and (to_jsonb(new)->>'full_name') is distinct from (to_jsonb(old)->>'full_name')
+     and not public.is_admin() then
+    raise exception 'Apenas administrador pode alterar o nome do indivíduo';
+  end if;
+  if new.created_by is distinct from old.created_by and not public.is_admin() then
+    raise exception 'Apenas administradores podem alterar a autoria do cadastro';
+  end if;
+  new.id := old.id;
+  if not public.is_admin() then new.created_by := old.created_by; end if;
+  new.created_at := old.created_at;
+  new.updated_by := (select auth.uid());
+  new.updated_at := now();
+  return new;
+end;
+$;
+
 create or replace function public.prevent_operator_vehicle_plate_changes()
 returns trigger
 language plpgsql
