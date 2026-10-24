@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const config={url:import.meta.env.VITE_SUPABASE_URL,key:import.meta.env.VITE_SUPABASE_ANON_KEY};
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const state={client:null,session:null,profile:null,page:'dashboard',selected:null,query:'',people:[],vehicles:[],profiles:[],revisions:[],loading:false,searchTimer:null,install:null,passwordSetup:false,teamTab:'manual',teamCreatedUser:null,revisionOffset:0,letter:'all',listPage:0,listPageSize:50,listTotal:0,serverPaged:false};
+const state={client:null,session:null,profile:null,page:'dashboard',selected:null,query:'',people:[],vehicles:[],profiles:[],revisions:[],loading:false,searchTimer:null,install:null,passwordSetup:false,teamTab:'google',teamCreatedUser:null,revisionOffset:0,letter:'all',listPage:0,listPageSize:50,listTotal:0,serverPaged:false};
 const icon={dashboard:'▦',people:'♙',vehicles:'⌑',team:'♧',history:'↺'};
 const label={dashboard:'Dashboard',people:'Indivíduos',vehicles:'Veículos',team:'Usuários',history:'Histórico'};
 const photoUrls=new Map();let photoDbPromise=null;
