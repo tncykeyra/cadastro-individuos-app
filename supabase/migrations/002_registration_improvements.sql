@@ -5,7 +5,7 @@ drop index if exists public.people_cpf_unique_uq;
 -- Legacy duplicates do not block installing the guard. New or changed CPF values
 -- are checked transactionally by the trigger below.
 create or replace function public.reject_duplicate_cpf_on_write()
-returns trigger language plpgsql set search_path = '' as $
+returns trigger language plpgsql set search_path = '' as $cpf_guard$
 begin
   if new.cpf_digits is null then return new; end if;
   if tg_op = 'UPDATE' and new.cpf_digits is not distinct from old.cpf_digits then
@@ -19,7 +19,7 @@ begin
   end if;
   return new;
 end;
-$;
+$cpf_guard$;
 drop trigger if exists reject_duplicate_cpf_on_write on public.people;
 create trigger reject_duplicate_cpf_on_write
 before insert or update of cpf_digits on public.people
