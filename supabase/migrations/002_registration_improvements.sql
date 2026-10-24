@@ -8,6 +8,7 @@ create or replace function public.reject_duplicate_cpf_on_write()
 returns trigger language plpgsql set search_path = '' as $cpf_guard$
 begin
   if new.cpf_digits is null then return new; end if;
+  perform pg_advisory_xact_lock(hashtextextended(new.cpf_digits, 0));
   if tg_op = 'UPDATE' and new.cpf_digits is not distinct from old.cpf_digits then
     return new;
   end if;
