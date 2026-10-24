@@ -35,3 +35,13 @@
 
 .duplicate-warning{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px;padding:13px 15px;border:1px solid #efc777;border-radius:12px;background:#fff8e8;color:#674d17;line-height:1.45}.duplicate-warning[hidden]{display:none}.duplicate-warning strong{margin-right:5px}.duplicate-warning .button{flex:0 0 auto}.duplicate-warning-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 @media(max-width:620px){.duplicate-warning{align-items:stretch;flex-direction:column}.duplicate-warning .button{width:100%}}
+
+
+/* Atributos hidden precisam prevalecer sobre display definido nos componentes. */
+[hidden]{display:none!important}
+
+/* Login: mostrar somente a marca e o formulário, sem cabeçalho nem navegação. */
+.auth-mode .topbar,
+.auth-mode .drawer,
+.auth-mode .bottom-nav{display:none!important}
+.auth-mode #mainContent{padding-top:24px}
