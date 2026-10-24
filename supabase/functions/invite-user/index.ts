@@ -41,18 +41,52 @@ Deno.serve(async (request) => {
     return respond({ error: 'Apenas administradores podem cadastrar usuários.' }, 403);
   }
 
-  let payload: { action?: string; email?: string; temporaryPassword?: string };
+  let payload: { action?: string; email?: string; temporaryPassword?: string; userId?: string };
   try {
     payload = await request.json();
   } catch {
     return respond({ error: 'Informe um e-mail válido.' }, 400);
   }
   const email = String(payload.email ?? '').trim().toLowerCase();
-  if (!emailPattern.test(email)) return respond({ error: 'Informe um e-mail válido.' }, 400);
+  if (payload.action !== 'delete' && !emailPattern.test(email)) return respond({ error: 'Informe um e-mail válido.' }, 400);
 
   const admin = createClient(url, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
   });
+
+  if (payload.action === 'delete') {
+    const targetId = String(payload.userId ?? '');
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(targetId)) {
+      return respond({ error: 'Selecione uma conta válida.' }, 400);
+    }
+    if (targetId === user.id) return respond({ error: 'Você não pode excluir sua própria conta.' }, 400);
+
+    const { data: targetResult, error: targetError } = await admin.auth.admin.getUserById(targetId);
+    if (targetError || !targetResult?.user) return respond({ error: 'A conta selecionada não foi encontrada.' }, 404);
+    const { data: targetProfile } = await admin.from('profiles').select('role').eq('id', targetId).maybeSingle();
+    if (targetProfile?.role === 'admin') {
+      const { count, error: countError } = await admin.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'admin');
+      if (countError) return respond({ error: 'Não foi possível verificar os administradores ativos.' }, 500);
+      if ((count ?? 0) <= 1) return respond({ error: 'Não é possível excluir o último administrador.' }, 409);
+    }
+
+    // Preserva os cadastros e substitui apenas a referência de autoria exigida
+    // pelas chaves estrangeiras antes de remover a conta de autenticação.
+    const references: Array<[string, string]> = [
+      ['people', 'created_by'], ['people', 'updated_by'],
+      ['vehicles', 'created_by'], ['vehicles', 'updated_by'],
+      ['person_vehicle_links', 'created_by'], ['record_photos', 'created_by'],
+    ];
+    for (const [table, column] of references) {
+      const { error } = await admin.from(table).update({ [column]: user.id }).eq(column, targetId);
+      if (error && table === 'record_photos' && ['42P01', 'PGRST205', 'PGRST204'].includes(error.code ?? '')) continue;
+      if (error) return respond({ error: 'Não foi possível preservar os cadastros vinculados à conta. Nenhuma conta foi excluída.' }, 500);
+    }
+
+    const { error: deleteError } = await admin.auth.admin.deleteUser(targetId);
+    if (deleteError) return respond({ error: 'Não foi possível excluir a conta: ' + deleteError.message }, 500);
+    return respond({ ok: true, deleted: true });
+  }
 
   if (payload.action === 'create') {
     const temporaryPassword = String(payload.temporaryPassword ?? '');
