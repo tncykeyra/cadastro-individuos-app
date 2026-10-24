@@ -12,7 +12,30 @@ end;
 $$;
 
 drop index if exists public.people_cpf_active_uq;
-create unique index people_cpf_unique_uq on public.people(cpf_digits) where cpf_digits is not null;
+drop index if exists public.people_cpf_unique_uq;
+
+-- Legacy duplicates do not block installing the guard. New or changed CPF values
+-- are checked transactionally by the trigger below.
+create or replace function public.reject_duplicate_cpf_on_write()
+returns trigger language plpgsql set search_path = '' as $
+begin
+  if new.cpf_digits is null then return new; end if;
+  if tg_op = 'UPDATE' and new.cpf_digits is not distinct from old.cpf_digits then
+    return new;
+  end if;
+  if exists (
+    select 1 from public.people p
+    where p.cpf_digits = new.cpf_digits and p.id <> new.id
+  ) then
+    raise exception 'Já existe um cadastro com este CPF' using errcode = '23505';
+  end if;
+  return new;
+end;
+$;
+drop trigger if exists reject_duplicate_cpf_on_write on public.people;
+create trigger reject_duplicate_cpf_on_write
+before insert or update of cpf_digits on public.people
+for each row execute function public.reject_duplicate_cpf_on_write();
 
 create table public.record_photos (
   id uuid primary key default gen_random_uuid(),
