@@ -5,7 +5,7 @@ Aplicativo web responsivo para cadastro e pesquisa de indivíduos e veículos, c
 ## O que está preparado
 
 - Login por e-mail e senha; redefinição e senha inicial por convite.
-- Perfis `admin`, `operator`, `pending` e `disabled`. Novas contas ficam pendentes até aprovação.
+- Perfis `admin`, `operator`, `pending` e `disabled`. E-mails autorizados recebem automaticamente o papel configurado no primeiro login Google (Operador por padrão); e-mails não autorizados ficam pendentes.
 - Cadastro de pessoas, veículos e vínculos muitos-para-muitos (proprietário, condutor ou associado).
 - Busca por nome, CPF, RG, matrícula, apelido, endereço, anotações, placa, marca, modelo, cor e pessoas/veículos associados.
 - Operadores podem criar e atualizar registros e vínculos. O banco não concede permissão para apagar registros. Só o administrador arquiva/restaura.
@@ -26,9 +26,9 @@ Aplicativo web responsivo para cadastro e pesquisa de indivíduos e veículos, c
    where lower(email) = lower('cykeyra@hotmail.com');
    ```
 
-6. No app, administradores gerenciam acessos na tela **Usuários**: **Cadastrar e-mail** envia um convite para a pessoa definir a senha; **Cadastrar sem convite** cria a conta com senha provisória e obriga a troca no primeiro acesso. Depois, aprove o perfil como **Operador**.
+6. Na tela **Usuários** do app, administradores autorizam o e-mail da Conta Google. O perfil é criado automaticamente como **Operador** no primeiro login; depois, o administrador pode promovê-lo a **Administrador**. O banco bloqueia cadastro por senha: todos entram com **Continuar com Google**. Um e-mail não-Gmail também pode ser usado se estiver vinculado a uma Conta Google.
 7. Para publicar automaticamente a função de usuários, adicione o secret `SUPABASE_ACCESS_TOKEN` nas configurações de Actions do GitHub. O fluxo `.github/workflows/deploy-supabase-users.yml` publica a função ao atualizar seu código. O convite por e-mail exige que o provedor SMTP do Supabase consiga enviar mensagens; se falhar, o app oferece um link de uso único ou o cadastro sem convite.
-8. Execute uma vez os arquivos `supabase/migrations/004_admin_only_person_name.sql` e `supabase/migrations/005_search_name_tokens.sql` no SQL Editor do projeto para aplicar a regra de nomes e a busca por todas as partes do nome.
+8. Execute uma vez os arquivos `supabase/migrations/004_admin_only_person_name.sql`, `005_search_name_tokens.sql` e `006_authorized_email_auto_role.sql` no SQL Editor para aplicar as regras do nome, busca e autorização automática de papéis.
 9. Copie a Project URL e a chave **publishable** (ou a chave pública anon legada) para um arquivo local `.env`, usando `.env.example` como modelo. Nunca coloque uma chave `service_role` ou secret no navegador, no GitHub ou neste projeto.
 
 ## Publicar no GitHub Pages
