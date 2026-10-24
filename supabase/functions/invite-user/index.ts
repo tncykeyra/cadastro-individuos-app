@@ -48,11 +48,76 @@ Deno.serve(async (request) => {
     return respond({ error: 'Informe um e-mail válido.' }, 400);
   }
   const email = String(payload.email ?? '').trim().toLowerCase();
-  if (payload.action !== 'delete' && !emailPattern.test(email)) return respond({ error: 'Informe um e-mail válido.' }, 400);
+  if (!['delete', 'list_google_authorized'].includes(payload.action ?? '') && !emailPattern.test(email)) return respond({ error: 'Informe um e-mail válido.' }, 400);
 
   const admin = createClient(url, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
   });
+
+  if (payload.action === 'list_google_authorized') {
+    const { data: emails, error } = await admin
+      .from('authorized_emails')
+      .select('email, role, created_at')
+      .order('created_at', { ascending: false })
+      .limit(250);
+    if (error) return respond({ error: 'Não foi possível carregar os e-mails autorizados.' }, 500);
+    return respond({ ok: true, emails: emails ?? [] });
+  }
+
+  if (payload.action === 'authorize-google') {
+    const { data: existing, error: lookupError } = await admin
+      .from('authorized_emails')
+      .select('email, role')
+      .eq('email', email)
+      .maybeSingle();
+    if (lookupError) return respond({ error: 'Não foi possível consultar a lista de e-mails autorizados.' }, 500);
+
+    let role: string = existing?.role === 'admin' ? 'admin' : 'operator';
+    let alreadyAuthorized = Boolean(existing);
+    if (!existing) {
+      const { error: insertError } = await admin
+        .from('authorized_emails')
+        .insert({ email, role: 'operator' });
+      if (insertError?.code === '23505') {
+        alreadyAuthorized = true;
+      } else if (insertError) {
+        return respond({ error: 'Não foi possível autorizar o e-mail na base de dados.' }, 500);
+      }
+    } else if (existing.role !== role) {
+      const { error: updateError } = await admin
+        .from('authorized_emails')
+        .update({ role })
+        .eq('email', email);
+      if (updateError) return respond({ error: 'Não foi possível atualizar a autorização do e-mail.' }, 500);
+    }
+
+    const { data: authorized, error: authorizedError } = await admin
+      .from('authorized_emails')
+      .select('email, role')
+      .eq('email', email)
+      .single();
+    if (authorizedError || !authorized) return respond({ error: 'Não foi possível confirmar a autorização do e-mail.' }, 500);
+    role = authorized.role;
+
+    if (role === 'operator' || role === 'admin') {
+      const { data: pendingProfiles, error: pendingError } = await admin
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .eq('role', 'pending')
+        .limit(10);
+      if (pendingError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível atualizar um perfil pendente.' }, 500);
+      for (const pending of pendingProfiles ?? []) {
+        const { error: roleError } = await caller.rpc('admin_set_user_role', {
+          target_user_id: pending.id,
+          target_role: role,
+        });
+        if (roleError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível atualizar um perfil pendente.' }, 500);
+      }
+    }
+
+    return respond({ ok: true, role, already_authorized: alreadyAuthorized });
+  }
 
   if (payload.action === 'delete') {
     const targetId = String(payload.userId ?? '');
@@ -88,58 +153,10 @@ Deno.serve(async (request) => {
     return respond({ ok: true, deleted: true });
   }
 
-  if (payload.action === 'create') {
-    const temporaryPassword = String(payload.temporaryPassword ?? '');
-    if (temporaryPassword.length < 12) {
-      return respond({ error: 'A senha provisória deve ter pelo menos 12 caracteres.' }, 400);
-    }
-    const { data, error } = await admin.auth.admin.createUser({
-      email,
-      password: temporaryPassword,
-      email_confirm: true,
-      user_metadata: { must_change_password: true },
-    });
-    if (error) {
-      if (/already|registered|exists/i.test(error.message)) {
-        return respond({ error: 'Esse e-mail já possui uma conta. Confira a aba de usuários cadastrados.' }, 409);
-      }
-      return respond({ error: 'Não foi possível criar a conta: ' + error.message }, 400);
-    }
-    return respond({ ok: true, user_id: data.user.id }, 201);
-  }
-
-  if (payload.action !== 'invite') return respond({ error: 'Ação inválida.' }, 400);
-  const { error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-    data: { must_change_password: true },
-    redirectTo: appUrl,
-  });
-  if (!inviteError) return respond({ ok: true, email_sent: true });
-
-  // If SMTP is unavailable or an invite already created an unconfirmed user,
-  // provide a one-time link that the administrator can deliver through another channel.
-  const { data: generated, error: linkError } = await admin.auth.admin.generateLink({
-    type: 'invite',
-    email,
-    options: { data: { must_change_password: true }, redirectTo: appUrl },
-  });
-  const inviteLink = generated?.properties?.action_link;
-  if (!linkError && inviteLink) {
+  if (payload.action === 'create' || payload.action === 'invite') {
     return respond({
-      ok: true,
-      email_sent: false,
-      invite_link: inviteLink,
-      message: 'O e-mail automático falhou; use o link de convite abaixo.',
-    });
+      error: 'Este projeto usa login pelo Google. Autorize o e-mail; a conta e o perfil serão criados no primeiro acesso.',
+    }, 400);
   }
-  if (/smtp|email|mail|send/i.test(inviteError.message)) {
-    return respond({
-      error: 'O Supabase não conseguiu enviar o e-mail nem gerar um link. Use “Cadastrar sem convite” ou configure o envio de e-mails.',
-    }, 502);
-  }
-  if (/already|registered|exists/i.test(inviteError.message)) {
-    return respond({
-      error: 'Esse e-mail já tem uma conta. Confira a aba “Usuários cadastrados”.',
-    }, 409);
-  }
-  return respond({ error: 'Não foi possível enviar o convite: ' + inviteError.message }, 400);
+  return respond({ error: 'Ação inválida.' }, 400);
 });
