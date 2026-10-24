@@ -17,3 +17,5 @@
 #inviteLinkFallback{margin-top:14px;overflow-wrap:anywhere}
 #inviteLinkFallback input{width:100%;margin:8px 0}
 .field input[readonly]{background:#f0f1f2;color:var(--muted);cursor:not-allowed}
+
+.search{display:block;width:100%;max-width:none;min-width:0;min-height:54px;padding:16px 20px;font-size:1.05rem}.search:focus{box-shadow:0 0 0 3px #50595e22}.linked-vehicle-photo{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
