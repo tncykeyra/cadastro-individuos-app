@@ -24,6 +24,7 @@ create trigger vehicles_plate_admin_only
 do $$
 begin
   if to_regclass('public.record_photos') is not null then
+    execute 'alter table public.record_photos enable row level security';
     execute 'grant select, insert, update, delete on public.record_photos to authenticated';
     execute 'drop policy if exists record_photos_staff_read on public.record_photos';
     execute 'create policy record_photos_staff_read on public.record_photos for select to authenticated using ((select public.can_use_app()))';
