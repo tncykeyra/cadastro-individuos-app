@@ -61,3 +61,5 @@
 .portrait-gallery.record-gallery-card .carousel-main{aspect-ratio:3/4}
 @media(max-width:620px){.portrait-gallery.record-gallery-card .carousel-main{aspect-ratio:3/4}}
 
+
+.install-help-copy{color:var(--muted);font-size:1rem;line-height:1.65;margin:10px 0 22px}.install-help .dialog-actions{margin-top:12px}

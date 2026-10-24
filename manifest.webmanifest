@@ -1,9 +1,11 @@
 {
   "name": "Cadastro protegido",
   "short_name": "Cadastro",
+  "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#f5f6f6",
   "theme_color": "#50595e",
   "description": "Cadastro protegido de pessoas e veículos",
