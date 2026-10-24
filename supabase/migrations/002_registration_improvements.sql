@@ -1,16 +1,4 @@
 -- Cadastro: CPF globalmente único, galeria privada e ações administrativas.
-do $$
-begin
-  if exists (
-    select 1 from public.people
-    where cpf_digits is not null
-    group by cpf_digits having count(*) > 1
-  ) then
-    raise exception 'Há CPFs duplicados em public.people. Resolva as duplicidades antes de aplicar esta migração.';
-  end if;
-end;
-$$;
-
 drop index if exists public.people_cpf_active_uq;
 drop index if exists public.people_cpf_unique_uq;
 
