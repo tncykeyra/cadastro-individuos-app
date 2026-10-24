@@ -32,3 +32,6 @@
 .crop-stage img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none;user-select:none}
 .crop-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
 @media(max-width:620px){.crop-editor-dialog{padding:16px}.crop-actions{flex-direction:column-reverse}.crop-actions button{width:100%}}
+
+.duplicate-warning{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px;padding:13px 15px;border:1px solid #efc777;border-radius:12px;background:#fff8e8;color:#674d17;line-height:1.45}.duplicate-warning[hidden]{display:none}.duplicate-warning strong{margin-right:5px}.duplicate-warning .button{flex:0 0 auto}.duplicate-warning-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+@media(max-width:620px){.duplicate-warning{align-items:stretch;flex-direction:column}.duplicate-warning .button{width:100%}}
