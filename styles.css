@@ -45,3 +45,7 @@
 .auth-mode .drawer,
 .auth-mode .bottom-nav{display:none!important}
 .auth-mode #mainContent{padding-top:24px}
+
+
+.list-row:has([data-delete-user]){grid-template-columns:52px minmax(0,1fr) auto auto}
+@media(max-width:620px){.list-row:has([data-delete-user]){grid-template-columns:42px minmax(0,1fr);gap:8px}.list-row:has([data-delete-user]) .role-select,.list-row:has([data-delete-user]) [data-delete-user]{grid-column:2;justify-self:start}}
