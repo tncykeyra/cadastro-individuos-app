@@ -8,7 +8,7 @@ Aplicativo web responsivo para cadastro e pesquisa de indivíduos e veículos, c
 - Perfis `admin`, `operator`, `pending` e `disabled`. E-mails autorizados recebem automaticamente o papel configurado no primeiro login Google (Operador por padrão); e-mails não autorizados ficam pendentes.
 - Cadastro de pessoas, veículos e vínculos muitos-para-muitos (proprietário, condutor ou associado).
 - Busca por nome, CPF, RG, matrícula, apelido, endereço, anotações, placa, marca, modelo, cor e pessoas/veículos associados.
-- Operadores podem criar e atualizar registros e vínculos. O banco não concede permissão para apagar registros. Só o administrador arquiva/restaura.
+- Operadores podem criar registros e atualizar informações e vínculos. Nome e CPF de indivíduos ficam protegidos contra alteração por operadores, inclusive no banco. Só o administrador arquiva/restaura e altera ou exclui fotos.
 - Histórico de versões anteriores e atuais. Só administradores podem consultar e restaurar uma versão; a restauração também gera um novo evento.
 - Galeria de fotos múltiplas para indivíduos e veículos, com capa, miniaturas, navegação por toque e ampliação. Operadores podem adicionar fotos; somente administradores escolhem a capa, ajustam o enquadramento ou excluem fotos. O service worker guarda somente arquivos da interface; respostas do banco não são armazenadas offline.
 
@@ -28,7 +28,7 @@ Aplicativo web responsivo para cadastro e pesquisa de indivíduos e veículos, c
 
 6. Na tela **Usuários** do app, administradores autorizam o e-mail da Conta Google. O perfil é criado automaticamente como **Operador** no primeiro login; depois, o administrador pode promover, desativar, excluir ou revogar o acesso. O banco bloqueia cadastro por senha: todos entram com **Continuar com Google**. Um e-mail não-Gmail também pode ser usado se estiver vinculado a uma Conta Google.
 7. Para publicar automaticamente a função de usuários, adicione o secret `SUPABASE_ACCESS_TOKEN` nas configurações de Actions do GitHub. O fluxo `.github/workflows/deploy-supabase-users.yml` publica a função ao atualizar seu código. O convite por e-mail exige que o provedor SMTP do Supabase consiga enviar mensagens; se falhar, o app oferece um link de uso único ou o cadastro sem convite.
-8. Execute uma vez os arquivos `supabase/migrations/004_admin_only_person_name.sql`, `005_search_name_tokens.sql`, `006_authorized_email_auto_role.sql` e `007_admin_photo_management.sql` no SQL Editor para aplicar as regras do nome, busca e autorização automática de papéis.
+8. Execute uma vez os arquivos `supabase/migrations/004_admin_only_person_name.sql`, `005_search_name_tokens.sql`, `006_authorized_email_auto_role.sql` e `007_admin_photo_management.sql`, `008_operator_identity_fields.sql` no SQL Editor para aplicar as regras do nome, busca e autorização automática de papéis.
 9. Copie a Project URL e a chave **publishable** (ou a chave pública anon legada) para um arquivo local `.env`, usando `.env.example` como modelo. Nunca coloque uma chave `service_role` ou secret no navegador, no GitHub ou neste projeto.
 
 ## Publicar no GitHub Pages
