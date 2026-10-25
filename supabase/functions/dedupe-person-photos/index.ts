@@ -22,6 +22,23 @@ async function fetchAll(queryFactory: (start: number, end: number) => any) {
 const pathValues = (value: unknown) =>
   Array.isArray(value) ? value.filter((item) => typeof item === 'string' && item.length > 0) : [];
 
+async function listImportedFiles(admin: any) {
+  const files: any[] = [];
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await admin.storage.from('people-photos').list('imports', {
+      limit: 1000,
+      offset,
+      sortBy: { column: 'name', order: 'asc' },
+    });
+    if (error) throw error;
+    const batch = data ?? [];
+    files.push(...batch
+      .filter((item: any) => item.id !== null)
+      .map((item: any) => ({ name: 'imports/' + item.name, metadata: item.metadata ?? {} })));
+    if (batch.length < 1000) return files;
+  }
+}
+
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: cors });
   if (request.method !== 'POST') return respond({ error: 'Método não permitido.' }, 405);
@@ -67,7 +84,7 @@ Deno.serve(async (request) => {
   try {
     const [people, storageObjects] = await Promise.all([
       fetchAll((start, end) => admin.from('people').select('id,photo_path,photo_paths').order('id').range(start, end)),
-      fetchAll((start, end) => admin.schema('storage').from('objects').select('name,metadata').eq('bucket_id', 'people-photos').range(start, end)),
+      listImportedFiles(admin),
     ]);
 
     const metadataByPath = new Map<string, any>(storageObjects.map((object: any) => [object.name, object.metadata ?? {}]));
