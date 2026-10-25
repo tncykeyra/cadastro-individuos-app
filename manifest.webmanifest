@@ -1,29 +1,29 @@
 {
-  "name": "Cadastro protegido",
-  "short_name": "Cadastro",
-  "id": "./",
-  "start_url": "./",
-  "scope": "./",
+  "name": "Cadastro Criminal",
+  "short_name": "Cadastro Criminal",
+  "id": "/cadastro-individuos-app/",
+  "start_url": "/cadastro-individuos-app/",
+  "scope": "/cadastro-individuos-app/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "background_color": "#f5f6f6",
   "theme_color": "#50595e",
-  "description": "Cadastro protegido de pessoas e veículos",
+  "description": "Cadastro protegido de indivíduos e veículos",
   "icons": [
     {
-      "src": "./icon-192.png",
+      "src": "/cadastro-individuos-app/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./icon-512.png",
+      "src": "/cadastro-individuos-app/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./icon.svg",
+      "src": "/cadastro-individuos-app/icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
