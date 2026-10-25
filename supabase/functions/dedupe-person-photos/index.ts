@@ -73,16 +73,17 @@ Deno.serve(async (request) => {
     const metadataByPath = new Map<string, any>(storageObjects.map((object: any) => [object.name, object.metadata ?? {}]));
     const plans: { id: string; paths: string[]; removedPaths: string[] }[] = [];
     let duplicateReferences = 0;
-    let duplicateContentFiles = 0;
 
     for (const person of people) {
       const original = pathValues(person.photo_paths);
-      const kept = new Set<string>();
       const seenContents = new Set<string>();
-      const next: string[] = [];
+      const keptPaths = new Set<string>();
       const removedPaths = new Set<string>();
+      const preferredOrder = original
+        .map((photoPath, index) => ({ photoPath, index }))
+        .sort((a, b) => Number(b.photoPath === person.photo_path) - Number(a.photoPath === person.photo_path) || a.index - b.index);
 
-      for (const photoPath of original) {
+      for (const { photoPath } of preferredOrder) {
         const metadata = metadataByPath.get(photoPath);
         const etag = metadata?.eTag;
         const size = metadata?.size ?? metadata?.contentLength ?? '';
@@ -90,17 +91,14 @@ Deno.serve(async (request) => {
 
         if (seenContents.has(contentKey)) {
           duplicateReferences += 1;
-          if (metadata && !kept.has(photoPath)) {
-            removedPaths.add(photoPath);
-            duplicateContentFiles += 1;
-          }
+          if (metadata && !keptPaths.has(photoPath)) removedPaths.add(photoPath);
           continue;
         }
         seenContents.add(contentKey);
-        kept.add(photoPath);
-        next.push(photoPath);
+        keptPaths.add(photoPath);
       }
 
+      const next = [...new Set(original)].filter((photoPath) => keptPaths.has(photoPath));
       if (next.length !== original.length) {
         plans.push({ id: person.id, paths: next, removedPaths: [...removedPaths] });
       }
