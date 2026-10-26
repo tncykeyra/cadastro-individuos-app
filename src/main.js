@@ -148,7 +148,7 @@ async function saveWarrantManual(event){
   if(file&&file.size>20*1024*1024)throw new Error('O PDF deve ter até 20 MB.');
   const id=crypto.randomUUID(),userId=state.session.user.id,path=file?userId+'/'+id+'/'+crypto.randomUUID()+'.pdf':null;
   if(file){const {error}=await state.client.storage.from('warrant-documents').upload(path,file,{contentType:'application/pdf',upsert:false});if(error)throw error}
-  const payload={id,warrant_number:number,full_name:name,cpf_digits:cpf||null,birth_date:values.birth_date||null,source_agency:String(values.source_agency||'BNMP').trim()||'BNMP',source_kind:file?'pdf':'manual',source_reference:String(values.source_reference||'').trim(),status:'pending',created_by:userId,updated_by:userId};
+  const payload={id,warrant_number:number,full_name:name,cpf_digits:cpf||null,birth_date:values.birth_date||null,source_agency:String(values.source_agency||'BNMP').trim().toLocaleUpperCase('pt-BR')||'BNMP',source_kind:file?'pdf':'manual',source_reference:String(values.source_reference||'').trim(),status:'pending',created_by:userId,updated_by:userId};
   const {error:insertError}=await state.client.from('arrest_warrants').insert(payload);
   if(insertError){if(path)await state.client.storage.from('warrant-documents').remove([path]);if(insertError.code==='23505')throw new Error('Já existe um mandado com esse número e órgão emissor. Confira a lista antes de continuar.');throw insertError}
   if(file){
