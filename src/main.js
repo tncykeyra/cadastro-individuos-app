@@ -8,7 +8,7 @@ import { processOcrFiles } from './ocr-engine.js';
 const config={url:import.meta.env.VITE_SUPABASE_URL,key:import.meta.env.VITE_SUPABASE_ANON_KEY};
 const appIconUrl=import.meta.env.BASE_URL+'icon.svg?v=9';
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const state={client:null,session:null,profile:null,page:'dashboard',selected:null,query:'',searchInput:'',people:[],vehicles:[],profiles:[],revisions:[],loading:false,searchTimer:null,searchRequest:0,lastSearchKey:'',searchLoading:false,install:null,passwordSetup:false,teamTab:'google',teamCreatedUser:null,revisionOffset:0,revisionTotal:0,revisionFilters:{entity:'all',action:'all',actor:'all',from:'',to:''},historyProfiles:[],letter:'all',listPage:0,listPageSize:30,listTotal:0,serverPaged:false,routeStack:[],modalHistory:false,drawerHistory:false,ignoreNavigationPop:false,closingModalFromBack:false,photoSearch:{imageFile:null,imageUrl:'',query:'',page:0,pageSize:30,total:0,records:[],photoCounts:{},comparePersonId:null,compareName:'',comparePhotos:[],compareIndex:0,zoom:1,loading:false,loadingCompare:false,error:''}};
+const state={client:null,session:null,profile:null,page:'dashboard',selected:null,query:'',searchInput:'',people:[],vehicles:[],profiles:[],revisions:[],loading:false,searchTimer:null,searchRequest:0,lastSearchKey:'',searchLoading:false,install:null,passwordSetup:false,teamTab:'google',teamCreatedUser:null,revisionOffset:0,revisionTotal:0,revisionFilters:{entity:'all',action:'all',actor:'all',from:'',to:''},historyProfiles:[],letter:'all',listPage:0,listPageSize:30,listTotal:0,serverPaged:false,routeStack:[],modalHistory:false,drawerHistory:false,ignoreNavigationPop:false,closingModalFromBack:false,photoSearch:{requestId:0,imageFile:null,imageUrl:'',query:'',page:0,pageSize:30,total:0,records:[],photoCounts:{},comparePersonId:null,compareName:'',comparePhotos:[],compareIndex:0,zoom:1,loading:false,loadingCompare:false,error:''}};
 const icon={dashboard:'▦',people:'♙',photoSearch:'📷',vehicles:'⌑',warrants:'⚖',team:'♧',history:'↺'};
 const label={dashboard:'Dashboard',people:'Indivíduos',photoSearch:'Pesquisa Fotográfica',vehicles:'Veículos',warrants:'Mandados',team:'Usuários',history:'Histórico'};
 const photoUrls=new Map();let photoDbPromise=null;let warrantImportPreview=null;let warrantPdfBatch=[];let warrantPdfBatchSaving=false;
@@ -445,7 +445,7 @@ async function countPhotosForPeople(records){
   }
   return Object.fromEntries([...counts].map(([id,paths])=>[id,paths.size]));
 }
-function clearPhotoSearchSelection(){const search=state.photoSearch;if(search?.imageUrl?.startsWith('blob:'))URL.revokeObjectURL(search.imageUrl);state.photoSearch={imageFile:null,imageUrl:'',query:'',page:0,pageSize:30,total:0,records:[],photoCounts:{},comparePersonId:null,compareName:'',comparePhotos:[],compareIndex:0,zoom:1,loading:false,loadingCompare:false,error:''}}
+function clearPhotoSearchSelection(){const search=state.photoSearch;if(search)search.requestId=(search.requestId||0)+1;if(search?.imageUrl?.startsWith('blob:'))URL.revokeObjectURL(search.imageUrl);state.photoSearch={requestId:0,imageFile:null,imageUrl:'',query:'',page:0,pageSize:30,total:0,records:[],photoCounts:{},comparePersonId:null,compareName:'',comparePhotos:[],compareIndex:0,zoom:1,loading:false,loadingCompare:false,error:''}}
 function photoSearchCompareMarkup(){
   const search=state.photoSearch,index=search.compareIndex,photo=search.comparePhotos[index];
   if(!search.comparePersonId)return '';
@@ -465,23 +465,23 @@ function photoSearchContent(){
   return '<section class="photo-search-page"><div class="page-intro"><div><h1>Pesquisa Fotográfica</h1><p>Compare manualmente uma imagem com as fotografias dos indivíduos autorizados.</p></div></div><div class="notice">A imagem escolhida fica apenas no dispositivo durante a consulta. Não há reconhecimento facial automático, pontuação de semelhança nem envio da imagem selecionada.</div><div class="photo-search-tools"><button type="button" class="button secondary" data-photo-search-camera-open>📷 Tirar foto</button><button type="button" class="button secondary" data-photo-search-file-open>📁 Selecionar imagem</button><input type="file" accept="image/*" capture="environment" data-photo-search-camera hidden><input type="file" accept="image/*" data-photo-search-file hidden></div>'+image+photoSearchCompareMarkup()+'<div class="photo-search-filter"><label for="photoSearchQuery">Filtrar por nome, CPF ou RG</label><div class="search-control"><input id="photoSearchQuery" class="search" type="search" maxlength="100" autocomplete="off" placeholder="Digite pelo menos 3 caracteres" value="'+esc(search.query)+'"><button type="button" class="button search-button" data-photo-search-submit aria-label="Pesquisar indivíduos" title="Pesquisar">⌕</button></div><p class="search-hint" role="status">'+(search.loading?'Buscando…':search.query?'Resultados filtrados pela pesquisa (até 100 por consulta).':'Mostrando '+total+' indivíduos em páginas de '+search.pageSize+'.')+'</p></div>'+hint+paging+'</section>';
 }
 async function renderPhotoSearch(){
-  const search=state.photoSearch;search.loading=true;search.error='';frame(photoSearchContent());
+  const search=state.photoSearch,requestId=++search.requestId;search.loading=true;search.error='';frame(photoSearchContent());
   try{
     let all=[],total=0;
     if(search.query.trim()){
       if(search.query.trim().length<3){search.records=[];search.total=0;search.loading=false;frame(photoSearchContent());return}
       const {data,error}=await state.client.rpc('search_people',{search_term:search.query.trim(),result_limit:100});
-      if(error)throw error;all=data||[];total=all.length;
+      if(error)throw error;if(search!==state.photoSearch||requestId!==search.requestId)return;all=data||[];total=all.length;
     }else{
       const start=search.page*search.pageSize;
       const {data,error,count}=await state.client.from('people').select('id,full_name,cpf_digits,rg,photo_path,photo_position',{count:'exact'}).is('archived_at',null).order('full_name').order('id').range(start,start+search.pageSize-1);
-      if(error)throw error;all=data||[];total=count||0;
+      if(error)throw error;if(search!==state.photoSearch||requestId!==search.requestId)return;all=data||[];total=count||0;
     }
     search.total=total;const start=search.page*search.pageSize;search.records=search.query.trim()?all.slice(start,start+search.pageSize):all;
-    await loadRecordCovers('people',search.records);
-    search.photoCounts=await countPhotosForPeople(search.records);
-  }catch(error){search.error=msg(error);search.records=[];search.total=0}
-  search.loading=false;frame(photoSearchContent());
+    await loadRecordCovers('people',search.records);if(search!==state.photoSearch||requestId!==search.requestId)return;
+    search.photoCounts=await countPhotosForPeople(search.records);if(search!==state.photoSearch||requestId!==search.requestId)return;
+  }catch(error){if(search!==state.photoSearch||requestId!==search.requestId)return;search.error=msg(error);search.records=[];search.total=0}
+  if(search!==state.photoSearch||requestId!==search.requestId)return;search.loading=false;frame(photoSearchContent());
 }
 async function openPhotoSearchCompare(personId){
   const search=state.photoSearch;
