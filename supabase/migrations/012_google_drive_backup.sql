@@ -2,7 +2,9 @@
 -- This migration intentionally does not start a schedule. Scheduling is enabled by the
 -- Edge Function only after Drive OAuth is configured and a backup can run.
 
-create extension if not exists pg_cron;
+create extension if not exists pg_cron with schema pg_catalog;
+grant usage on schema cron to postgres;
+grant all privileges on all tables in schema cron to postgres;
 create extension if not exists pg_net;
 
 create table if not exists public.backup_runs (
