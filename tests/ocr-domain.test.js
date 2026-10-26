@@ -22,11 +22,12 @@ test('flags an invalid CPF and does not make it applicable', () => {
   assert.match(result.warnings.join(' '), /CPF/);
 });
 
-test('does not misread father or mother names as the individual name', () => {
+test('stores mother-only SENATRAN data as filiation without creating parent fields', () => {
   const result = extractDocumentFields('NOME DA MÃE: Maria de Souza\nNOME DO PAI: José da Silva\nCPF: 52998224725', 'people', 90);
   assert.equal(result.values.full_name, undefined);
-  assert.equal(result.values.mother_name, 'Maria de Souza');
-  assert.equal(result.values.father_name, 'José da Silva');
+  assert.equal(result.values.filiation, 'Maria de Souza');
+  assert.equal(result.values.father_name, undefined);
+  assert.equal(result.formValues.filiation, 'Maria de Souza');
 });
 
 test('recognizes SENATRAN label/value pairs and normalizes dates', () => {
