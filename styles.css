@@ -329,3 +329,5 @@ button,.button,input,select,textarea{min-width:0;max-width:100%}
  .warrant-record-top>.warrant-status{max-width:none;align-self:flex-start}
  .warrant-confidence{text-align:left}
 }
+
+.warrant-import-confirm{display:flex;align-items:flex-start;gap:9px;margin:12px 0;color:#765300;font-weight:650;line-height:1.45}.warrant-import-confirm input{flex:0 0 auto;margin-top:3px}
