@@ -397,3 +397,61 @@ button,.button,input,select,textarea{min-width:0;max-width:100%}
 .warrant-pdf-batch-fields .warrant-batch-full{grid-column:1/-1}
 @media(max-width:620px){.warrant-pdf-batch-fields{grid-template-columns:minmax(0,1fr)}.warrant-pdf-batch-fields .warrant-batch-full{grid-column:auto}.warrant-pdf-batch-row{padding:12px}.warrant-pdf-batch-heading{align-items:flex-start}}
 .warrant-status.closed{background:#e9eef0;color:#45545a}
+
+/* Pesquisa fotográfica: imagens sempre locais na consulta e comparação visual manual. */
+html,body{width:100%;max-width:100%}
+.app-shell,main,#mainContent,.page-intro,.detail-hero,.detail-sections,.cards,.record-gallery{min-width:0;max-width:100%}
+button,input,textarea,select,video,canvas,img{max-width:100%}
+.detail-hero>*{min-width:0}
+h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
+.photo-search-page{width:100%;min-width:0;max-width:100%}
+.photo-search-tools,.photo-search-card-actions,.photo-search-compare-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.photo-search-tools{margin:14px 0}
+.photo-search-selected{display:flex;align-items:center;gap:14px;min-width:0;max-width:100%;padding:12px;border:1px solid var(--line);border-radius:14px;background:#fff;margin:12px 0 20px}
+.photo-search-selected img{display:block;flex:0 0 104px;width:104px;height:132px;object-fit:contain;border-radius:9px;background:#eef0f1}
+.photo-search-selected p{margin:5px 0;color:var(--muted)}
+.photo-search-filter{margin:20px 0 14px}
+.photo-search-filter label{display:block;font-weight:650;margin-bottom:8px}
+.photo-search-filter .search{margin:0}
+.photo-search-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,245px),1fr));gap:14px;min-width:0}
+.photo-search-card{min-width:0;max-width:100%;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px}
+.photo-search-cover{width:100%;aspect-ratio:4/3;max-height:320px;overflow:hidden;border-radius:11px;background:#eef0f1}
+.photo-search-cover img{display:block;width:100%;height:100%;object-fit:cover}
+.photo-search-placeholder{width:100%;height:100%;display:grid;place-items:center;color:#788187;font-size:3rem}
+.photo-search-card-copy{min-width:0;padding:4px 2px}
+.photo-search-card-copy h3{margin:10px 0 6px}
+.photo-search-card-copy p{margin:4px 0;color:var(--muted);overflow-wrap:anywhere}
+.photo-search-card-actions{margin-top:12px}
+.photo-search-card-actions .button{flex:1 1 auto;white-space:normal}
+.photo-search-comparison{min-width:0;max-width:100%;margin:20px 0;padding:14px;background:#fff;border:1px solid var(--line);border-radius:16px}
+.photo-search-compare-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.photo-search-compare-heading h2{margin:0 0 4px}
+.photo-search-compare-heading p{margin:4px 0 12px}
+.photo-search-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;min-width:0}
+.photo-search-pair figure{min-width:0;margin:0}
+.photo-search-pair figcaption{margin:0 0 6px;font-weight:650;font-size:.9rem;overflow-wrap:anywhere}
+.photo-search-image-frame{width:100%;height:clamp(200px,42vw,420px);min-width:0;overflow:hidden;display:grid;place-items:center;border-radius:12px;background:#edf0f1}
+.photo-search-image-frame img{display:block;width:100%;height:100%;object-fit:contain;transform-origin:center;transition:transform .15s}
+.photo-search-compare-controls{justify-content:center;margin-top:12px}
+.photo-search-compare-controls span{min-width:48px;text-align:center;color:var(--muted);font-variant-numeric:tabular-nums}
+.photo-search-compare-controls .button{white-space:normal}
+@media(max-width:620px){
+  .photo-search-tools .button{flex:1 1 145px;min-height:46px}
+  .photo-search-selected{align-items:flex-start}
+  .photo-search-selected img{flex-basis:82px;width:82px;height:108px}
+  .photo-search-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  .photo-search-card{padding:7px}
+  .photo-search-card-actions{display:grid;grid-template-columns:1fr}
+  .photo-search-card-actions .button{width:100%;padding:8px 10px;font-size:.82rem}
+  .photo-search-pair{grid-template-columns:1fr}
+  .photo-search-image-frame{height:min(74vw,360px)}
+  .photo-search-compare-controls{gap:6px}
+  .photo-search-compare-controls .button{flex:1 1 42%;padding-inline:8px}
+}
+@media(max-width:360px){
+  main{padding-left:12px;padding-right:12px}
+  .photo-search-grid{grid-template-columns:1fr}
+  .photo-search-selected{flex-wrap:wrap}
+  .page-intro{align-items:flex-start;flex-wrap:wrap}
+  .page-intro>.button{white-space:normal}
+}

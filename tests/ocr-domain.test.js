@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { extractDocumentFields, isValidCpf, isValidCnpj, isValidDocumentDate } from '../src/ocr-domain.js';
+import { extractDocumentFields, isValidCpf, isValidCnpj, isValidDocumentDate, mergeFiliationIntoNotes } from '../src/ocr-domain.js';
 
 test('validates CPF digits before making them applicable', () => {
   assert.equal(isValidCpf('529.982.247-25'), true);
@@ -121,4 +121,13 @@ test('does not treat the word after a vehicle label as its value when it is anot
   assert.equal(result.values.make, 'HONDA');
   assert.equal(result.values.model, 'CG 160 FAN');
   assert.equal(result.values.color, 'VERMELHA');
+});
+
+
+test('preserves existing notes when adding OCR filiation and does not duplicate the same block', () => {
+  const notes = 'Observação anterior do cadastro.';
+  const filiation = 'MARIA EXEMPLO UM\nJOSE EXEMPLO DOIS';
+  const merged = mergeFiliationIntoNotes(notes, filiation);
+  assert.equal(merged, notes + '\n\nFiliação:\n' + filiation);
+  assert.equal(mergeFiliationIntoNotes(merged, filiation), merged);
 });
