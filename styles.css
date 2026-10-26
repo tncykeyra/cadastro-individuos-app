@@ -379,3 +379,21 @@ button,.button,input,select,textarea{min-width:0;max-width:100%}
   .person-photo-gallery .edit-photo-card.crop-editing .edit-photo-image-wrap{max-width:min(100%,420px)}
   .vehicle-photo-gallery .edit-photo-card.crop-editing .edit-photo-image-wrap{max-width:100%}
 }
+
+
+/* Admin queue for reviewing multiple warrant PDFs before saving */
+.warrant-pdf-batch-queue{display:grid;gap:14px;margin:14px 0 24px;min-width:0}
+.warrant-pdf-batch-list{display:grid;gap:12px;min-width:0}
+.warrant-pdf-batch-row{display:grid;gap:12px;padding:16px;border:1px solid var(--line);border-radius:15px;background:var(--surface-soft,#f7f8f8);min-width:0;overflow:hidden}
+.warrant-pdf-batch-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.warrant-pdf-batch-heading>div{display:grid;gap:4px;min-width:0}
+.warrant-pdf-batch-heading strong{overflow-wrap:anywhere}
+.warrant-pdf-batch-heading small,.warrant-pdf-batch-status{color:var(--muted);font-size:.85rem;line-height:1.45}
+.warrant-pdf-batch-status{margin:0;overflow-wrap:anywhere}
+.warrant-pdf-batch-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-width:0}
+.warrant-pdf-batch-fields label{display:grid;gap:5px;min-width:0;font-size:.88rem;font-weight:650}
+.warrant-pdf-batch-fields input,.warrant-pdf-batch-fields textarea{box-sizing:border-box;width:100%;min-width:0;max-width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font:inherit}
+.warrant-pdf-batch-fields textarea{min-height:74px;resize:vertical}
+.warrant-pdf-batch-fields .warrant-batch-full{grid-column:1/-1}
+@media(max-width:620px){.warrant-pdf-batch-fields{grid-template-columns:minmax(0,1fr)}.warrant-pdf-batch-fields .warrant-batch-full{grid-column:auto}.warrant-pdf-batch-row{padding:12px}.warrant-pdf-batch-heading{align-items:flex-start}}
+.warrant-status.closed{background:#e9eef0;color:#45545a}
