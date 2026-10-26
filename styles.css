@@ -342,3 +342,40 @@ button,.button,input,select,textarea{min-width:0;max-width:100%}
 .warrant-review-photo-placeholder{font-size:1.55rem;line-height:1}
 .warrant-review-photo-placeholder[hidden]{display:none}
 @media(max-width:620px){.warrant-review-photo-frame{flex-basis:56px;width:56px;height:56px}}
+
+
+/* Linked warrant records and reviewable person proposals */
+.warrant-linked-people{display:grid;gap:10px;margin:14px 0;min-width:0}
+.warrant-linked-person{display:flex;align-items:center;gap:12px;width:100%;min-width:0;padding:10px;text-align:left;border:1px solid var(--line);border-radius:13px;background:#fff;color:var(--ink);cursor:pointer}
+.warrant-linked-person>span:last-child{display:grid;gap:3px;min-width:0}
+.warrant-linked-person small,.warrant-linked-open{color:var(--muted);font-size:.78rem}
+.warrant-linked-person strong{overflow-wrap:anywhere}
+.warrant-linked-open{color:var(--brand);font-weight:700}
+.warrant-linked-photo{position:relative;display:grid;place-items:center;flex:0 0 58px;width:58px;height:72px;overflow:hidden;border-radius:9px;background:#eef0f1;color:var(--muted)}
+.warrant-linked-photo img{width:100%;height:100%;object-fit:cover}
+.warrant-linked-photo-placeholder[hidden]{display:none}
+.warrant-proposal-card{min-width:0;padding:16px;border:1px solid var(--line);border-radius:15px;background:#fff;overflow-wrap:anywhere}
+.warrant-proposal-heading{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:.8rem}
+.warrant-proposal-card h3{margin:10px 0}
+.warrant-proposal-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:9px;margin:12px 0}
+.warrant-proposal-fields div{min-width:0;padding:9px;border-radius:9px;background:var(--page)}
+.warrant-proposal-fields dt{color:var(--muted);font-size:.75rem;font-weight:700}
+.warrant-proposal-fields dd{margin:3px 0 0;overflow-wrap:anywhere;white-space:normal}
+.warrant-full-field{grid-column:1/-1}
+.edit-photo-card.crop-editing{width:min(100%,760px);justify-self:center}
+.edit-photo-card.crop-editing .edit-photo-image-wrap{width:100%;margin:0 auto}
+.person-photo-gallery .edit-photo-card.crop-editing .edit-photo-image-wrap{max-width:540px}
+.vehicle-photo-gallery .edit-photo-card.crop-editing .edit-photo-image-wrap{max-width:760px}
+.person-photo-gallery .edit-photo-card.crop-editing .edit-photo-image,
+.vehicle-photo-gallery .edit-photo-card.crop-editing .edit-photo-image{width:100%;height:auto;max-width:100%;object-fit:cover}
+.person-photo-gallery .edit-photo-card.crop-editing .edit-photo-image,
+.person-photo-gallery .edit-photo-card.crop-editing .edit-photo-image img{aspect-ratio:3/4}
+.vehicle-photo-gallery .edit-photo-card.crop-editing .edit-photo-image,
+.vehicle-photo-gallery .edit-photo-card.crop-editing .edit-photo-image img{aspect-ratio:4/3}
+@media(max-width:620px){
+  .warrant-proposal-card{padding:12px}
+  .warrant-linked-person{padding:8px}
+  .edit-photo-card.crop-editing{width:100%}
+  .person-photo-gallery .edit-photo-card.crop-editing .edit-photo-image-wrap{max-width:min(100%,420px)}
+  .vehicle-photo-gallery .edit-photo-card.crop-editing .edit-photo-image-wrap{max-width:100%}
+}

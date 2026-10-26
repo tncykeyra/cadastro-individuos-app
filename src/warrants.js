@@ -177,3 +177,107 @@ export function extractWarrantSuggestions(text) {
     hasValidCpf: Boolean(cpf_digits)
   };
 }
+
+
+function warrantOcrLines(text) {
+  return String(text || '')
+    .replace(/\f/g, '\n')
+    .split(/\r?\n/)
+    .map(line => String(line || '').replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+}
+
+function warrantOcrHeader(line) {
+  const value = normalizeWarrantText(line);
+  return /^(?:cpf|rg|registro geral|documento de identidade|identidade|data de nascimento|nascimento|endereco|residencia|logradouro|filiacao|informacoes processuais|dados processuais|numero do processo|processo|numero do mandado|mandado|orgao expedidor|situacao|observacoes|nome da mae|nome do pai|nome completo|nome do requerido|nome do procurado|requerido|procurado|indiciado|acusado)\b/.test(value);
+}
+
+function warrantOcrValueAfter(line, labelPattern) {
+  const match = String(line || '').match(labelPattern);
+  if (!match) return '';
+  return cleanField(line.slice(match.index + match[0].length).replace(/^\s*[:\-–—|]+\s*/, ''), 400);
+}
+
+function warrantOcrField(lines, labelPattern, { maxLines = 1, maxLength = 400 } = {}) {
+  for (let index = 0; index < lines.length; index++) {
+    if (!labelPattern.test(lines[index])) continue;
+    const collected = [];
+    const inline = warrantOcrValueAfter(lines[index], labelPattern);
+    if (inline) collected.push(inline);
+    for (let offset = 1; offset <= maxLines && index + offset < lines.length; offset++) {
+      const line = lines[index + offset];
+      if (warrantOcrHeader(line)) break;
+      if (collected.length && !line) break;
+      collected.push(line);
+    }
+    const value = cleanField(collected.join(' '), maxLength);
+    if (value) return value;
+  }
+  return '';
+}
+
+function warrantOcrBlock(lines, labelPattern, { maxLines = 16, maxLength = 4000 } = {}) {
+  for (let index = 0; index < lines.length; index++) {
+    if (!labelPattern.test(lines[index])) continue;
+    const collected = [];
+    const inline = warrantOcrValueAfter(lines[index], labelPattern);
+    if (inline) collected.push(inline);
+    let blankCount = 0;
+    for (let offset = 1; offset <= maxLines && index + offset < lines.length; offset++) {
+      const line = lines[index + offset];
+      if (!line) {
+        if (collected.length && ++blankCount > 1) break;
+        continue;
+      }
+      blankCount = 0;
+      const normalized = normalizeWarrantText(line);
+      if (/^(?:cpf|rg|registro geral|data de nascimento|endereco|residencia|logradouro|informacoes pessoais|dados pessoais|dados do mandado|filiacao|numero do mandado|mandado|observacoes|situacao|orgao expedidor)\b/.test(normalized)) break;
+      collected.push(line);
+    }
+    const value = collected.map(line => line.replace(/^\s*(?:nome da m[aã]e|nome do pai)\s*[:\-]?\s*/i, '').trim()).filter(Boolean).join('\n').slice(0, maxLength).trim();
+    if (value) return value;
+  }
+  return '';
+}
+
+function warrantOcrName(lines, fallback) {
+  const labelPattern = /(?:em desfavor de|em face de|nome do condutor|nome completo|nome do requerido|nome do procurado|nome do acusado|nome(?!\s+(?:da\s+m[aã]e|do\s+pai))|requerido(?:\(a\))?|procurado(?:\(a\))?|indiciado(?:\(a\))?|acusado(?:\(a\))?)\s*[:\-]?\s*/i;
+  for (let index = 0; index < lines.length; index++) {
+    const match = lines[index].match(labelPattern);
+    if (!match) continue;
+    const first = cleanField(lines[index].slice(match.index + match[0].length).replace(/\s+(?:CPF|RG|MANDADO|PROCESSO|DATA DE NASCIMENTO)\b.*$/i, ''), 180);
+    const parts = first ? [first] : [];
+    for (let offset = 1; offset <= 3 && index + offset < lines.length; offset++) {
+      const line = lines[index + offset];
+      const normalized = normalizeWarrantText(line);
+      if (warrantOcrHeader(line) || /\d{2,}/.test(line) || /^(?:informacoes|dados|mandado|processo|cpf|rg)\b/.test(normalized)) break;
+      if (!/^[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ'’ .-]{0,79}$/.test(line)) break;
+      parts.push(line);
+    }
+    const value = cleanField(parts.join(' ').replace(/\s+/g, ' '), 180);
+    if (value.length >= 3) return value;
+  }
+  return fallback || '';
+}
+
+/** Extrai campos para conferência local do PDF; nada é salvo pelo parser. */
+export function extractWarrantPersonSuggestions(text) {
+  const source = String(text || '');
+  const lines = warrantOcrLines(source);
+  const base = extractWarrantSuggestions(source);
+  const rg = warrantOcrField(lines, /(?:\bRG\b|registro geral|documento de identidade|identidade)\s*/i, { maxLines: 1, maxLength: 100 });
+  const address_primary = warrantOcrField(lines, /(?:endere[cç]o(?:\s+residencial)?|resid[eê]ncia|logradouro)\s*/i, { maxLines: 3, maxLength: 1000 });
+  const filiation = warrantOcrBlock(lines, /filia[cç][aã]o\s*[:\-]?\s*/i, { maxLines: 8, maxLength: 2000 });
+  const process_information = warrantOcrBlock(lines, /(?:informa[cç][oõ]es|dados)\s+processuais\s*[:\-]?\s*/i, { maxLines: 20, maxLength: 12000 });
+  const processMatch = source.match(/(?:n[uú]mero\s+do\s+processo|processo\s*(?:n[º°.]|n[uú]mero|#))\s*[:#\-]?\s*([0-9][0-9./-]{5,50})/i)
+    || source.match(/\b(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})\b/);
+  return {
+    ...base,
+    full_name: warrantOcrName(lines, base.full_name),
+    rg,
+    address_primary,
+    filiation,
+    process_information,
+    process_reference: cleanField(processMatch?.[1] || '', 200)
+  };
+}
