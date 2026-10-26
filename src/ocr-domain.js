@@ -204,13 +204,35 @@ const VEHICLE_FIELDS = [
   ['vehicle_type', 'Tipo de veículo', LABELS.vehicle_type]
 ];
 
+function isNotesSectionHeading(line) {
+  return /^(?:CRIMES?|CONTEXTO(?:\s*\/\s*OCORR[EÊ]NCIA)?|ANOTA[CÇ][OÕ]ES?|ENDERE[CÇ]OS?|VE[IÍ]CULOS?|OBSERVA[CÇ][OÕ]ES?|HIST[ÓO]RICO|INFORMA[CÇ][OÕ]ES)\s*:?\s*$/i.test(String(line || '').trim());
+}
 function extractFiliationBlock(notes) {
   const source = String(notes || '').replace(/\r/g, '');
   const expression = /(?:^|\n)Filiação:\s*\n?([\s\S]*?)(?=\n{2,}|$)/i;
   const match = source.match(expression);
   if (!match) return { source, value: '' };
-  const lines = match[1].split('\n').map(line => line.trim()).filter(Boolean);
-  return { source: source.slice(0, match.index) + source.slice(match.index + match[0].length), value: lines.join('\n') };
+  const contentLines = match[1].split('\n');
+  const names = [], preserved = [];
+  let stop = false;
+  for (const rawLine of contentLines) {
+    const line = rawLine.trim();
+    if (stop || !line || isNotesSectionHeading(line) || !looksLikePersonLine(line)) {
+      stop = true;
+      if (line) preserved.push(line);
+      continue;
+    }
+    if (names.length >= 6) {
+      preserved.push(line);
+      stop = true;
+      continue;
+    }
+    names.push(line);
+  }
+  const prefix = source.slice(0, match.index);
+  const suffix = source.slice(match.index + match[0].length);
+  const preservedTail = preserved.length ? (prefix.endsWith('\n') ? '\n' : '') + preserved.join('\n') : '';
+  return { source: prefix + preservedTail + suffix, value: names.join('\n') };
 }
 export function extractFiliationFromNotes(notes) {
   return extractFiliationBlock(notes).value;
