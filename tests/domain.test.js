@@ -17,3 +17,6 @@ test('accepts old and Mercosul plate formats only', () => {
   assert.equal(isValidPlate('AB12345'), false);
   assert.equal(isValidPlate('ABC12D3'), false);
 });
+
+test('compara hashes visuais de fotos com tolerância pequena', async () => { const { arePhotoHashesSimilar } = await import('../src/domain.js'); assert.equal(arePhotoHashesSimilar('0000000000000000','0000000000000001'), true); assert.equal(arePhotoHashesSimilar('0000000000000000','000000000000001f'), false); assert.equal(arePhotoHashesSimilar('not-a-hash','0000000000000000'), false); });
+test('remove duplicatas visuais sem misturar fotos de pessoas associadas', async () => { const { dedupePhotoSources } = await import('../src/domain.js'); const photo = (group, suffix='0000000000000000') => ({ dedupe_group: group, difference_hash: suffix, average_hash: 'ffffffffffffffff' }); const unique = dedupePhotoSources([photo('record'), photo('record','0000000000000001'), photo('person:1'), photo('person:2')]); assert.deepEqual(unique.map(item=>item.dedupe_group), ['record','person:1','person:2']); });
