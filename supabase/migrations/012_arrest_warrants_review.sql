@@ -136,7 +136,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_action text;
 begin
@@ -166,7 +166,7 @@ begin
   );
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists arrest_warrants_audit_trigger on public.arrest_warrants;
 create trigger arrest_warrants_audit_trigger
