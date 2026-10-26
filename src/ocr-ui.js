@@ -4,6 +4,12 @@ import { processOcrFiles, cancelOcrWorker } from './ocr-engine.js';
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 }
+function canvasBlob(canvas, type = 'image/jpeg', quality = 0.9) {
+  return new Promise((resolve, reject) => canvas.toBlob(blob => {
+    if (!blob) reject(new Error('Não foi possível gerar o arquivo da fotografia.'));
+    else resolve(blob);
+  }, type, quality));
+}
 
 function maskedCpf(value) {
   const digits = String(value || '').replace(/\D/g, '');
