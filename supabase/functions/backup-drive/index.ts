@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { contentHmacTag, encryptAesGcm } from './crypto.ts';
 
 const APP_URL = 'https://tncykeyra.github.io/cadastro-individuos-app/';
 const DRIVE_REDIRECT = 'https://etvxrzjtnhuefxeirkxf.supabase.co/functions/v1/backup-drive/oauth/callback';
@@ -123,37 +124,18 @@ async function ensureEncryptionKey(admin: ReturnType<typeof serviceClient>) {
 }
 async function encrypted(admin: ReturnType<typeof serviceClient>, bytes: Uint8Array) {
   const raw = await ensureEncryptionKey(admin);
-  const key = await crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt']);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const cipher = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: utf8('cadastro-criminal-backup-v1') }, key, bytes.slice().buffer as ArrayBuffer));
-  const version = utf8('CCBK1');
-  const result = new Uint8Array(version.length + iv.length + cipher.length);
-  result.set(version, 0); result.set(iv, version.length); result.set(cipher, version.length + iv.length);
-  return result;
+  return await encryptAesGcm(bytes, raw, 'cadastro-criminal-backup-v1', 'CCBK1');
 }
 async function createRecoveryEnvelope(admin: ReturnType<typeof serviceClient>, accessToken: string, folderId: string, recoveryKey: string) {
   const master = await ensureEncryptionKey(admin);
   const recovery = fromB64(recoveryKey);
   if (recovery.length !== 32) throw new Error('RECOVERY_KEY_INVALID');
-  const key = await crypto.subtle.importKey('raw', recovery, { name: 'AES-GCM' }, false, ['encrypt']);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const encryptedMaster = new Uint8Array(await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv, additionalData: utf8('cadastro-criminal-key-envelope-v1') },
-    key, master.slice().buffer as ArrayBuffer,
-  ));
-  const prefix = utf8('CCKR1');
-  const payload = new Uint8Array(prefix.length + iv.length + encryptedMaster.length);
-  payload.set(prefix, 0); payload.set(iv, prefix.length); payload.set(encryptedMaster, prefix.length + iv.length);
+  const payload = await encryptAesGcm(master, recovery, 'cadastro-criminal-key-envelope-v1', 'CCKR1');
   return await driveUpload(accessToken, folderId, 'recovery-key-envelope.ccr.enc', payload);
 }
 async function contentTag(admin: ReturnType<typeof serviceClient>, bytes: Uint8Array) {
   const raw = await ensureEncryptionKey(admin);
-  const material = await crypto.subtle.importKey('raw', raw, 'HKDF', false, ['deriveKey']);
-  const key = await crypto.subtle.deriveKey(
-    { name: 'HKDF', hash: 'SHA-256', salt: utf8('cadastro-criminal'), info: utf8('media-deduplication-v1') },
-    material, { name: 'HMAC', hash: 'SHA-256', length: 256 }, false, ['sign']);
-  const signature = new Uint8Array(await crypto.subtle.sign('HMAC', key, bytes.slice().buffer as ArrayBuffer));
-  return [...signature].map(byte => byte.toString(16).padStart(2, '0')).join('');
+  return await contentHmacTag(raw, bytes);
 }
 async function createRun(admin: ReturnType<typeof serviceClient>, createdBy: string | null, triggerType: 'manual' | 'scheduled') {
   await ensureEncryptionKey(admin);
