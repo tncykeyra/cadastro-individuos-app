@@ -87,7 +87,7 @@ function findLabelMatch(line, aliases = FIELD_LABELS) {
       const before = mapped.text.slice(0, index);
       const after = mapped.text.slice(index + label.length);
       if (!allowedLabelPrefix(before)) continue;
-      if (after && /^[A-Z0-9]/.test(after)) continue;
+      if (after && (/^[A-Z0-9]/.test(after) || (after.startsWith('/') && !label.includes('/')))) continue;
       if (label === 'NOME' && /^(?:\s+DO PAI|\s+DA MAE|\s+DO CONDUTOR|\s+DO PROPRIETARIO)/.test(after)) continue;
       const rawEnd = mapped.rawEndByIndex[index + label.length - 1] ?? line.length;
       return { label, rawEnd };
