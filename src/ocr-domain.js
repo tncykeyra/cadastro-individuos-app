@@ -295,7 +295,7 @@ export function extractDocumentFields(text, kind = 'people', confidence = 0) {
       else value = plate;
     }
     if (key === 'color') {
-      value = value.replace(/\s+(?:ALCOOL|ETANOL|GASOLINA|DIESEL|FLEX|GNV|ELETRICO|ELÉTRICO)(?:\s*\/\s*(?:ALCOOL|ETANOL|GASOLINA|DIESEL|FLEX|GNV|ELETRICO|ELÉTRICO))*.*$/i, '').trim();
+      value = value.replace(/\s+(?:[AÁ]LCOOL|ETANOL|GASOLINA|DIESEL|FLEX|GNV|ELETRICO|ELÉTRICO)(?:\s*\/\s*(?:[AÁ]LCOOL|ETANOL|GASOLINA|DIESEL|FLEX|GNV|ELETRICO|ELÉTRICO))*.*$/i, '').trim();
     }
     if (key === 'registration') { value = value.replace(/[^\d]/g, ''); if (value.length !== 11) warning = 'Número de registro da CNH deve ter 11 dígitos; confira o documento.'; }
     values[key] = value;
