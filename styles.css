@@ -252,3 +252,82 @@ button,.button,input,select,textarea{min-width:0;max-width:100%}
   .ocr-crop-wrap,.ocr-crop-wrap img{max-height:48dvh}
   .ocr-actions>*{flex:1 1 140px}
 }
+
+
+/* Mandados: revisão administrativa e avisos responsivos */
+.warrants-page{width:100%;max-width:1120px;margin:0 auto;min-width:0;overflow-wrap:anywhere}
+.warrant-page-header,.warrant-section-title,.warrant-record-top,.warrant-review-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;min-width:0}
+.warrant-page-header{margin:0 0 24px}
+.warrant-page-header h1{margin:4px 0 8px;font-size:clamp(1.6rem,4vw,2.2rem)}
+.warrant-page-header .muted,.warrant-section-title p{margin:4px 0;color:var(--muted);line-height:1.5}
+.warrant-admin-pill,.warrant-review-tag,.warrant-source{display:inline-flex;align-items:center;gap:6px;border-radius:999px;background:#eef0f1;color:var(--brand-dark);padding:7px 11px;font-size:.78rem;font-weight:700;white-space:normal}
+.warrant-admin-tools{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin-bottom:28px;min-width:0}
+.warrant-tool-card,.warrant-active-section{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;min-width:0;box-shadow:0 4px 18px #17212708}
+.warrant-tool-card h2,.warrant-section-title h2{font-size:1.12rem;margin:0}
+.warrant-tool-card>p{color:var(--muted);line-height:1.55;margin:8px 0 14px}
+.warrant-file-label{display:inline-flex;align-items:center;position:relative}
+.warrant-manual-tool>summary{cursor:pointer;list-style:none;display:flex;flex-direction:column;gap:5px}
+.warrant-manual-tool>summary::-webkit-details-marker{display:none}
+.warrant-manual-tool>summary:after{content:"＋";font-size:1.3rem;color:var(--brand);position:absolute;right:22px;top:18px}
+.warrant-manual-tool[open]>summary:after{content:"−"}
+.warrant-manual-tool[open] .warrant-form{margin-top:20px}
+.warrant-form,.warrant-form-grid{display:grid;gap:14px;min-width:0}
+.warrant-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.warrant-form label{display:grid;gap:7px;font-size:.9rem;font-weight:650;min-width:0}
+.warrant-form input,.warrant-form textarea,.warrant-search-row input{display:block;width:100%;min-width:0;border:1px solid #d8dcde;border-radius:11px;background:#fff;color:var(--ink);padding:11px 12px;font:inherit;font-weight:400}
+.warrant-form input:focus,.warrant-form textarea:focus,.warrant-search-row input:focus{outline:2px solid #50595e50;outline-offset:1px}
+.warrant-file-field{grid-column:1/-1}
+.warrant-actions,.warrant-record-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-width:0}
+.warrant-caution{color:#5d5050;background:#faf5f1;border-left:3px solid #b97850;border-radius:7px;padding:10px 12px;line-height:1.5}
+.warrant-import-preview{border:1px solid #dfe4e5;border-radius:14px;padding:14px;margin-top:14px;background:#fafbfb;overflow-wrap:anywhere}
+.warrant-import-preview p{line-height:1.5;color:var(--muted);margin:7px 0}
+.warrant-review-section{grid-column:1/-1;margin-top:8px}
+.warrant-review-list,.warrant-record-list,.warrant-alert-list{display:grid;gap:12px;min-width:0}
+.warrant-review-card,.warrant-record,.warrant-alert-item{border:1px solid var(--line);border-radius:16px;background:#fff;padding:16px;min-width:0;overflow:hidden}
+.warrant-review-card h3,.warrant-record h3{margin:8px 0;font-size:1.02rem;overflow-wrap:anywhere}
+.warrant-review-heading p{margin:5px 0;color:var(--muted);line-height:1.45}
+.warrant-confidence{font-size:.82rem;font-weight:700;color:var(--brand-dark);text-align:right}
+.warrant-meta{font-size:.86rem;color:var(--muted);line-height:1.5;overflow-wrap:anywhere}
+.warrant-status{display:inline-block;font-size:.82rem;font-weight:700;line-height:1.35;border-radius:10px;padding:8px 10px}
+.warrant-status.pending{background:#fff4db;color:#765300}
+.warrant-status.reported{background:#eaf1f5;color:#3f5867}
+.warrant-record-top>div{min-width:0}
+.warrant-record-top>.warrant-status{max-width:280px}
+.warrant-record-actions{margin:12px 0}
+.warrant-person-search{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.warrant-person-search summary{cursor:pointer;color:var(--brand-dark);font-weight:700}
+.warrant-search-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;margin:12px 0}
+.warrant-search-results{display:grid;gap:8px}
+.warrant-search-result{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:11px;padding:10px;min-width:0}
+.warrant-search-result>span{min-width:0}
+.warrant-search-result strong,.warrant-search-result small{display:block;overflow-wrap:anywhere}
+.warrant-search-result small{color:var(--muted);margin-top:4px}
+.warrant-empty-review{color:var(--muted);padding:12px 0}
+.warrant-person-alert{margin:20px 0;border:1px solid #e8d5a8;border-radius:16px;background:#fffaf0;padding:16px;min-width:0;overflow:hidden}
+.warrant-section-title{align-items:center;margin-bottom:14px}
+.warrant-section-title>div{min-width:0}
+.warrant-section-title h2{margin:0;font-size:1.05rem}
+.warrant-section-title p{margin:5px 0 0}
+.warrant-alert-icon{width:36px;height:36px;display:grid;place-items:center;flex:0 0 36px;border-radius:50%;background:#f2e5c9;color:#725300;font-size:1.2rem}
+.warrant-section-title>.warrant-alert-icon{margin-right:-6px}
+.warrant-alert-item{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.warrant-alert-item>div{min-width:0}
+.warrant-alert-item p{margin:8px 0}
+.warrant-card-alert{display:block;margin:8px 12px 0;border-radius:9px;background:#fff4db;color:#765300;padding:7px 9px;font-size:.77rem;line-height:1.35;font-weight:700;overflow-wrap:anywhere}
+.warrant-summary{background:#f4f5f5;border-radius:10px;padding:12px;color:var(--muted);line-height:1.45}
+@media(max-width:620px){
+ .warrant-page-header,.warrant-record-top,.warrant-review-heading,.warrant-alert-item{flex-direction:column;align-items:stretch}
+ .warrant-admin-pill{align-self:flex-start}
+ .warrant-tool-card,.warrant-active-section{padding:15px;border-radius:15px}
+ .warrant-form-grid{grid-template-columns:minmax(0,1fr)}
+ .warrant-file-field{grid-column:auto}
+ .warrant-search-row{grid-template-columns:minmax(0,1fr)}
+ .warrant-search-row .button,.warrant-actions .button,.warrant-record-actions .button{width:100%}
+ .warrant-search-result{align-items:stretch;flex-direction:column}
+ .warrant-section-title{align-items:flex-start;flex-wrap:wrap}
+ .warrant-section-title .button{width:100%}
+ .warrant-record-top>.warrant-status{max-width:none;align-self:flex-start}
+ .warrant-confidence{text-align:left}
+}
+
+.warrant-import-confirm{display:flex;align-items:flex-start;gap:9px;margin:12px 0;color:#765300;font-weight:650;line-height:1.45}.warrant-import-confirm input{flex:0 0 auto;margin-top:3px}
