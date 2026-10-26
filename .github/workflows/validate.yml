@@ -28,3 +28,5 @@ jobs:
           deno-version: v2.x
       - name: Validar função de backup
         run: deno check --no-lock supabase/functions/backup-drive/index.ts
+      - name: Testar criptografia e deduplicação
+        run: deno test --no-lock supabase/functions/backup-drive/crypto_test.ts
