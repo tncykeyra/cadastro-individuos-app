@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { extractDocumentFields, isValidCpf, isValidCnpj, isValidDocumentDate } from '../src/ocr-domain.js';
+import { extractDocumentFields, extractFiliationFromNotes, isValidCpf, isValidCnpj, isValidDocumentDate, mergeFiliationIntoNotes } from '../src/ocr-domain.js';
 
 test('validates CPF digits before making them applicable', () => {
   assert.equal(isValidCpf('529.982.247-25'), true);
@@ -22,21 +22,50 @@ test('flags an invalid CPF and does not make it applicable', () => {
   assert.match(result.warnings.join(' '), /CPF/);
 });
 
-test('does not misread father or mother names as the individual name', () => {
+test('does not expose parent names as separate fields; mother-only SENATRAN value becomes filiation', () => {
   const result = extractDocumentFields('NOME DA MÃE: Maria de Souza\nNOME DO PAI: José da Silva\nCPF: 52998224725', 'people', 90);
   assert.equal(result.values.full_name, undefined);
-  assert.equal(result.values.mother_name, 'Maria de Souza');
-  assert.equal(result.values.father_name, 'José da Silva');
+  assert.equal(result.values.filiation, 'Maria de Souza');
+  assert.deepEqual(result.formValues, { cpf_digits: '52998224725', filiation: 'Maria de Souza' });
+  assert.equal(result.details.some(item => item.key === 'mother_name' || item.key === 'father_name'), false);
 });
 
-test('recognizes SENATRAN label/value pairs and normalizes dates', () => {
-  const result = extractDocumentFields('Consulta SENATRAN\nCPF\n529.982.247-25\nNome do Condutor\nAna Maria de Souza\nNúmero do Registro\n01234567890\nCondutor Habilitado\nSim\nValidade\n15/08/2030\nCategoria\nAB', 'people', 91);
+test('joins a CNH name across lines and recognizes 4C RG, 4D CPF and birth date', () => {
+  const result = extractDocumentFields([
+    '1 e 2 NOME E SOBRENOME',
+    'JOÃO CARLOS DA SILVA',
+    'OLIVEIRA',
+    '3 DATA E LOCAL DE NASCIMENTO',
+    '03/08/1980 SÃO PAULO/SP',
+    '4C DOC. IDENTIDADE/ORG. EMISSOR/UF',
+    '12.345.678 SSP SP',
+    '4D - CPF',
+    '529.982.247-25',
+    'FILIAÇÃO',
+    'ALEXANDRE DOS SANTOS',
+    'ELIANA MIGUEL BARBOSA DOS SANTOS'
+  ].join('\n'), 'people', 92);
+  assert.equal(result.values.full_name, 'JOÃO CARLOS DA SILVA OLIVEIRA');
+  assert.equal(result.values.birthday, '1980-08-03');
+  assert.equal(result.values.rg, '12.345.678 SSP SP');
+  assert.equal(result.values.cpf_digits, '52998224725');
+  assert.equal(result.values.filiation, 'ALEXANDRE DOS SANTOS\nELIANA MIGUEL BARBOSA DOS SANTOS');
+  assert.deepEqual(Object.keys(result.formValues).sort(), ['birthday', 'cpf_digits', 'filiation', 'full_name', 'rg']);
+  assert.equal(result.details.find(item => item.key === 'filiation').supported, true);
+  assert.equal(result.details.find(item => item.key === 'registration'), undefined);
+});
+
+test('joins SENATRAN names across lines but never treats CNH registration or expiry as form fields', () => {
+  const result = extractDocumentFields('Consulta SENATRAN\nCPF\n529.982.247-25\nNome do Condutor\nAna Maria de Souza\nOliveira\nNúmero do Registro\n01234567890\nCondutor Habilitado\nSim\nValidade\n15/08/2030\nCategoria\nAB', 'people', 91);
   assert.equal(result.type, 'Print de consulta SENATRAN');
-  assert.equal(result.values.full_name, 'Ana Maria de Souza');
+  assert.equal(result.values.full_name, 'Ana Maria de Souza Oliveira');
   assert.equal(result.values.registration, '01234567890');
   assert.equal(result.values.cnh_expiry, '2030-08-15');
   assert.equal(result.values.cnh_category, 'AB');
   assert.equal(result.values.license_status, 'Sim');
+  assert.equal(Object.hasOwn(result.formValues, 'registration'), false);
+  assert.equal(Object.hasOwn(result.formValues, 'cnh_expiry'), false);
+  assert.equal(Object.hasOwn(result.formValues, 'cnh_category'), false);
 });
 
 test('extracts vehicle data without fabricating unsupported database fields', () => {
@@ -58,4 +87,17 @@ test('flags invalid dates and vehicle plates for review', () => {
   assert.match(person.warnings.join(' '), /Data/);
   assert.equal(Object.hasOwn(vehicle.formValues, 'plate'), false);
   assert.match(vehicle.warnings.join(' '), /Placa/);
+});
+
+test('preserves existing notes and appends or replaces filiation without duplicating it', () => {
+  const notes = 'Anotação já existente';
+  const appended = mergeFiliationIntoNotes(notes, 'ALEXANDRE DOS SANTOS\nELIANA MIGUEL BARBOSA DOS SANTOS');
+  assert.equal(appended, 'Anotação já existente\n\nFiliação:\nALEXANDRE DOS SANTOS\nELIANA MIGUEL BARBOSA DOS SANTOS');
+  assert.equal(mergeFiliationIntoNotes(appended, 'ALEXANDRE DOS SANTOS\nELIANA MIGUEL BARBOSA DOS SANTOS'), appended);
+  const updated = mergeFiliationIntoNotes(appended, 'MARIA DE SOUZA');
+  assert.equal(updated, 'Anotação já existente\n\nFiliação:\nMARIA DE SOUZA');
+  assert.equal(extractFiliationFromNotes(updated), 'MARIA DE SOUZA');
+  const withFollowingNote = appended + '\nCrimes\nFurto';
+  const replaced = mergeFiliationIntoNotes(withFollowingNote, 'MARIA DE SOUZA');
+  assert.equal(replaced, 'Anotação já existente\n\nCrimes\nFurto\n\nFiliação:\nMARIA DE SOUZA');
 });
