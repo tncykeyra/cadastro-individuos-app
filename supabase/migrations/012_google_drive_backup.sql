@@ -107,7 +107,8 @@ declare v_id uuid;
 begin
   if p_name is null or p_name <> all(array[
     'google_client_id','google_client_secret','google_refresh_token',
-    'google_drive_folder_id','backup_crypto_key','backup_cron_secret'
+    'google_drive_folder_id','backup_crypto_key','backup_cron_secret',
+    'backup_recovery_key','backup_recovery_key_delivered','backup_key_envelope_drive_id'
   ]::text[]) then raise exception 'Unsupported backup secret name'; end if;
   if p_secret is null or length(p_secret) = 0 or length(p_secret) > 8192
     then raise exception 'Invalid backup secret value'; end if;
