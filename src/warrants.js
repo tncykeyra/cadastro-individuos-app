@@ -281,3 +281,12 @@ export function extractWarrantPersonSuggestions(text) {
     process_reference: cleanField(processMatch?.[1] || '', 200)
   };
 }
+
+export function formatWarrantOcrProgress(progress) {
+  const event = progress && typeof progress === 'object' ? progress : { percent: progress };
+  const status = String(event.status || 'processando').trim() || 'processando';
+  const hasPercent = event.percent !== null && event.percent !== undefined && String(event.percent).trim() !== '';
+  const numeric = hasPercent ? Number(event.percent) : Number.NaN;
+  const percent = Number.isFinite(numeric) ? Math.min(100, Math.max(0, Math.round(numeric))) : null;
+  return 'Leitura local: ' + status + (percent === null ? '' : ' ' + percent + '%');
+}
