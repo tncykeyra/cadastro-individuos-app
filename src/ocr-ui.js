@@ -1,4 +1,4 @@
-import { extractDocumentFields, isValidCpf, isValidDocumentDate } from './ocr-domain.js';
+import { extractDocumentFields, extractFiliationFromNotes, isValidCpf, isValidDocumentDate } from './ocr-domain.js';
 import { processOcrFiles, cancelOcrWorker } from './ocr-engine.js';
 
 function escapeHtml(value) {
@@ -12,6 +12,7 @@ function maskedCpf(value) {
 
 function fieldCurrentValue(record, key) {
   if (key === 'cpf_digits') return String(record.cpf_digits || '');
+  if (key === 'filiation') return extractFiliationFromNotes(record.notes || '');
   return String(record[key] || '');
 }
 
@@ -51,9 +52,9 @@ export function mountOcrAssistant({ form, kind, existingRecord = null, findMatch
   cameraInput.multiple = true;
   cameraInput.hidden = true;
   document.body.append(dialog, fileInput, cameraInput);
-  let pages = [], parsed = null, cancelled = false, running = false, cropMode = false, crop = null, previewUrl = '', selectedSource = 0;
+  let pages = [], parsed = null, cancelled = false, running = false, cropMode = false, crop = null, previewUrl = '', cropPreviewUrl = '', preparedCropFile = null, selectedSource = 0;
   const close = () => { if (dialog.open) dialog.close(); };
-  const releaseUrls = () => { if (previewUrl) URL.revokeObjectURL(previewUrl); previewUrl = ''; };
+  const releaseUrls = () => { if (previewUrl) URL.revokeObjectURL(previewUrl); if (cropPreviewUrl) URL.revokeObjectURL(cropPreviewUrl); previewUrl = ''; cropPreviewUrl = ''; preparedCropFile = null; };
   const show = html => { dialog.innerHTML = html; if (!dialog.open) dialog.showModal(); dialog.querySelector('[data-ocr-close]')?.addEventListener('click', close); };
   const header = '<div class="ocr-dialog-inner"><div class="dialog-head"><div><h2>Leitura de documento</h2><p>Imagens e textos são processados localmente no aparelho.</p></div><button class="close" type="button" data-ocr-close aria-label="Fechar">×</button></div>';
   const home = () => {
@@ -93,10 +94,10 @@ export function mountOcrAssistant({ form, kind, existingRecord = null, findMatch
   };
   fileInput.addEventListener('change', () => { const files = [...fileInput.files]; fileInput.value = ''; void runFiles(files); });
   cameraInput.addEventListener('change', () => { const files = [...cameraInput.files]; cameraInput.value = ''; void runFiles(files); });
-  const sourceMarkup = () => pages.length ? '<section class="ocr-photo-section"><h3>📷 Fotografia do documento</h3><p class="muted">A foto do documento não será adicionada automaticamente. Selecione uma página, arraste sobre a fotografia para recortá-la e adicione-a à galeria apenas se estiver correta.</p><label class="ocr-source-label">Imagem ou página<select data-ocr-source>' + pages.map((page, index) => '<option value="' + index + '"' + (index === selectedSource ? ' selected' : '') + '>' + escapeHtml(page.name + (page.page > 1 ? ' · página ' + page.page : '')) + '</option>').join('') + '</select></label><div class="ocr-crop-wrap" data-ocr-crop-wrap><img data-ocr-image alt="Documento analisado"><div class="ocr-crop-selection" data-ocr-selection hidden></div></div><div class="ocr-actions"><button type="button" class="button secondary small" data-ocr-crop-toggle>✏️ Ajustar recorte</button><button type="button" class="button small" data-ocr-add-photo disabled>✓ Adicionar recorte à galeria</button></div><p class="muted" data-ocr-crop-status aria-live="polite"></p></section>' : '';
+  const sourceMarkup = () => pages.length ? '<section class="ocr-photo-section"><h3>📷 Fotografia do documento</h3><p class="muted">Selecione a página, arraste sobre a fotografia e confira a prévia. A imagem só entra na galeria depois da confirmação.</p><label class="ocr-source-label">Imagem ou página<select data-ocr-source>' + pages.map((page, index) => '<option value="' + index + '"' + (index === selectedSource ? ' selected' : '') + '>' + escapeHtml(page.name + (page.page > 1 ? ' · página ' + page.page : '')) + '</option>').join('') + '</select></label><div class="ocr-crop-wrap" data-ocr-crop-wrap><img data-ocr-image alt="Documento analisado"><div class="ocr-crop-selection" data-ocr-selection hidden></div></div><div class="ocr-crop-preview" data-ocr-crop-preview-wrap hidden><p><strong>Prévia do recorte</strong></p><img data-ocr-crop-preview alt="Prévia da fotografia recortada"></div><div class="ocr-actions"><button type="button" class="button secondary small" data-ocr-crop-toggle>✏️ Ajustar recorte</button><button type="button" class="button secondary small" data-ocr-preview-crop disabled>👁️ Pré-visualizar recorte</button><button type="button" class="button small" data-ocr-add-photo disabled>＋ Adicionar à galeria</button></div><p class="muted" data-ocr-crop-status aria-live="polite"></p></section>' : '';
   const reviewView = () => {
     cropMode = false; crop = null; releaseUrls();
-    const detailRows = parsed.details.map(item => '<div class="ocr-field-row"><label><span>' + escapeHtml(item.label) + '</span><input type="text" data-ocr-value="' + escapeHtml(item.key) + '" value="' + escapeHtml(item.value) + '" maxlength="240"></label>' + (item.supported ? '<label class="ocr-include"><input type="checkbox" data-ocr-include="' + escapeHtml(item.key) + '" checked> Aplicar</label>' : '<span class="ocr-not-saved">Campo ainda não existe no cadastro</span>') + (item.warning ? '<small class="ocr-warning">' + escapeHtml(item.warning) + '</small>' : '') + '</div>').join('');
+    const detailRows = parsed.details.map(item => '<div class="ocr-field-row"><label><span>' + escapeHtml(item.label) + '</span>' + (item.key === 'filiation' ? '<textarea data-ocr-value="' + escapeHtml(item.key) + '" rows="3" maxlength="500">' + escapeHtml(item.value) + '</textarea>' : '<input type="text" data-ocr-value="' + escapeHtml(item.key) + '" value="' + escapeHtml(item.value) + '" maxlength="240">') + '</label>' + (item.supported ? '<label class="ocr-include"><input type="checkbox" data-ocr-include="' + escapeHtml(item.key) + '" checked> Aplicar</label>' : '<span class="ocr-not-saved">Campo reconhecido apenas para conferência</span>') + (item.warning ? '<small class="ocr-warning">' + escapeHtml(item.warning) + '</small>' : '') + '</div>').join('');
     const warnings = parsed.warnings.length ? '<div class="notice ocr-notice"><strong>Confira antes de continuar</strong><ul>' + parsed.warnings.map(value => '<li>' + escapeHtml(value) + '</li>').join('') + '</ul></div>' : '';
     show(header + '<div class="ocr-result"><h3>📄 DOCUMENTO ANALISADO</h3><p><strong>Tipo identificado:</strong> ' + escapeHtml(parsed.type) + ' · <strong>Confiança média:</strong> ' + Math.round(parsed.confidence) + '%</p>' + warnings + '<div class="ocr-review-fields">' + (detailRows || '<p class="muted">Nenhuma informação compatível foi encontrada.</p>') + '</div>' + sourceMarkup() + '<div class="ocr-actions"><button type="button" class="button secondary" data-ocr-reread>🔄 Ler novamente</button><button type="button" class="button" data-ocr-confirm>✓ Confirmar informações</button></div><p class="muted" data-ocr-status role="status" aria-live="polite"></p></div></div>');
     dialog.querySelector('[data-ocr-reread]').onclick = home;
@@ -117,7 +118,8 @@ export function mountOcrAssistant({ form, kind, existingRecord = null, findMatch
       if (!item) return '';
       const oldValue = fieldCurrentValue(candidate.record, key);
       const differs = oldValue.trim() !== String(value).trim();
-      return '<label class="ocr-compare-row"><span><strong>' + escapeHtml(item.label) + '</strong><small>Atual: ' + escapeHtml(oldValue || 'Não informado') + '</small></span><input type="text" data-ocr-compare-value="' + escapeHtml(key) + '" value="' + escapeHtml(value) + '"><input type="checkbox" data-ocr-compare-include="' + escapeHtml(key) + '"' + (differs ? ' checked' : '') + ' aria-label="Aplicar ' + escapeHtml(item.label) + '"></label>';
+      const control = key === 'filiation' ? '<textarea data-ocr-compare-value="' + escapeHtml(key) + '" rows="3" maxlength="500">' + escapeHtml(value) + '</textarea>' : '<input type="text" data-ocr-compare-value="' + escapeHtml(key) + '" value="' + escapeHtml(value) + '">';
+      return '<label class="ocr-compare-row"><span><strong>' + escapeHtml(item.label) + '</strong><small>Atual: ' + escapeHtml(oldValue || 'Não informado') + '</small></span>' + control + '<input type="checkbox" data-ocr-compare-include="' + escapeHtml(key) + '"' + (differs ? ' checked' : '') + ' aria-label="Aplicar ' + escapeHtml(item.label) + '"></label>';
     }).join('');
     show(header + '<div class="ocr-result"><div class="notice"><strong>Cadastro existente encontrado</strong><p>' + escapeHtml(candidate.reason) + '</p><p>Confira a comparação. Nada será salvo até você usar o botão Salvar no cadastro.</p></div><div class="ocr-compare-list">' + rows + '</div><div class="ocr-actions"><button type="button" class="button secondary" data-ocr-back>← Voltar</button><button type="button" class="button" data-ocr-apply-compare>Aplicar seleções no formulário</button></div></div></div>');
     dialog.querySelector('[data-ocr-back]').onclick = () => renderCandidates(values, lastCandidates, lastHard);
@@ -164,6 +166,19 @@ export function mountOcrAssistant({ form, kind, existingRecord = null, findMatch
   const bindCrop = () => {
     const image = dialog.querySelector('[data-ocr-image]'), select = dialog.querySelector('[data-ocr-source]');
     if (!image || !select) return;
+    const previewButton = dialog.querySelector('[data-ocr-preview-crop]');
+    const addButton = dialog.querySelector('[data-ocr-add-photo]');
+    const cropPreviewWrap = dialog.querySelector('[data-ocr-crop-preview-wrap]');
+    const cropPreviewImage = dialog.querySelector('[data-ocr-crop-preview]');
+    const status = dialog.querySelector('[data-ocr-crop-status]');
+    const resetPreparedCrop = () => {
+      if (cropPreviewUrl) URL.revokeObjectURL(cropPreviewUrl);
+      cropPreviewUrl = ''; preparedCropFile = null;
+      if (cropPreviewImage) cropPreviewImage.removeAttribute('src');
+      if (cropPreviewWrap) cropPreviewWrap.hidden = true;
+      if (previewButton) previewButton.disabled = !crop || crop.w < .04 || crop.h < .04;
+      if (addButton) { addButton.disabled = true; addButton.textContent = '＋ Adicionar à galeria'; }
+    };
     const setSource = () => {
       releaseUrls(); crop = null;
       selectedSource = Number(select.value || 0);
@@ -172,49 +187,136 @@ export function mountOcrAssistant({ form, kind, existingRecord = null, findMatch
       previewUrl = URL.createObjectURL(page.blob);
       image.onload = () => { const selection = dialog.querySelector('[data-ocr-selection]'); if (selection) selection.hidden = true; };
       image.src = previewUrl;
-      const status = dialog.querySelector('[data-ocr-crop-status]');
-      if (status) status.textContent = 'Prévia da página. Para extrair uma foto, selecione a área da fotografia.';
+      resetPreparedCrop();
+      if (status) status.textContent = 'Prévia da página. Para recortar uma fotografia, selecione a área sobre a imagem.';
     };
     select.onchange = setSource;
     setSource();
     const toggle = dialog.querySelector('[data-ocr-crop-toggle]');
-    const status = dialog.querySelector('[data-ocr-crop-status]');
-    const addButton = dialog.querySelector('[data-ocr-add-photo]');
-    toggle.onclick = () => { cropMode = !cropMode; toggle.textContent = cropMode ? 'Toque e arraste sobre a foto' : '✏️ Ajustar recorte'; if (status) status.textContent = cropMode ? 'Arraste na imagem para marcar a fotografia. Arraste novamente para corrigir.' : 'A área marcada será pré-visualizada antes de ser adicionada.'; };
+    toggle.onclick = () => {
+      cropMode = !cropMode;
+      toggle.textContent = cropMode ? 'Toque e arraste sobre a foto' : '✏️ Ajustar recorte';
+      if (status) status.textContent = cropMode ? 'Arraste sobre a fotografia para marcar o recorte. A área selecionada acompanha a imagem.' : 'Confira a seleção e gere uma prévia antes de adicionar.';
+    };
     let start = null;
-    const point = event => { const rect = image.getBoundingClientRect(); return { x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)), y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height)) }; };
+    const displayedContentRect = () => {
+      const box = image.getBoundingClientRect();
+      const naturalWidth = image.naturalWidth || box.width;
+      const naturalHeight = image.naturalHeight || box.height;
+      if (!box.width || !box.height || !naturalWidth || !naturalHeight) return null;
+      const scale = Math.min(box.width / naturalWidth, box.height / naturalHeight);
+      const width = naturalWidth * scale, height = naturalHeight * scale;
+      return { left: box.left + (box.width - width) / 2, top: box.top + (box.height - height) / 2, width, height };
+    };
+    const point = event => {
+      const rect = displayedContentRect();
+      if (!rect) return null;
+      return {
+        x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)),
+        y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height))
+      };
+    };
     image.addEventListener('pointerdown', event => {
       if (!cropMode) return;
-      event.preventDefault(); image.setPointerCapture(event.pointerId); start = point(event); crop = { x: start.x, y: start.y, w: 0, h: 0 };
+      const position = point(event);
+      if (!position) return;
+      event.preventDefault(); image.setPointerCapture(event.pointerId); start = position; crop = { x: start.x, y: start.y, w: 0, h: 0 };
+      resetPreparedCrop();
     });
     image.addEventListener('pointermove', event => {
       if (!start || !cropMode) return;
-      const end = point(event); crop = { x: Math.min(start.x, end.x), y: Math.min(start.y, end.y), w: Math.abs(end.x - start.x), h: Math.abs(end.y - start.y) };
+      const end = point(event), rect = displayedContentRect();
+      if (!end || !rect) return;
+      crop = { x: Math.min(start.x, end.x), y: Math.min(start.y, end.y), w: Math.abs(end.x - start.x), h: Math.abs(end.y - start.y) };
       const box = dialog.querySelector('[data-ocr-selection]'), wrapper = image.parentElement;
-      if (box && wrapper) { const imageRect = image.getBoundingClientRect(), wrapperRect = wrapper.getBoundingClientRect(); box.hidden = false; box.style.left = ((imageRect.left - wrapperRect.left + crop.x * imageRect.width) / wrapperRect.width * 100) + '%'; box.style.top = ((imageRect.top - wrapperRect.top + crop.y * imageRect.height) / wrapperRect.height * 100) + '%'; box.style.width = (crop.w * imageRect.width / wrapperRect.width * 100) + '%'; box.style.height = (crop.h * imageRect.height / wrapperRect.height * 100) + '%'; }
-      if (addButton) addButton.disabled = crop.w < .05 || crop.h < .05;
+      if (box && wrapper) {
+        const wrapperRect = wrapper.getBoundingClientRect();
+        box.hidden = false;
+        box.style.left = ((rect.left - wrapperRect.left + crop.x * rect.width) / wrapperRect.width * 100) + '%';
+        box.style.top = ((rect.top - wrapperRect.top + crop.y * rect.height) / wrapperRect.height * 100) + '%';
+        box.style.width = (crop.w * rect.width / wrapperRect.width * 100) + '%';
+        box.style.height = (crop.h * rect.height / wrapperRect.height * 100) + '%';
+      }
+      if (previewButton) previewButton.disabled = crop.w < .04 || crop.h < .04;
+      if (status && crop.w >= .04 && crop.h >= .04) status.textContent = 'Área selecionada. Gere a prévia para conferir o recorte.';
     });
     const endCrop = () => {
       if (!start) return;
       start = null;
-      if (status && crop?.w > .05 && crop?.h > .05) status.textContent = 'Recorte selecionado. Confira e adicione à galeria.';
     };
     image.addEventListener('pointerup', endCrop);
     image.addEventListener('pointercancel', endCrop);
-    addButton.onclick = async () => {
-      if (!crop || crop.w < .05 || crop.h < .05) { if (status) status.textContent = 'Marque a área da fotografia antes de adicionar.'; return; }
+    const createCropFile = async () => {
       const current = pages[selectedSource];
+      if (!current?.blob) throw new Error('A imagem selecionada não está disponível. Escolha a página novamente.');
+      let bitmap;
+      try { bitmap = await createImageBitmap(current.blob, { imageOrientation: 'from-image' }); }
+      catch { bitmap = await createImageBitmap(current.blob); }
+      let canvas;
       try {
-        const bitmap = await createImageBitmap(current.blob);
-        const x = Math.round(crop.x * bitmap.width), y = Math.round(crop.y * bitmap.height);
-        const width = Math.max(1, Math.round(crop.w * bitmap.width)), height = Math.max(1, Math.round(crop.h * bitmap.height));
-        const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
-        canvas.getContext('2d', { alpha: false }).drawImage(bitmap, x, y, width, height, 0, 0, width, height); bitmap.close?.();
-        const blob = await canvasBlob(canvas, 'image/jpeg'); canvas.width = 0; canvas.height = 0;
-        const file = new File([blob], 'foto-documento-' + Date.now() + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
-        const result = await onAddPhoto(file);
-        if (status) status.textContent = result === 'staged' ? 'Recorte adicionado ao formulário. Ele será enviado ao salvar o cadastro; a foto original continua preservada.' : result ? 'Recorte salvo na galeria. A foto original continua preservada.' : 'Não foi possível salvar o recorte. Confira a mensagem do cadastro e tente novamente.';
-      } catch (error) { if (status) status.textContent = error?.message || 'Não foi possível preparar o recorte.'; }
+        const x = Math.max(0, Math.min(bitmap.width - 1, Math.floor(crop.x * bitmap.width)));
+        const y = Math.max(0, Math.min(bitmap.height - 1, Math.floor(crop.y * bitmap.height)));
+        const width = Math.max(1, Math.min(bitmap.width - x, Math.round(crop.w * bitmap.width)));
+        const height = Math.max(1, Math.min(bitmap.height - y, Math.round(crop.h * bitmap.height)));
+        if (width < 32 || height < 32) throw new Error('O recorte ficou pequeno demais. Marque uma área maior da fotografia.');
+        let scale = Math.min(1, 1800 / Math.max(width, height)), quality = .9, blob = null;
+        canvas = document.createElement('canvas');
+        for (let attempt = 0; attempt < 9; attempt++) {
+          canvas.width = Math.max(1, Math.round(width * scale));
+          canvas.height = Math.max(1, Math.round(height * scale));
+          const context = canvas.getContext('2d', { alpha: false });
+          if (!context) throw new Error('Não foi possível preparar a prévia neste dispositivo.');
+          context.drawImage(bitmap, x, y, width, height, 0, 0, canvas.width, canvas.height);
+          blob = await canvasBlob(canvas, 'image/jpeg', quality);
+          if (blob.size > 0 && blob.size <= 4.8 * 1024 * 1024) break;
+          if (quality > .68) quality -= .08;
+          else scale *= .82;
+        }
+        if (!blob || !blob.size || blob.type !== 'image/jpeg') throw new Error('O recorte não gerou uma imagem válida. Tente outra área.');
+        if (blob.size > 5 * 1024 * 1024) throw new Error('A imagem recortada continua acima de 5 MB. Selecione uma área menor.');
+        return new File([blob], 'foto-documento-' + Date.now() + '.jpg', { type: 'image/jpeg', lastModified: Date.now() });
+      } finally {
+        bitmap.close?.();
+        if (canvas) { canvas.width = 0; canvas.height = 0; }
+      }
+    };
+    previewButton.onclick = async () => {
+      if (!crop || crop.w < .04 || crop.h < .04) { if (status) status.textContent = 'Marque a área da fotografia antes de gerar a prévia.'; return; }
+      previewButton.disabled = true;
+      if (addButton) addButton.disabled = true;
+      if (status) status.textContent = 'Preparando e validando o recorte…';
+      try {
+        preparedCropFile = await createCropFile();
+        cropPreviewUrl = URL.createObjectURL(preparedCropFile);
+        if (cropPreviewImage) cropPreviewImage.src = cropPreviewUrl;
+        if (cropPreviewWrap) cropPreviewWrap.hidden = false;
+        if (addButton) addButton.disabled = false;
+        if (status) status.textContent = 'Prévia pronta. Confira se o recorte corresponde à fotografia antes de adicionar.';
+      } catch (error) {
+        preparedCropFile = null;
+        if (previewButton) previewButton.disabled = false;
+        if (status) status.textContent = error?.message || 'Não foi possível preparar a prévia.';
+      }
+    };
+    addButton.onclick = async () => {
+      if (!preparedCropFile) { if (status) status.textContent = 'Gere e confira a prévia do recorte antes de adicionar.'; return; }
+      addButton.disabled = true;
+      if (status) status.textContent = 'Adicionando fotografia à galeria…';
+      try {
+        const result = await onAddPhoto(preparedCropFile);
+        if (result === false || result === 0) {
+          addButton.disabled = false;
+          if (status) status.textContent = 'A fotografia não foi adicionada. Confira o aviso do cadastro e tente novamente.';
+          return;
+        }
+        addButton.textContent = '✓ Adicionada à galeria';
+        if (status) status.textContent = result === 'staged'
+          ? 'Fotografia adicionada ao formulário e visível na prévia. Será enviada ao salvar; as fotos existentes permanecem preservadas.'
+          : 'Fotografia salva na galeria e visível no cadastro. As fotos existentes permanecem preservadas.';
+      } catch (error) {
+        addButton.disabled = false;
+        if (status) status.textContent = error?.message || 'Não foi possível adicionar a fotografia. Tente novamente.';
+      }
     };
   };
   const toastMessage = (target, text) => { const status = target.querySelector('[data-ocr-status]'); if (status) status.textContent = text; };
