@@ -131,6 +131,21 @@ async function encrypted(admin: ReturnType<typeof serviceClient>, bytes: Uint8Ar
   result.set(version, 0); result.set(iv, version.length); result.set(cipher, version.length + iv.length);
   return result;
 }
+async function createRecoveryEnvelope(admin: ReturnType<typeof serviceClient>, accessToken: string, folderId: string, recoveryKey: string) {
+  const master = await ensureEncryptionKey(admin);
+  const recovery = fromB64(recoveryKey);
+  if (recovery.length !== 32) throw new Error('RECOVERY_KEY_INVALID');
+  const key = await crypto.subtle.importKey('raw', recovery, { name: 'AES-GCM' }, false, ['encrypt']);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const encryptedMaster = new Uint8Array(await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv, additionalData: utf8('cadastro-criminal-key-envelope-v1') },
+    key, master.slice().buffer as ArrayBuffer,
+  ));
+  const prefix = utf8('CCKR1');
+  const payload = new Uint8Array(prefix.length + iv.length + encryptedMaster.length);
+  payload.set(prefix, 0); payload.set(iv, prefix.length); payload.set(encryptedMaster, prefix.length + iv.length);
+  return await driveUpload(accessToken, folderId, 'recovery-key-envelope.ccr.enc', payload);
+}
 async function contentTag(admin: ReturnType<typeof serviceClient>, bytes: Uint8Array) {
   const raw = await ensureEncryptionKey(admin);
   const material = await crypto.subtle.importKey('raw', raw, 'HKDF', false, ['deriveKey']);
@@ -361,16 +376,18 @@ Deno.serve(async (request: Request) => {
     }
     const { admin, user } = await requireAdmin(request);
     if (body.action === 'status') {
-      const [clientId, refresh, key, folder] = await Promise.all([
+      const [clientId, refresh, key, folder, recoveryKey, recoveryDelivered] = await Promise.all([
         secret(admin,'google_client_id'), secret(admin,'google_refresh_token'),
         secret(admin,'backup_crypto_key'), secret(admin,'google_drive_folder_id'),
+        secret(admin,'backup_recovery_key'), secret(admin,'backup_recovery_key_delivered'),
       ]);
       const { data: runs, error } = await admin.from('backup_runs')
         .select('id,status,trigger_type,created_at,started_at,finished_at,progress,error_code')
         .order('created_at',{ascending:false}).limit(15);
       if (error) throw new Error('BACKUP_SCHEMA_NOT_READY');
       return json({ configured: Boolean(clientId && refresh && key && folder), clientConfigured: Boolean(clientId),
-        driveConnected: Boolean(refresh), encryptionConfigured: Boolean(key), folderConfigured: Boolean(folder), runs: runs || [] });
+        driveConnected: Boolean(refresh), encryptionConfigured: Boolean(key), folderConfigured: Boolean(folder),
+        recoveryKeyCreated: Boolean(recoveryKey), recoveryKeyAcknowledged: recoveryDelivered === 'true', runs: runs || [] });
     }
     if (body.action === 'save_client') {
       const clientId = String(body.clientId || '').trim();
@@ -379,6 +396,34 @@ Deno.serve(async (request: Request) => {
       await saveSecret(admin,'google_client_id',clientId);
       await saveSecret(admin,'google_client_secret',clientSecret);
       return json({ ok: true, clientConfigured: true });
+    }
+    if (body.action === 'create_recovery_key') {
+      const refresh = await secret(admin,'google_refresh_token');
+      if (!refresh) return json({ error:'Conecte o Google Drive antes de criar a chave de recuperação.' },400);
+      let recoveryKey = await secret(admin,'backup_recovery_key');
+      const delivered = await secret(admin,'backup_recovery_key_delivered');
+      if (recoveryKey && delivered === 'true') return json({ error:'A chave já foi confirmada como guardada e não será exibida novamente.' },409);
+      if (!recoveryKey) {
+        recoveryKey = toB64(crypto.getRandomValues(new Uint8Array(32)));
+        const accessToken = await getAccessToken(admin);
+        const folderId = await ensureDriveFolder(admin,accessToken);
+        const envelopeId = await createRecoveryEnvelope(admin,accessToken,folderId,recoveryKey);
+        await saveSecret(admin,'backup_recovery_key',recoveryKey);
+        await saveSecret(admin,'backup_key_envelope_drive_id',envelopeId);
+        await saveSecret(admin,'backup_recovery_key_delivered','false');
+      } else if (!await secret(admin,'backup_key_envelope_drive_id')) {
+        const accessToken = await getAccessToken(admin);
+        const folderId = await ensureDriveFolder(admin,accessToken);
+        const envelopeId = await createRecoveryEnvelope(admin,accessToken,folderId,recoveryKey);
+        await saveSecret(admin,'backup_key_envelope_drive_id',envelopeId);
+      }
+      return json({ recoveryKey, oneTime:true });
+    }
+    if (body.action === 'ack_recovery_key') {
+      const recoveryKey = await secret(admin,'backup_recovery_key');
+      if (!recoveryKey) return json({ error:'Gere a chave de recuperação primeiro.' },400);
+      await saveSecret(admin,'backup_recovery_key_delivered','true');
+      return json({ ok:true });
     }
     if (body.action === 'connect') {
       const { clientId } = await googleClient(admin);
@@ -400,6 +445,7 @@ Deno.serve(async (request: Request) => {
       await googleClient(admin);
       const refresh = await secret(admin,'google_refresh_token');
       if (!refresh) return json({ error: 'Conecte o Google Drive antes de iniciar o backup.' },400);
+      if (await secret(admin,'backup_recovery_key_delivered') !== 'true') return json({ error:'Guarde e confirme a chave de recuperação antes do primeiro backup.' },400);
       const result = await createRun(admin,user.id,'manual');
       return json({ ok:true, runId:result.id, alreadyRunning:result.alreadyRunning, scheduleActive:result.scheduleActive });
     }
