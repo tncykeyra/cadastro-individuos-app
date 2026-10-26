@@ -85,3 +85,40 @@ test('recognizes physical and digital CNH label variants with parentheses and no
   assert.equal(result.values.filiation, 'MARIA EXEMPLO UM\nJOSE EXEMPLO DOIS');
   assert.deepEqual(Object.keys(result.formValues).sort(), ['birthday', 'cpf_digits', 'filiation', 'full_name', 'rg']);
 });
+
+
+test('recognizes vehicle Senatran query fields and fills the existing vehicle form values', () => {
+  const result = extractDocumentFields([
+    'Veículo (pesquisa por placa)',
+    'Resultado da pesquisa',
+    'Dados do Veículo',
+    'Placa Renavam',
+    'DPG4B21 01275566950',
+    'Número do motor Chassi',
+    'KC22E0N116367 9C2KC2200NR116307',
+    'Marca / Modelo',
+    'HONDA/CG 160 FAN',
+    'Município / UF',
+    'LENCOIS PAULISTA / SP',
+    'Cor Combustível',
+    'VERMELHA ALCOOL/GASOLINA',
+    'Tipo Espécie',
+    'MOTOCICLETA PASSAGEIRO'
+  ].join('\n'), 'vehicles', 55);
+  assert.equal(result.type, 'Print de consulta veicular SENATRAN');
+  assert.equal(result.values.plate, 'DPG4B21');
+  assert.equal(result.values.make, 'HONDA');
+  assert.equal(result.values.model, 'CG 160 FAN');
+  assert.equal(result.values.color, 'VERMELHA');
+  assert.deepEqual(result.formValues, { plate: 'DPG4B21', make: 'HONDA', model: 'CG 160 FAN', color: 'VERMELHA' });
+  assert.equal(result.details.filter(item => item.key === 'make').length, 1);
+  assert.equal(result.details.filter(item => item.key === 'model').length, 1);
+});
+
+test('does not treat the word after a vehicle label as its value when it is another field label', () => {
+  const result = extractDocumentFields('Dados do Veículo\nPlaca Renavam\nABC1D23 01275566950\nMarca / Modelo\nHONDA/CG 160 FAN\nCor Combustível\nVERMELHA ALCOOL/GASOLINA', 'vehicles', 87);
+  assert.equal(result.values.plate, 'ABC1D23');
+  assert.equal(result.values.make, 'HONDA');
+  assert.equal(result.values.model, 'CG 160 FAN');
+  assert.equal(result.values.color, 'VERMELHA');
+});

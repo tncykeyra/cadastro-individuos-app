@@ -14,14 +14,15 @@ const LABELS = {
   plate: ['PLACA'],
   renavam: ['RENAVAM'],
   chassis: ['NUMERO DO CHASSI', 'CHASSI'],
-  make_model: ['MARCA/MODELO', 'MARCA E MODELO'],
+  engine_number: ['NUMERO DO MOTOR'],
+  make_model: ['MARCA/MODELO', 'MARCA / MODELO', 'MARCA E MODELO'],
   make: ['MARCA'],
   model: ['MODELO'],
   fabrication_year: ['ANO DE FABRICACAO', 'FABRICACAO'],
   model_year: ['ANO DO MODELO', 'MODELO/ANO'],
   color: ['COR'],
   fuel_type: ['COMBUSTIVEL/ENERGIA', 'COMBUSTIVEL'],
-  city: ['MUNICIPIO DE REGISTRO', 'MUNICIPIO'],
+  city: ['MUNICIPIO DE REGISTRO', 'MUNICIPIO / UF', 'MUNICIPIO/UF', 'MUNICIPIO'],
   owner_name: ['NOME DO PROPRIETARIO', 'PROPRIETARIO'],
   owner_cpf: ['CPF/CNPJ DO PROPRIETARIO', 'CPF/CNPJ'],
   category: ['CATEGORIA'],
@@ -86,10 +87,16 @@ function findLabelMatch(line, aliases = FIELD_LABELS) {
       from = index + label.length;
       const before = mapped.text.slice(0, index);
       const after = mapped.text.slice(index + label.length);
+      const trimmedAfter = after.trimStart();
       if (!allowedLabelPrefix(before)) continue;
-      if (after && (/^[A-Z0-9]/.test(after) || (after.startsWith('/') && !label.includes('/')))) continue;
-      if (label === 'NOME' && /^(?:\s+DO PAI|\s+DA MAE|\s+DO CONDUTOR|\s+DO PROPRIETARIO)/.test(after)) continue;
+      if (trimmedAfter.startsWith('/') && !label.includes('/')) continue;
       const rawEnd = mapped.rawEndByIndex[index + label.length - 1] ?? line.length;
+      const nextLabelFollows = ALL_LABELS.some(candidate =>
+        candidate !== label && (trimmedAfter === candidate || trimmedAfter.startsWith(candidate + ' ') || trimmedAfter.startsWith(candidate + ':'))
+      );
+      if (nextLabelFollows) return { label, rawEnd, ignoreInlineValue: true };
+      if (after && (/^[A-Z0-9]/.test(after) || (trimmedAfter.startsWith('/') && !label.includes('/')))) continue;
+      if (label === 'NOME' && /^(?:\s+DO PAI|\s+DA MAE|\s+DO CONDUTOR|\s+DO PROPRIETARIO)/.test(after)) continue;
       return { label, rawEnd };
     }
   }
@@ -114,7 +121,7 @@ function readLabel(text, aliases, { multiline = false, joinWith = ' ', maxLines 
   for (let index = 0; index < lines.length; index++) {
     const match = findLabelMatch(lines[index], aliases);
     if (!match) continue;
-    const sameLine = cleanValue(lines[index].slice(match.rawEnd));
+    const sameLine = match.ignoreInlineValue ? '' : cleanValue(lines[index].slice(match.rawEnd));
     const parts = sameLine ? [sameLine] : [];
     if (multiline || !sameLine) {
       for (let next = index + 1; next < Math.min(lines.length, index + maxLines + 1); next++) {
@@ -165,6 +172,7 @@ export function isValidCnpj(value) {
 
 function documentType(text, kind) {
   const value = normalized(text);
+  if (/VEICULO\s*\(?\s*PESQUISA\s+POR\s+PLACA|RESULTADO\s+DA\s+PESQUISA.{0,100}DADOS\s+DO\s+VEICULO|DADOS\s+DO\s+VEICULO.{0,100}RENAVAM/.test(value)) return 'Print de consulta veicular SENATRAN';
   if (/SENATRAN|CONDUTOR HABILITADO|NUMERO DO REGISTRO/.test(value)) return 'Print de consulta SENATRAN';
   if (/CRLV|CERTIFICADO DE REGISTRO E LICENCIAMENTO|RENAVAM/.test(value)) return 'Documento veicular';
   if (/CARTEIRA NACIONAL DE HABILITACAO|\bCNH\b/.test(value)) return 'CNH';
@@ -281,9 +289,13 @@ export function extractDocumentFields(text, kind = 'people', confidence = 0) {
     if (key === 'renavam') { value = value.replace(/\D/g, ''); if (value.length !== 11) warning = 'RENAVAM deve conter 11 dígitos; confira o documento.'; }
     if (key === 'chassis') { value = value.toUpperCase().replace(/[^A-Z0-9]/g, ''); if (value.length !== 17 || /[IOQ]/.test(value)) warning = 'Chassi deve ter 17 caracteres válidos; confira o documento.'; }
     if (key === 'plate') {
-      const plate = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const plateMatch = value.toUpperCase().match(/(?:^|[^A-Z0-9])([A-Z]{3}(?:[0-9]{4}|[0-9][A-Z][0-9]{2}))(?=$|[^A-Z0-9])/);
+      const plate = plateMatch?.[1] || value.toUpperCase().replace(/[^A-Z0-9]/g, '');
       if (!/^(?:[A-Z]{3}[0-9]{4}|[A-Z]{3}[0-9][A-Z][0-9]{2})$/.test(plate)) warning = 'Placa não segue o formato AAA0000 ou AAA0A00.';
       else value = plate;
+    }
+    if (key === 'color') {
+      value = value.replace(/\s+(?:[AÁ]LCOOL|ETANOL|GASOLINA|DIESEL|FLEX|GNV|ELETRICO|ELÉTRICO)(?:\s*\/\s*(?:[AÁ]LCOOL|ETANOL|GASOLINA|DIESEL|FLEX|GNV|ELETRICO|ELÉTRICO))*.*$/i, '').trim();
     }
     if (key === 'registration') { value = value.replace(/[^\d]/g, ''); if (value.length !== 11) warning = 'Número de registro da CNH deve ter 11 dígitos; confira o documento.'; }
     values[key] = value;
