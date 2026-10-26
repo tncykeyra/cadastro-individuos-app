@@ -14,8 +14,6 @@ test('gera PDF A4 de um único cadastro sem dependências externas', () => {
   assert.ok(text.startsWith('%PDF-1.4'));
   assert.ok(text.includes('/MediaBox [0 0 595 842]'));
   assert.ok(text.includes('/Count 1'));
-  assert.equal(pdf.previewPages[0].images.length, 1);
-  assert.ok(pdf.previewPages[0].texts.some(item => item.text === 'Foto de capa'));
   assert.ok(text.endsWith('%%EOF'));
   assert.equal(pdf.previewPages.length, 1);
   assert.ok(pdf.previewPages[0].texts.some(item => item.text === 'Ficha do indivíduo'));
@@ -32,6 +30,8 @@ test('inclui fotografia JPEG proporcional na ficha A4 sem usar URLs públicas', 
   assert.ok(text.includes('/Filter /DCTDecode'));
   assert.ok(text.includes('/Im1'));
   assert.ok(text.includes('/Count 1'));
+  assert.equal(pdf.previewPages[0].images.length, 1);
+  assert.ok(pdf.previewPages[0].texts.some(item => item.text === 'Foto de capa'));
   assert.ok(text.endsWith('%%EOF'));
 });
 
