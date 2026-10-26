@@ -479,3 +479,21 @@ drop policy if exists warrant_documents_storage_admin_delete on storage.objects;
 create policy warrant_documents_storage_admin_delete
 on storage.objects for delete to authenticated
 using (bucket_id = 'warrant-documents' and public.is_admin());
+
+
+-- Restrict direct REST reads to fields needed by the reviewed staff workflow.
+-- Source CPF, birth date, aliases, and family names remain in the database for admin-only matching,
+-- and are never exposed as table columns to operators.
+revoke select on table public.arrest_warrants from authenticated;
+grant select (
+  id, import_batch_id, warrant_number, full_name, source_agency, source_kind,
+  source_reference, status, discharge_reported_at, discharge_reported_date,
+  discharge_reference, discharge_notes, discharge_confirmed_at,
+  discharge_confirmed_date, discharge_confirmed_reference, discharge_confirmed_notes,
+  created_at, updated_at
+) on table public.arrest_warrants to authenticated;
+
+revoke select on table public.arrest_warrant_matches from authenticated;
+grant select (
+  id, warrant_id, person_id, match_basis, confidence, review_status, created_at
+) on table public.arrest_warrant_matches to authenticated;
