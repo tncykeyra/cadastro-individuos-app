@@ -12,7 +12,7 @@ export function buildRecordPdf({title,recordName='',sections=[],photos=[],genera
  const sortedPhotos=[...photos].sort((a,b)=>Number(Boolean(b.is_cover))-Number(Boolean(a.is_cover))),photoBuckets=new Map(),uniquePhotos=[];for(const photo of sortedPhotos){const key=photoByteHash(photo),bucket=photoBuckets.get(key)||[];if(bucket.some(existing=>samePhotoBytes(existing,photo)))continue;bucket.push(photo);photoBuckets.set(key,bucket);uniquePhotos.push(photo)}photos=uniquePhotos;
  const pages=[],pageWidth=595,pageHeight=842,margin=34,contentWidth=pageWidth-margin*2,bottom=margin+18;
  const cover=photos.find(photo=>photo.is_cover||photo.label==='Foto de capa')||(photos.some(photo=>photo.association_photo)?null:photos[0])||null;
- const remaining=cover?photos.filter(photo=>photo!==cover):[];
+ const remaining=cover?photos.filter(photo=>photo!==cover):[...photos];
  let current=null,y=0;
  const startPage=(first=false,heading='')=>{
   current={commands:'',images:[]};pages.push(current);
