@@ -104,7 +104,7 @@ test('recognizes vehicle Senatran query fields and fills the existing vehicle fo
     'VERMELHA ALCOOL/GASOLINA',
     'Tipo Espécie',
     'MOTOCICLETA PASSAGEIRO'
-  ].join('\\n'), 'vehicles', 55);
+  ].join('\n'), 'vehicles', 55);
   assert.equal(result.type, 'Print de consulta veicular SENATRAN');
   assert.equal(result.values.plate, 'DPG4B21');
   assert.equal(result.values.make, 'HONDA');
@@ -116,7 +116,7 @@ test('recognizes vehicle Senatran query fields and fills the existing vehicle fo
 });
 
 test('does not treat the word after a vehicle label as its value when it is another field label', () => {
-  const result = extractDocumentFields('Dados do Veículo\\nPlaca Renavam\\nABC1D23 01275566950\\nMarca / Modelo\\nHONDA/CG 160 FAN\\nCor Combustível\\nVERMELHA ALCOOL/GASOLINA', 'vehicles', 87);
+  const result = extractDocumentFields('Dados do Veículo\nPlaca Renavam\nABC1D23 01275566950\nMarca / Modelo\nHONDA/CG 160 FAN\nCor Combustível\nVERMELHA ALCOOL/GASOLINA', 'vehicles', 87);
   assert.equal(result.values.plate, 'ABC1D23');
   assert.equal(result.values.make, 'HONDA');
   assert.equal(result.values.model, 'CG 160 FAN');
