@@ -20,22 +20,29 @@ test('gera PDF A4 de um único cadastro sem dependências externas', () => {
   assert.ok(pdf.previewPages[0].texts.some(item => item.text === 'Pessoa de teste' && item.size === 13 && item.x === 34));
 });
 
-test('destaca a foto de capa proporcional acima do nome na primeira folha', () => {
+test('organiza o cabeçalho e coloca a capa antes do campo nome completo', () => {
   const pdf = buildRecordPdf({
-    title: 'Ficha do veículo',
-    sections: [{ title: 'Dados do veículo', rows: [{ label: 'Placa', value: 'ZZZ0000' }] }],
+    title: 'Ficha do indivíduo',
+    recordName: 'Pessoa de teste',
+    sections: [{ title: 'Identificação e informações do indivíduo', rows: [{ label: 'Nome completo', value: 'Pessoa de teste' }, { label: 'Crimes', value: 'Informação de teste' }] }],
+    generatedAt: new Date('2026-01-01T12:00:00Z'),
     photos: [{ bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), width: 1200, height: 800, is_cover: true, label: 'Foto de capa' }, { bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), width: 1200, height: 800, label: 'Fotografia duplicada' }]
   });
-  const text = decode(pdf);
+  const text = decode(pdf), preview = pdf.previewPages[0];
   assert.ok(text.includes('/Subtype /Image'));
   assert.ok(text.includes('/Filter /DCTDecode'));
   assert.ok(text.includes('/Im1'));
   assert.ok(text.includes('/Count 1'));
-  assert.equal(pdf.previewPages[0].images.length, 1);
-  assert.equal(pdf.previewPages[0].images[0].height, 250);
-  const title = pdf.previewPages[0].texts.find(item => item.text === 'Ficha do veículo');
-  assert.ok(title);
-  assert.ok(pdf.previewPages[0].images[0].y > title.y);
+  assert.equal(preview.images.length, 1);
+  assert.equal(preview.images[0].height, 220);
+  const title = preview.texts.find(item => item.text === 'Ficha do indivíduo');
+  const name = preview.texts.find(item => item.text === 'Pessoa de teste');
+  const generated = preview.texts.find(item => item.text.startsWith('Gerado em'));
+  const section = preview.texts.find(item => item.text === 'Identificação e informações do indivíduo');
+  const fullNameField = preview.texts.find(item => item.text === 'Nome completo');
+  assert.ok(title && name && generated && section && fullNameField);
+  assert.ok(title.y > name.y && name.y > generated.y && generated.y > section.y);
+  assert.ok(section.y > preview.images[0].y && preview.images[0].y > fullNameField.y);
   assert.ok(text.endsWith('%%EOF'));
 });
 
