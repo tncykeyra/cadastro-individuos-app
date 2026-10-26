@@ -269,32 +269,34 @@ export async function processOcrFiles(files, { onProgress = () => {}, isCancelle
       continue;
     }
     const task = pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) });
-    const pdf = await task.promise;
-    if (pdf.numPages > 10) {
-      await pdf.destroy();
-      throw new Error('Este PDF tem mais de 10 páginas. Separe-o em arquivos menores para evitar travar o celular.');
+    try {
+      const pdf = await task.promise;
+      if (pdf.numPages > 10) {
+        throw new Error('Este PDF tem mais de 10 páginas. Separe-o em arquivos menores para evitar travar o celular.');
+      }
+      for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+        totalPages++;
+        if (totalPages > 20) throw new Error('A leitura aceita até 20 imagens/páginas por vez. Separe o restante em outra leitura.');
+        if (isCancelled()) throw new Error('Leitura cancelada.');
+        notify('Preparando página ' + pageNumber + ' de ' + pdf.numPages + '…');
+        const page = await pdf.getPage(pageNumber);
+        const base = page.getViewport({ scale: 1 });
+        const scale = Math.min(2.2, 1800 / Math.max(base.width, base.height));
+        const viewport = page.getViewport({ scale });
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(viewport.width));
+        canvas.height = Math.max(1, Math.round(viewport.height));
+        await page.render({ canvasContext: canvas.getContext('2d', { alpha: false }), viewport }).promise;
+        const blob = await canvasBlob(canvas);
+        canvas.width = 0; canvas.height = 0;
+        const result = await readOne(worker, blob, (status, percent) => notify(status || 'Lendo página ' + pageNumber + ' de ' + pdf.numPages + '…', percent), isCancelled);
+        pages.push({ name: file.name, page: pageNumber, text: result.text, confidence: result.confidence, quality: result.quality, perspectiveCorrected: result.perspectiveCorrected, blob });
+        page.cleanup();
+        completed++;
+      }
+    } finally {
+      await task.destroy().catch(() => {});
     }
-    for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-      totalPages++;
-      if (totalPages > 20) { await pdf.destroy(); throw new Error('A leitura aceita até 20 imagens/páginas por vez. Separe o restante em outra leitura.'); }
-      if (isCancelled()) { await pdf.destroy(); throw new Error('Leitura cancelada.'); }
-      notify('Preparando página ' + pageNumber + ' de ' + pdf.numPages + '…');
-      const page = await pdf.getPage(pageNumber);
-      const base = page.getViewport({ scale: 1 });
-      const scale = Math.min(2.2, 1800 / Math.max(base.width, base.height));
-      const viewport = page.getViewport({ scale });
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.max(1, Math.round(viewport.width));
-      canvas.height = Math.max(1, Math.round(viewport.height));
-      await page.render({ canvasContext: canvas.getContext('2d', { alpha: false }), viewport }).promise;
-      const blob = await canvasBlob(canvas);
-      canvas.width = 0; canvas.height = 0;
-      const result = await readOne(worker, blob, (status, percent) => notify(status || 'Lendo página ' + pageNumber + ' de ' + pdf.numPages + '…', percent), isCancelled);
-      pages.push({ name: file.name, page: pageNumber, text: result.text, confidence: result.confidence, quality: result.quality, perspectiveCorrected: result.perspectiveCorrected, blob });
-      page.cleanup();
-      completed++;
-    }
-    await pdf.destroy();
   }
   const text = pages.map(page => page.text).filter(Boolean).join('\n\n');
   const confidence = pages.length ? pages.reduce((sum, page) => sum + page.confidence, 0) / pages.length : 0;
