@@ -40,3 +40,21 @@ test('does not invent missing warrant person fields', () => {
   assert.equal(result.address_primary, '');
   assert.equal(result.filiation, '');
 });
+test('prefers Nome da Pessoa and reads ENDEREÇO(S) without leaking the label', () => {
+  const text = [
+    'MANDADO DE PRISÃO',
+    'Nome do Magistrado: FULANO DE TAL',
+    'Nome da Pessoa:',
+    'DAVI MARCIO DE SOUZA',
+    'JUNIOR',
+    'CPF: 592.305.648-85',
+    'ENDEREÇO(S):',
+    'Rua das Palmeiras, 45',
+    'Jardim Central',
+    'INFORMAÇÕES PROCESSUAIS',
+    'Processo nº: 1000000-00.2024.8.26.0000'
+  ].join('\n');
+  const result = extractWarrantPersonSuggestions(text);
+  assert.equal(result.full_name, 'DAVI MARCIO DE SOUZA JUNIOR');
+  assert.equal(result.address_primary, 'Rua das Palmeiras, 45 Jardim Central');
+});
