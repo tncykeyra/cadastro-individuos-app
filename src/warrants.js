@@ -231,7 +231,7 @@ function warrantOcrBlock(lines, labelPattern, { maxLines = 16, maxLength = 4000 
       }
       blankCount = 0;
       const normalized = normalizeWarrantText(line);
-      if (/^(?:cpf|rg|registro geral|data de nascimento|endereco|residencia|logradouro|informacoes pessoais|dados pessoais|dados do mandado|numero do mandado|mandado|observacoes|situacao|orgao expedidor)\b/.test(normalized)) break;
+      if (/^(?:cpf|rg|registro geral|data de nascimento|endereco|residencia|logradouro|informacoes pessoais|dados pessoais|dados do mandado|filiacao|numero do mandado|mandado|observacoes|situacao|orgao expedidor)\b/.test(normalized)) break;
       collected.push(line);
     }
     const value = collected.map(line => line.replace(/^\s*(?:nome da m[aã]e|nome do pai)\s*[:\-]?\s*/i, '').trim()).filter(Boolean).join('\n').slice(0, maxLength).trim();
