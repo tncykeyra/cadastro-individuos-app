@@ -8,6 +8,13 @@ export function normalizeWarrantName(value) {
   return normalizeWarrantText(value).replace(/\b(de|da|do|das|dos|e)\b/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+export function normalizeWarrantProcessNumber(value) {
+  const source = String(value || '').trim();
+  const match = source.match(/([0-9]{7}\s*-\s*[0-9]{2}\s*[.]\s*[0-9]{4}\s*[.]\s*[0-9]\s*[.]\s*[0-9]{2}\s*[.]\s*[0-9]{4})/);
+  if (match) return match[1].replace(/\D/g, '');
+  return /^[0-9]{20}$/.test(source) ? source : '';
+}
+
 function csvRows(text, delimiter) {
   const rows = [];
   let row = [], cell = '', quoted = false;
@@ -77,7 +84,7 @@ export function parseWarrantCsv(text) {
   const delimiter = detectDelimiter(text);
   const parsed = csvRows(text, delimiter);
   if (parsed.length < 2) throw new Error('O arquivo não contém linhas de dados.');
-  const headers = parsed[0].map(cleanField);
+  const headers = parsed[0].map(header => cleanField(header));
   const col = {
     number: firstHeader(headers, key => key === 'numero' || key.includes('mero') || key.includes('mandado')),
     name: firstHeader(headers, key => key === 'nome' || key === 'nome completo' || key === 'nome do procurado'),
@@ -91,8 +98,8 @@ export function parseWarrantCsv(text) {
     reference: firstHeader(headers, key => key.includes('peca') || key.includes('processo') || key.includes('referencia'))
   };
   if (col.number < 0 || col.name < 0) throw new Error('Não encontrei as colunas de número do mandado e nome. Confira o cabeçalho do CSV.');
-  const records = [], errors = [], seen = new Set();
-  let skippedNotPending = 0, duplicateRows = 0, invalidCpfRows = 0;
+  const records = [], errors = [], seen = new Set(), seenProcessNumbers = new Set();
+  let skippedNotPending = 0, duplicateRows = 0, duplicateProcessRows = 0, invalidCpfRows = 0;
   for (let index = 1; index < parsed.length; index++) {
     const raw = parsed[index];
     const value = i => i >= 0 ? raw[i] : '';
@@ -116,12 +123,20 @@ export function parseWarrantCsv(text) {
       }
     }
     const source_agency = cleanField(value(col.agency), 140).toLocaleUpperCase('pt-BR') || 'BNMP';
+    const source_reference = cleanField(value(col.reference), 200);
+    const processNumber = normalizeWarrantProcessNumber(source_reference);
     const uniqueKey = source_agency + '|' + warrant_number;
     if (seen.has(uniqueKey)) {
       duplicateRows++;
       continue;
     }
+    if (processNumber && seenProcessNumbers.has(processNumber)) {
+      duplicateRows++;
+      duplicateProcessRows++;
+      continue;
+    }
     seen.add(uniqueKey);
+    if (processNumber) seenProcessNumbers.add(processNumber);
     const birthValue = value(col.birthday);
     const birthday = parseIsoDate(birthValue);
     if (birthValue && !birthday) errors.push(index + 1);
@@ -135,7 +150,7 @@ export function parseWarrantCsv(text) {
       birth_date: birthday,
       source_agency,
       source_kind: 'csv',
-      source_reference: cleanField(value(col.reference), 200),
+      source_reference,
       status: 'pending'
     });
   }
@@ -146,6 +161,7 @@ export function parseWarrantCsv(text) {
     hasCpfColumn: col.cpf >= 0,
     skippedNotPending,
     duplicateRows,
+    duplicateProcessRows,
     invalidCpfRows,
     invalidRows: [...new Set(errors)],
     statusColumnPresent: col.status >= 0
@@ -189,7 +205,7 @@ function warrantOcrLines(text) {
 
 function warrantOcrHeader(line) {
   const value = normalizeWarrantText(line);
-  return /^(?:cpf|rg|registro geral|documento de identidade|identidade|data de nascimento|nascimento|endereco|residencia|logradouro|filiacao|informacoes processuais|dados processuais|numero do processo|processo|numero do mandado|mandado|orgao expedidor|situacao|observacoes|nome da mae|nome do pai|nome completo|nome da pessoa|nome do requerido|nome do procurado|requerido|procurado|indiciado|acusado)\b/.test(value);
+  return /^(?:cpf|rg|registro geral|documento de identidade|identidade|data de nascimento|nascimento|endereco|residencia|logradouro|filiacao|informacoes processuais|dados processuais|numero do processo|processo|numero do mandado|mandado|orgao expedidor|situacao|observacoes|nome da mae|nome do pai|nome completo|nome do requerido|nome do procurado|requerido|procurado|indiciado|acusado)\b/.test(value);
 }
 
 function warrantOcrValueAfter(line, labelPattern) {
@@ -240,7 +256,8 @@ function warrantOcrBlock(lines, labelPattern, { maxLines = 16, maxLength = 4000 
   return '';
 }
 
-function warrantOcrNameFromLabel(lines, labelPattern) {
+function warrantOcrName(lines, fallback) {
+  const labelPattern = /(?:em desfavor de|em face de|nome do condutor|nome completo|nome do requerido|nome do procurado|nome do acusado|nome(?!\s+(?:da\s+m[aã]e|do\s+pai))|requerido(?:\(a\))?|procurado(?:\(a\))?|indiciado(?:\(a\))?|acusado(?:\(a\))?)\s*[:\-]?\s*/i;
   for (let index = 0; index < lines.length; index++) {
     const match = lines[index].match(labelPattern);
     if (!match) continue;
@@ -256,15 +273,7 @@ function warrantOcrNameFromLabel(lines, labelPattern) {
     const value = cleanField(parts.join(' ').replace(/\s+/g, ' '), 180);
     if (value.length >= 3) return value;
   }
-  return '';
-}
-
-function warrantOcrName(lines, fallback) {
-  const explicit = warrantOcrNameFromLabel(lines, /nome\s+da\s+pessoa\s*[:\-]?\s*/i);
-  if (explicit) return explicit;
-
-  const labelPattern = /(?:em desfavor de|em face de|nome do condutor|nome completo|nome do requerido|nome do procurado|nome do acusado|nome(?!\s+(?:da\s+m[aã]e|do\s+pai))|requerido(?:\(a\))?|procurado(?:\(a\))?|indiciado(?:\(a\))?|acusado(?:\(a\))?)\s*[:\-]?\s*/i;
-  return warrantOcrNameFromLabel(lines, labelPattern) || fallback || '';
+  return fallback || '';
 }
 
 /** Extrai campos para conferência local do PDF; nada é salvo pelo parser. */
@@ -273,7 +282,7 @@ export function extractWarrantPersonSuggestions(text) {
   const lines = warrantOcrLines(source);
   const base = extractWarrantSuggestions(source);
   const rg = warrantOcrField(lines, /(?:\bRG\b|registro geral|documento de identidade|identidade)\s*/i, { maxLines: 1, maxLength: 100 });
-  const address_primary = warrantOcrField(lines, /(?:endere[cç]o(?:\s*\(\s*s\s*\)|s)?(?:\s+residencial)?|resid[eê]ncia|logradouro)\s*/i, { maxLines: 3, maxLength: 1000 });
+  const address_primary = warrantOcrField(lines, /(?:endere[cç]o(?:\s+residencial)?|resid[eê]ncia|logradouro)\s*/i, { maxLines: 3, maxLength: 1000 });
   const filiation = warrantOcrBlock(lines, /filia[cç][aã]o\s*[:\-]?\s*/i, { maxLines: 8, maxLength: 2000 });
   const process_information = warrantOcrBlock(lines, /(?:informa[cç][oõ]es|dados)\s+processuais\s*[:\-]?\s*/i, { maxLines: 20, maxLength: 12000 });
   const processMatch = source.match(/(?:n[uú]mero\s+do\s+processo|processo\s*(?:n[º°.]|n[uú]mero|#))\s*[:#\-]?\s*([0-9][0-9./-]{5,50})/i)
