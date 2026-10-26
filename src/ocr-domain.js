@@ -73,7 +73,7 @@ function normalizedWithMap(value) {
 
 function allowedLabelPrefix(prefix) {
   const value = prefix.trim().replace(/^[([{]+|[)\]}]+$/g, '').trim().replace(/[:=|–—-]+$/, '').trim().replace(/\.$/, '');
-  return !value || /^(?:[1-4][A-Z]?(?:\s*(?:E|&)\s*[1-4][A-Z]?)?)$/.test(value);
+  return !value || /^(?:[1-9][A-Z]?(?:\s*(?:E|&)\s*[1-9][A-Z]?)?)$/.test(value);
 }
 
 function findLabelMatch(line, aliases = FIELD_LABELS) {
