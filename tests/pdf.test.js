@@ -46,8 +46,8 @@ test('mantém as fotos adicionais em páginas depois da capa', () => {
     sections: [{ title: 'Identificação', rows: [{ label: 'Nome', value: 'Pessoa de teste' }] }],
     photos: [
       { bytes: jpeg, width: 600, height: 800, is_cover: true, label: 'Foto de capa' },
-      { bytes: jpeg, width: 800, height: 600, label: 'Fotografia 2' },
-      { bytes: jpeg, width: 800, height: 600, label: 'Fotografia 3' }
+      { bytes: new Uint8Array([0xff, 0xd8, 0xff, 0x01]), width: 800, height: 600, label: 'Fotografia 2' },
+      { bytes: new Uint8Array([0xff, 0xd8, 0xff, 0x02]), width: 800, height: 600, label: 'Fotografia 3' }
     ]
   });
   const text = decode(pdf);
