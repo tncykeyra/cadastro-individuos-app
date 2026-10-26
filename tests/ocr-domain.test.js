@@ -22,11 +22,12 @@ test('flags an invalid CPF and does not make it applicable', () => {
   assert.match(result.warnings.join(' '), /CPF/);
 });
 
-test('does not misread father or mother names as the individual name', () => {
+test('stores mother-only SENATRAN data as filiation without creating parent fields', () => {
   const result = extractDocumentFields('NOME DA MÃE: Maria de Souza\nNOME DO PAI: José da Silva\nCPF: 52998224725', 'people', 90);
   assert.equal(result.values.full_name, undefined);
-  assert.equal(result.values.mother_name, 'Maria de Souza');
-  assert.equal(result.values.father_name, 'José da Silva');
+  assert.equal(result.values.filiation, 'Maria de Souza');
+  assert.equal(result.values.father_name, undefined);
+  assert.equal(result.formValues.filiation, 'Maria de Souza');
 });
 
 test('recognizes SENATRAN label/value pairs and normalizes dates', () => {
@@ -58,4 +59,29 @@ test('flags invalid dates and vehicle plates for review', () => {
   assert.match(person.warnings.join(' '), /Data/);
   assert.equal(Object.hasOwn(vehicle.formValues, 'plate'), false);
   assert.match(vehicle.warnings.join(' '), /Placa/);
+});
+
+
+test('recognizes physical and digital CNH label variants with parentheses and no comma', () => {
+  const result = extractDocumentFields([
+    '(2 e 1) NOME E SOBRENOME',
+    'PESSOA EXEMPLO DA SILVA',
+    '3 DATA LOCAL E UF DE NASCIMENTO',
+    '12/04/1990 LENCOIS PAULISTA/SP',
+    '4C DOC. IDENTIDADE/ORG. EMISSOR/UF',
+    '12.345.678 SSP SP',
+    '4D CPF',
+    '529.982.247-25',
+    'FILIAÇÃO',
+    'MARIA EXEMPLO UM',
+    'JOSE EXEMPLO DOIS',
+    '7 ASSINATURA DO PORTADOR',
+    'ASSINATURA EXEMPLO'
+  ].join('\n'), 'people', 55);
+  assert.equal(result.values.full_name, 'PESSOA EXEMPLO DA SILVA');
+  assert.equal(result.values.birthday, '1990-04-12');
+  assert.equal(result.values.rg, '12.345.678 SSP SP');
+  assert.equal(result.values.cpf_digits, '52998224725');
+  assert.equal(result.values.filiation, 'MARIA EXEMPLO UM\nJOSE EXEMPLO DOIS');
+  assert.deepEqual(Object.keys(result.formValues).sort(), ['birthday', 'cpf_digits', 'filiation', 'full_name', 'rg']);
 });
