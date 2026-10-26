@@ -24,7 +24,7 @@ test('destaca a foto de capa proporcional acima do nome na primeira folha', () =
   const pdf = buildRecordPdf({
     title: 'Ficha do veículo',
     sections: [{ title: 'Dados do veículo', rows: [{ label: 'Placa', value: 'ZZZ0000' }] }],
-    photos: [{ bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), width: 1200, height: 800, is_cover: true, label: 'Foto de capa' }]
+    photos: [{ bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), width: 1200, height: 800, is_cover: true, label: 'Foto de capa' }, { bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), width: 1200, height: 800, label: 'Fotografia duplicada' }]
   });
   const text = decode(pdf);
   assert.ok(text.includes('/Subtype /Image'));
