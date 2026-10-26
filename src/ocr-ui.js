@@ -1,5 +1,6 @@
 import { extractDocumentFields, extractFiliationFromNotes, isValidCpf, isValidDocumentDate } from './ocr-domain.js';
 import { processOcrFiles, cancelOcrWorker } from './ocr-engine.js';
+import { containImageRect, normalizedCropToPixels, pointerToNormalized } from './ocr-crop.js';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -207,21 +208,9 @@ export function mountOcrAssistant({ form, kind, existingRecord = null, findMatch
     let start = null;
     const displayedContentRect = () => {
       const box = image.getBoundingClientRect();
-      const naturalWidth = image.naturalWidth || box.width;
-      const naturalHeight = image.naturalHeight || box.height;
-      if (!box.width || !box.height || !naturalWidth || !naturalHeight) return null;
-      const scale = Math.min(box.width / naturalWidth, box.height / naturalHeight);
-      const width = naturalWidth * scale, height = naturalHeight * scale;
-      return { left: box.left + (box.width - width) / 2, top: box.top + (box.height - height) / 2, width, height };
+      return containImageRect(box, image.naturalWidth || box.width, image.naturalHeight || box.height);
     };
-    const point = event => {
-      const rect = displayedContentRect();
-      if (!rect) return null;
-      return {
-        x: Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)),
-        y: Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height))
-      };
-    };
+    const point = event => pointerToNormalized({ x: event.clientX, y: event.clientY }, displayedContentRect());
     image.addEventListener('pointerdown', event => {
       if (!cropMode) return;
       const position = point(event);
@@ -260,10 +249,9 @@ export function mountOcrAssistant({ form, kind, existingRecord = null, findMatch
       catch { bitmap = await createImageBitmap(current.blob); }
       let canvas;
       try {
-        const x = Math.max(0, Math.min(bitmap.width - 1, Math.floor(crop.x * bitmap.width)));
-        const y = Math.max(0, Math.min(bitmap.height - 1, Math.floor(crop.y * bitmap.height)));
-        const width = Math.max(1, Math.min(bitmap.width - x, Math.round(crop.w * bitmap.width)));
-        const height = Math.max(1, Math.min(bitmap.height - y, Math.round(crop.h * bitmap.height)));
+        const pixels = normalizedCropToPixels(crop, bitmap.width, bitmap.height);
+        if (!pixels) throw new Error('Não foi possível localizar o recorte na imagem.');
+        const { x, y, width, height } = pixels;
         if (width < 32 || height < 32) throw new Error('O recorte ficou pequeno demais. Marque uma área maior da fotografia.');
         let scale = Math.min(1, 1800 / Math.max(width, height)), quality = .9, blob = null;
         canvas = document.createElement('canvas');
