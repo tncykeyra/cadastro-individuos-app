@@ -7,11 +7,11 @@ function drawText(text,x,y,size=12,color='0.16 0.19 0.21'){return 'BT /F1 '+size
 function imageObject(data){const header=ascii('<< /Type /XObject /Subtype /Image /Width '+data.width+' /Height '+data.height+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+data.bytes.length+' >>\nstream\n');return joinBytes([header,data.bytes,ascii('\nendstream')])}
 function streamObject(stream){return ascii('<< /Length '+stream.length+' >>\nstream\n'+stream+'endstream')}
 function samePhotoBytes(a,b){if(a.width!==b.width||a.height!==b.height||a.bytes?.length!==b.bytes?.length)return false;for(let index=0;index<(a.bytes?.length||0);index++)if(a.bytes[index]!==b.bytes[index])return false;return true}
-function photoByteHash(photo){let hash=2166136261;for(const byte of photo.bytes||[])hash=Math.imul(hash^byte,16777619);return(photo.width||0)+'x'+(photo.height||0)+':'+(photo.bytes?.length||0)+':'+(hash>>>0)}
+function photoByteHash(photo){let hash=2166136261;for(const byte of photo.bytes||[])hash=Math.imul(hash^byte,16777619);return String(photo.dedupe_group||'record')+':'+(photo.width||0)+'x'+(photo.height||0)+':'+(photo.bytes?.length||0)+':'+(hash>>>0)}
 export function buildRecordPdf({title,recordName='',sections=[],photos=[],generatedAt=new Date()}){
  const sortedPhotos=[...photos].sort((a,b)=>Number(Boolean(b.is_cover))-Number(Boolean(a.is_cover))),photoBuckets=new Map(),uniquePhotos=[];for(const photo of sortedPhotos){const key=photoByteHash(photo),bucket=photoBuckets.get(key)||[];if(bucket.some(existing=>samePhotoBytes(existing,photo)))continue;bucket.push(photo);photoBuckets.set(key,bucket);uniquePhotos.push(photo)}photos=uniquePhotos;
  const pages=[],pageWidth=595,pageHeight=842,margin=34,contentWidth=pageWidth-margin*2,bottom=margin+18;
- const cover=photos.find(photo=>photo.is_cover||photo.label==='Foto de capa')||photos[0]||null;
+ const cover=photos.find(photo=>photo.is_cover||photo.label==='Foto de capa')||(photos.some(photo=>photo.association_photo)?null:photos[0])||null;
  const remaining=cover?photos.filter(photo=>photo!==cover):[];
  let current=null,y=0;
  const startPage=(first=false,heading='')=>{
