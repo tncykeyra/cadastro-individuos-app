@@ -470,7 +470,7 @@ async function loadPhotoSearchCovers(records){
   if(error)throw error;
   const covers=new Map();
   for(const photo of data||[]){const current=covers.get(photo.entity_id);if(!current||photo.is_cover)covers.set(photo.entity_id,photo)}
-  await Promise.all(records.map(async record=>{const photo=covers.get(record.id),path=photo?.photo_path||record.photo_path;record.photo_url=path?await galleryPhotoUrl(path):'';record.photo_position=photo?.crop_position||record.photo_position||'50% 50%'}));
+  await Promise.all(records.map(async record=>{const photo=covers.get(record.id),path=photo?.photo_path||record.photo_path;record.photo_url=path?await galleryPhotoUrl(path):'';record.photo_position=photo?.crop_position||'50% 20%'}));
 }
 async function renderPhotoSearch(){
   const search=state.photoSearch,requestId=++search.requestId;search.loading=true;search.error='';frame(photoSearchContent());
@@ -482,7 +482,7 @@ async function renderPhotoSearch(){
       if(error)throw error;if(search!==state.photoSearch||requestId!==search.requestId)return;all=data||[];total=all.length;
     }else{
       const start=search.page*search.pageSize;
-      const {data,error,count}=await state.client.from('people').select('id,full_name,cpf_digits,rg,photo_path,photo_position',{count:'exact'}).is('archived_at',null).order('full_name').order('id').range(start,start+search.pageSize-1);
+      const {data,error,count}=await state.client.from('people').select('id,full_name,cpf_digits,rg,photo_path',{count:'exact'}).is('archived_at',null).order('full_name').order('id').range(start,start+search.pageSize-1);
       if(error)throw error;if(search!==state.photoSearch||requestId!==search.requestId)return;all=data||[];total=count||0;
     }
     search.total=total;const start=search.page*search.pageSize;search.records=search.query.trim()?all.slice(start,start+search.pageSize):all;
