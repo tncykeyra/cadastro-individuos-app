@@ -111,15 +111,18 @@ async function driveUpload(accessToken: string, folderId: string, filename: stri
   if (!result.id) throw new Error('GOOGLE_DRIVE_UPLOAD_FAILED');
   return String(result.id);
 }
-async function encrypted(admin: ReturnType<typeof serviceClient>, bytes: Uint8Array) {
+async function ensureEncryptionKey(admin: ReturnType<typeof serviceClient>) {
   let keyText = await secret(admin, 'backup_crypto_key');
   if (!keyText) {
-    const raw = crypto.getRandomValues(new Uint8Array(32));
-    keyText = toB64(raw);
+    keyText = toB64(crypto.getRandomValues(new Uint8Array(32)));
     await saveSecret(admin, 'backup_crypto_key', keyText);
   }
   const raw = fromB64(keyText);
   if (raw.length !== 32) throw new Error('BACKUP_KEY_INVALID');
+  return raw;
+}
+async function encrypted(admin: ReturnType<typeof serviceClient>, bytes: Uint8Array) {
+  const raw = await ensureEncryptionKey(admin);
   const key = await crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt']);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const cipher = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: utf8('cadastro-criminal-backup-v1') }, key, bytes));
@@ -129,7 +132,7 @@ async function encrypted(admin: ReturnType<typeof serviceClient>, bytes: Uint8Ar
   return result;
 }
 async function contentTag(admin: ReturnType<typeof serviceClient>, bytes: Uint8Array) {
-  const raw = fromB64(await secret(admin, 'backup_crypto_key'));
+  const raw = await ensureEncryptionKey(admin);
   const material = await crypto.subtle.importKey('raw', raw, 'HKDF', false, ['deriveKey']);
   const key = await crypto.subtle.deriveKey(
     { name: 'HKDF', hash: 'SHA-256', salt: utf8('cadastro-criminal'), info: utf8('media-deduplication-v1') },
@@ -138,10 +141,11 @@ async function contentTag(admin: ReturnType<typeof serviceClient>, bytes: Uint8A
   return [...signature].map(byte => byte.toString(16).padStart(2, '0')).join('');
 }
 async function createRun(admin: ReturnType<typeof serviceClient>, createdBy: string | null, triggerType: 'manual' | 'scheduled') {
+  await ensureEncryptionKey(admin);
   const { data: active, error: activeError } = await admin.from('backup_runs').select('id,status')
     .in('status', ['queued','running']).order('created_at').limit(1).maybeSingle();
   if (activeError) throw new Error('BACKUP_SCHEMA_NOT_READY');
-  if (active) return { id: active.id, alreadyRunning: true };
+  if (active) return { id: active.id, alreadyRunning: true, scheduleActive: true };
   const { data: run, error } = await admin.from('backup_runs')
     .insert({ trigger_type: triggerType, created_by: createdBy, status: 'queued' })
     .select('id').single();
@@ -155,8 +159,8 @@ async function createRun(admin: ReturnType<typeof serviceClient>, createdBy: str
     status: 'running', started_at: new Date().toISOString(), current_entity: ENTITIES[0],
     progress: { entity_index: 0, entity_counts: counts || {}, storage_count: null, storage_completed: 0 },
   }).eq('id', run.id);
-  await admin.rpc('backup_configure_schedule');
-  return { id: run.id, alreadyRunning: false };
+  const { error: scheduleError } = await admin.rpc('backup_configure_schedule');
+  return { id: run.id, alreadyRunning: false, scheduleActive: !scheduleError };
 }
 async function startFromCron(admin: ReturnType<typeof serviceClient>, request: Request) {
   const expected = await secret(admin, 'backup_cron_secret');
@@ -256,7 +260,7 @@ async function worker(admin: ReturnType<typeof serviceClient>) {
       let driveId = '';
       const unchanged = previous && Number(previous.source_size) === size &&
         String(previous.source_etag || '') === String(object.object_etag || '') &&
-        String(previous.source_last_modified || '') === String(lastModified || '');
+        (!lastModified && !previous.source_last_modified || Boolean(lastModified && previous.source_last_modified && Date.parse(String(previous.source_last_modified)) === Date.parse(lastModified));
       if (unchanged) {
         tag = String(previous.content_tag); driveId = String(previous.drive_file_id);
       } else {
@@ -389,12 +393,13 @@ Deno.serve(async (request: Request) => {
       }).toString();
       return json({ authorizationUrl: auth.toString() });
     }
+    if (body.action === 'run_step') return json(await worker(admin));
     if (body.action === 'backup_now') {
       await googleClient(admin);
       const refresh = await secret(admin,'google_refresh_token');
       if (!refresh) return json({ error: 'Conecte o Google Drive antes de iniciar o backup.' },400);
       const result = await createRun(admin,user.id,'manual');
-      return json({ ok:true, runId:result.id, alreadyRunning:result.alreadyRunning });
+      return json({ ok:true, runId:result.id, alreadyRunning:result.alreadyRunning, scheduleActive:result.scheduleActive });
     }
     if (body.action === 'history') {
       const { data, error } = await admin.from('backup_runs')
