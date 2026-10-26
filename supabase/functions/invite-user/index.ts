@@ -197,6 +197,82 @@ Deno.serve(async (request) => {
     return respond({ ok: true, deleted: true, access_revoked: Boolean(authorizationRow) });
   }
 
+  if (payload.action === 'create-email-user') {
+    const { data: existingProfile, error: existingProfileError } = await admin
+      .from('profiles')
+      .select('id, role')
+      .eq('email', email)
+      .maybeSingle();
+    if (existingProfileError) return respond({ error: 'Não foi possível consultar o acesso deste e-mail.' }, 500);
+
+    if (existingProfile) {
+      if (existingProfile.role === 'disabled') {
+        return respond({ error: 'Este e-mail já tem uma conta desativada. Reative-a na lista de Usuários antes de liberar o acesso.' }, 409);
+      }
+      const { data: authRecord, error: authLookupError } = await admin.auth.admin.getUserById(existingProfile.id);
+      if (authLookupError || !authRecord?.user) {
+        return respond({ error: 'A conta existe, mas não foi possível conferir o método de acesso. Nenhuma alteração foi feita.' }, 500);
+      }
+      const authUser = authRecord.user;
+      const providers = Array.isArray(authUser.app_metadata?.providers) ? authUser.app_metadata.providers : [];
+      const hasGoogle = providers.includes('google') || (authUser.identities ?? []).some((identity) => identity.provider === 'google');
+      const role = existingProfile.role === 'pending' ? 'operator' : existingProfile.role;
+
+      if (!hasGoogle) {
+        const { error: metadataError } = await admin.auth.admin.updateUserById(existingProfile.id, {
+          user_metadata: { ...authUser.user_metadata, must_change_password: true },
+        });
+        if (metadataError) return respond({ error: 'Não foi possível preparar a criação de senha. Nenhuma alteração no perfil foi feita.' }, 500);
+      }
+
+      if (existingProfile.role === 'pending') {
+        const { error: roleError } = await caller.rpc('admin_set_user_role', {
+          target_user_id: existingProfile.id,
+          target_role: 'operator',
+        });
+        if (roleError) {
+          if (!hasGoogle) await admin.auth.admin.updateUserById(existingProfile.id, { user_metadata: authUser.user_metadata ?? {} });
+          return respond({ error: 'Não foi possível liberar o perfil como Operador.' }, 500);
+        }
+      }
+
+      return respond({
+        ok: true,
+        created: false,
+        existing: true,
+        existingGoogle: hasGoogle,
+        email,
+        role,
+      });
+    }
+
+    const displayName = email.split('@')[0].replace(/[._-]+/g, ' ').trim();
+    const { data: created, error: createError } = await admin.auth.admin.createUser({
+      email,
+      email_confirm: true,
+      user_metadata: { must_change_password: true },
+    });
+    if (createError || !created.user) {
+      const detail = createError?.message ?? 'Não foi possível criar a conta.';
+      if (/already (been )?registered|already exists|duplicate/i.test(detail)) {
+        return respond({ error: 'Já existe uma conta de autenticação com este e-mail. Confira a lista de Usuários antes de tentar novamente.' }, 409);
+      }
+      return respond({ error: 'Não foi possível criar a conta: ' + detail }, 400);
+    }
+
+    const { error: profileError } = await admin.from('profiles').upsert({
+      id: created.user.id,
+      email,
+      display_name: displayName,
+      role: 'operator',
+    }, { onConflict: 'id' });
+    if (profileError) {
+      await admin.auth.admin.deleteUser(created.user.id);
+      return respond({ error: 'A conta não foi finalizada porque não foi possível criar o perfil de Operador.' }, 500);
+    }
+    return respond({ ok: true, created: true, email, role: 'operator', userId: created.user.id });
+  }
+
   if (payload.action === 'create-password-user') {
     const temporaryPassword = String(payload.temporaryPassword ?? '');
     if (temporaryPassword.length < 12) return respond({ error: 'A senha temporária precisa ter pelo menos 12 caracteres.' }, 400);
