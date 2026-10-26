@@ -116,8 +116,8 @@ body{min-width:0}
 :where(.page-intro,.detail-title,.detail-name-copy,.detail-actions,.detail-sections,.info-box,.info-value,.section-heading,.cards,.person-card,.vehicle-card,.list,.list-row,.list-row>*,.dashboard-cards,.stat,.form-grid,.form-section,.field,.photo-gallery-wrap,.carousel-stage,.carousel-main,.photo-gallery,.photo-item,.vehicle-card-copy,.vehicle-placeholder,.portrait,.avatar,.drawer-brand,.drawer-brand>div){min-width:0;max-width:100%}
 :where(h1,h2,h3,h4,p,span,strong,small,a,.row-title,.row-subtitle,.card-meta,.info-value,.detail-name-copy,.vehicle-card-copy){overflow-wrap:anywhere;word-break:normal}
 img,video,canvas,iframe,svg{max-width:100%}
-button,.button,input,select,textarea{max-width:100%}
-.button{white-space:normal}
+button,.button,input,select,textarea{min-width:0;max-width:100%}
+.button{white-space:normal;overflow-wrap:anywhere}
 .detail-hero img,.avatar img,.portrait img,.carousel-main img,.vehicle-placeholder img{min-width:0;max-width:100%}
 .carousel-stage,.carousel-main,.avatar,.portrait,.vehicle-placeholder{overflow:hidden}
 @media(max-width:899px){.detail-hero{grid-template-columns:minmax(0,38%) minmax(0,1fr);gap:18px}}
