@@ -87,7 +87,8 @@ export function parseWarrantCsv(text) {
     birthday: firstHeader(headers, key => key.includes('nascimento')),
     status: firstHeader(headers, key => key.includes('situ') || key === 'status'),
     agency: firstHeader(headers, key => key.includes('expedidor') || key.includes('orgao') || key.includes('tribunal')),
-    cpf: firstHeader(headers, key => key === 'cpf' || key.includes('cpf'))
+    cpf: firstHeader(headers, key => key === 'cpf' || key.includes('cpf')),
+    reference: firstHeader(headers, key => key.includes('peca') || key.includes('processo') || key.includes('referencia'))
   };
   if (col.number < 0 || col.name < 0) throw new Error('Não encontrei as colunas de número do mandado e nome. Confira o cabeçalho do CSV.');
   const records = [], errors = [], seen = new Set();
@@ -134,6 +135,7 @@ export function parseWarrantCsv(text) {
       birth_date: birthday,
       source_agency,
       source_kind: 'csv',
+      source_reference: cleanField(value(col.reference), 200),
       status: 'pending'
     });
   }
