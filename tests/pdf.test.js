@@ -17,7 +17,7 @@ test('gera PDF A4 de um único cadastro sem dependências externas', () => {
   assert.ok(text.endsWith('%%EOF'));
 });
 
-test('inclui fotografias JPEG sem alterar proporção nem usar URLs públicas no PDF', () => {
+test('inclui fotografia JPEG proporcional na ficha A4 sem usar URLs públicas', () => {
   const pdf = buildRecordPdf({
     title: 'Ficha do veículo',
     sections: [{ title: 'Dados do veículo', rows: [{ label: 'Placa', value: 'ZZZ0000' }] }],
@@ -27,7 +27,7 @@ test('inclui fotografias JPEG sem alterar proporção nem usar URLs públicas no
   assert.ok(text.includes('/Subtype /Image'));
   assert.ok(text.includes('/Filter /DCTDecode'));
   assert.ok(text.includes('/Im1'));
-  assert.ok(text.includes('/Count 2'));
+  assert.ok(text.includes('/Count 1'));
   assert.ok(text.endsWith('%%EOF'));
 });
 
