@@ -182,6 +182,7 @@ async function startFromCron(admin: ReturnType<typeof serviceClient>, request: R
   if (!expected || request.headers.get('x-backup-cron-secret') !== expected) throw new Error('CRON_AUTH_REQUIRED');
   const refresh = await secret(admin, 'google_refresh_token');
   if (!refresh) return { skipped: true, reason: 'DRIVE_NOT_CONNECTED' };
+  if (await secret(admin,'backup_recovery_key_delivered') !== 'true') return { skipped:true, reason:'RECOVERY_KEY_NOT_SAVED' };
   const run = await createRun(admin, null, 'scheduled');
   return { started: !run.alreadyRunning, runId: run.id };
 }
