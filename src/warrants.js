@@ -257,7 +257,7 @@ function warrantOcrBlock(lines, labelPattern, { maxLines = 16, maxLength = 4000 
 }
 
 function warrantOcrName(lines, fallback) {
-  const labelPattern = /(?:em desfavor de|em face de|nome do condutor|nome completo|nome do requerido|nome do procurado|nome do acusado|nome(?!\s+(?:da\s+m[aã]e|do\s+pai))|requerido(?:\(a\))?|procurado(?:\(a\))?|indiciado(?:\(a\))?|acusado(?:\(a\))?)\s*[:\-]?\s*/i;
+  const labelPattern = /(?:em desfavor de|em face de|nome do condutor|nome completo|nome do requerido|nome do procurado|nome do acusado|nome da pessoa|nome(?=\s*[:-])|requerido(?:\(a\))?|procurado(?:\(a\))?|indiciado(?:\(a\))?|acusado(?:\(a\))?)\s*[:\-]?\s*/i;
   for (let index = 0; index < lines.length; index++) {
     const match = lines[index].match(labelPattern);
     if (!match) continue;
@@ -282,7 +282,7 @@ export function extractWarrantPersonSuggestions(text) {
   const lines = warrantOcrLines(source);
   const base = extractWarrantSuggestions(source);
   const rg = warrantOcrField(lines, /(?:\bRG\b|registro geral|documento de identidade|identidade)\s*/i, { maxLines: 1, maxLength: 100 });
-  const address_primary = warrantOcrField(lines, /(?:endere[cç]o(?:\s+residencial)?|resid[eê]ncia|logradouro)\s*/i, { maxLines: 3, maxLength: 1000 });
+  const address_primary = warrantOcrField(lines, /(?:endere[cç]o(?:\s+residencial)?(?:\s*\(s\))?|resid[eê]ncia|logradouro)\s*/i, { maxLines: 3, maxLength: 1000 });
   const filiation = warrantOcrBlock(lines, /filia[cç][aã]o\s*[:\-]?\s*/i, { maxLines: 8, maxLength: 2000 });
   const process_information = warrantOcrBlock(lines, /(?:informa[cç][oõ]es|dados)\s+processuais\s*[:\-]?\s*/i, { maxLines: 20, maxLength: 12000 });
   const processMatch = source.match(/(?:n[uú]mero\s+do\s+processo|processo\s*(?:n[º°.]|n[uú]mero|#))\s*[:#\-]?\s*([0-9][0-9./-]{5,50})/i)
