@@ -464,6 +464,14 @@ function photoSearchContent(){
   const paging=total>search.pageSize?'<div class="pagination-controls"><span>Página '+(search.page+1)+' de '+pages+' · '+total+' indivíduos</span><div class="pagination"><button class="button secondary small" type="button" data-photo-search-page="'+(search.page-1)+'" '+(search.page<=0?'disabled':'')+'>← Anterior</button><button class="button secondary small" type="button" data-photo-search-page="'+(search.page+1)+'" '+(search.page>=pages-1?'disabled':'')+'>Próxima →</button></div></div>':'';
   return '<section class="photo-search-page"><div class="page-intro"><div><h1>Pesquisa Fotográfica</h1><p>Compare manualmente uma imagem com as fotografias dos indivíduos autorizados.</p></div></div><div class="notice">A imagem escolhida fica apenas no dispositivo durante a consulta. Não há reconhecimento facial automático, pontuação de semelhança nem envio da imagem selecionada.</div><div class="photo-search-tools"><button type="button" class="button secondary" data-photo-search-camera-open>📷 Tirar foto</button><button type="button" class="button secondary" data-photo-search-file-open>📁 Selecionar imagem</button><input type="file" accept="image/*" capture="environment" data-photo-search-camera hidden><input type="file" accept="image/*" data-photo-search-file hidden></div>'+image+photoSearchCompareMarkup()+'<div class="photo-search-filter"><label for="photoSearchQuery">Filtrar por nome, CPF ou RG</label><div class="search-control"><input id="photoSearchQuery" class="search" type="search" maxlength="100" autocomplete="off" placeholder="Digite pelo menos 3 caracteres" value="'+esc(search.query)+'"><button type="button" class="button search-button" data-photo-search-submit aria-label="Pesquisar indivíduos" title="Pesquisar">⌕</button></div><p class="search-hint" role="status">'+(search.loading?'Buscando…':search.query?'Resultados filtrados pela pesquisa (até 100 por consulta).':'Mostrando '+total+' indivíduos em páginas de '+search.pageSize+'.')+'</p></div>'+hint+paging+'</section>';
 }
+async function loadPhotoSearchCovers(records){
+  if(!records.length)return;
+  const {data,error}=await state.client.from('record_photos').select('entity_id,photo_path,crop_position,is_cover,created_at').eq('entity','people').in('entity_id',records.map(record=>record.id)).order('created_at',{ascending:true});
+  if(error)throw error;
+  const covers=new Map();
+  for(const photo of data||[]){const current=covers.get(photo.entity_id);if(!current||photo.is_cover)covers.set(photo.entity_id,photo)}
+  await Promise.all(records.map(async record=>{const photo=covers.get(record.id),path=photo?.photo_path||record.photo_path;record.photo_url=path?await galleryPhotoUrl(path):'';record.photo_position=photo?.crop_position||record.photo_position||'50% 50%'}));
+}
 async function renderPhotoSearch(){
   const search=state.photoSearch,requestId=++search.requestId;search.loading=true;search.error='';frame(photoSearchContent());
   try{
@@ -478,7 +486,7 @@ async function renderPhotoSearch(){
       if(error)throw error;if(search!==state.photoSearch||requestId!==search.requestId)return;all=data||[];total=count||0;
     }
     search.total=total;const start=search.page*search.pageSize;search.records=search.query.trim()?all.slice(start,start+search.pageSize):all;
-    await loadRecordCovers('people',search.records);if(search!==state.photoSearch||requestId!==search.requestId)return;
+    await loadPhotoSearchCovers(search.records);if(search!==state.photoSearch||requestId!==search.requestId)return;
     search.photoCounts=await countPhotosForPeople(search.records);if(search!==state.photoSearch||requestId!==search.requestId)return;
   }catch(error){if(search!==state.photoSearch||requestId!==search.requestId)return;search.error=msg(error);search.records=[];search.total=0}
   if(search!==state.photoSearch||requestId!==search.requestId)return;search.loading=false;frame(photoSearchContent());
