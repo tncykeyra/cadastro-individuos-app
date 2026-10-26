@@ -24,6 +24,8 @@ create table if not exists public.backup_runs (
 );
 create index if not exists backup_runs_created_at_idx
   on public.backup_runs (created_at desc);
+create unique index if not exists backup_runs_one_active_idx
+  on public.backup_runs ((true)) where status in ('queued','running');
 
 -- Temporary snapshot rows are cleared after the encrypted artifacts reach Drive.
 create table if not exists public.backup_snapshot_rows (
@@ -53,6 +55,8 @@ create table if not exists public.backup_file_index (
   drive_file_id text not null,
   updated_at timestamptz not null default now()
 );
+create index if not exists backup_file_index_content_tag_idx
+  on public.backup_file_index (content_tag);
 create table if not exists public.backup_run_storage_items (
   run_id uuid not null references public.backup_runs(id) on delete cascade,
   object_name text not null,
