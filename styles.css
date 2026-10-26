@@ -194,3 +194,56 @@ button,.button,input,select,textarea{min-width:0;max-width:100%}
  .pdf-preview-pages{padding:8px}
  .pdf-print-page{max-width:100%;max-height:100%}
 }
+
+
+/* Leitura OCR local e conferência */
+.ocr-assistant{margin:0 0 16px;max-width:100%}
+.ocr-assistant .muted{margin:6px 0 0}
+.ocr-dialog{width:min(860px,calc(100vw - 24px));max-width:860px;max-height:min(92dvh,920px);padding:0;border:0;border-radius:20px;overflow:hidden;background:var(--surface,#fff);color:var(--text,#18212b);box-shadow:0 24px 80px #0004}
+.ocr-dialog::backdrop{background:#10182099;backdrop-filter:blur(3px)}
+.ocr-dialog-inner{max-height:min(92dvh,920px);overflow-y:auto;overflow-x:hidden;padding:clamp(16px,3vw,26px);overscroll-behavior:contain}
+.ocr-dialog .dialog-head{position:sticky;top:calc(-1 * clamp(16px,3vw,26px));z-index:3;padding:8px 0 14px;background:var(--surface,#fff);border-bottom:1px solid var(--border,#e5e9ef)}
+.ocr-dialog .dialog-head h2{margin:0;font-size:1.3rem}
+.ocr-dialog .dialog-head p{margin:5px 0 0}
+.ocr-choice,.ocr-actions{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0;align-items:center}
+.ocr-choice>*{flex:1 1 220px;min-height:48px}
+.ocr-guidance ul,.ocr-notice ul{padding-left:22px;line-height:1.55}
+.ocr-guidance li{margin:7px 0}
+.ocr-progress{display:grid;gap:14px;padding:18px 0}
+.ocr-progress progress{width:100%;height:14px}
+.ocr-result{padding-top:16px;min-width:0}
+.ocr-result h3{margin:0 0 10px}
+.ocr-result p{overflow-wrap:anywhere}
+.ocr-review-fields,.ocr-compare-list{display:grid;gap:8px;margin:16px 0}
+.ocr-field-row,.ocr-compare-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end;padding:10px;border:1px solid var(--border,#e5e9ef);border-radius:12px;min-width:0}
+.ocr-field-row>label:first-child,.ocr-compare-row>span{display:grid;gap:5px;min-width:0}
+.ocr-field-row input[type=text],.ocr-compare-row input[type=text]{width:100%;min-width:0}
+.ocr-include{display:flex;gap:6px;align-items:center;white-space:nowrap}
+.ocr-warning{grid-column:1/-1;color:var(--danger,#b42318)}
+.ocr-not-saved{font-size:.82rem;color:var(--muted,#687385);text-align:right}
+.ocr-notice{margin:12px 0}
+.ocr-photo-section{margin-top:18px;padding-top:16px;border-top:1px solid var(--border,#e5e9ef)}
+.ocr-source-label{display:grid;gap:6px;max-width:100%;margin:12px 0}
+.ocr-source-label select{max-width:100%;min-width:0}
+.ocr-crop-wrap{position:relative;display:flex;justify-content:center;align-items:center;width:100%;max-height:58dvh;min-height:120px;overflow:hidden;border-radius:14px;background:#101820}
+.ocr-crop-wrap img{display:block;max-width:100%;max-height:58dvh;width:auto;height:auto;object-fit:contain;touch-action:none;user-select:none;-webkit-user-drag:none}
+.ocr-crop-selection{position:absolute;border:2px solid #27c478;background:#27c47822;pointer-events:none;box-shadow:0 0 0 9999px #0005}
+.ocr-candidate-list{display:grid;gap:8px;margin:14px 0}
+.ocr-candidate{display:grid;gap:4px;width:100%;padding:12px;text-align:left;border:1px solid var(--border,#e5e9ef);border-radius:12px;background:var(--surface,#fff);color:inherit}
+.ocr-candidate span,.ocr-candidate small{overflow-wrap:anywhere}
+.ocr-candidate b{color:var(--primary,#087443);margin-top:4px}
+.ocr-compare-row{grid-template-columns:minmax(0,1fr) minmax(130px,.8fr) auto;align-items:center}
+.ocr-compare-row small{display:block;margin-top:4px;color:var(--muted,#687385);overflow-wrap:anywhere}
+.ocr-dialog .error-box{margin:18px 0}
+@media(max-width:600px){
+  .ocr-dialog{width:calc(100vw - 12px);max-height:calc(100dvh - 12px);border-radius:16px}
+  .ocr-dialog-inner{max-height:calc(100dvh - 12px);padding:14px}
+  .ocr-dialog .dialog-head{top:-14px;padding-top:6px}
+  .ocr-field-row{grid-template-columns:minmax(0,1fr) auto;padding:8px}
+  .ocr-not-saved{grid-column:1/-1;text-align:left}
+  .ocr-compare-row{grid-template-columns:minmax(0,1fr) auto}
+  .ocr-compare-row input[type=text]{grid-column:1/-1;grid-row:2}
+  .ocr-compare-row input[type=checkbox]{grid-column:2;grid-row:1}
+  .ocr-crop-wrap,.ocr-crop-wrap img{max-height:48dvh}
+  .ocr-actions>*{flex:1 1 140px}
+}
