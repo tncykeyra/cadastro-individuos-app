@@ -223,6 +223,7 @@ button,.button,input,select,textarea{min-width:0;max-width:100%}
 .ocr-warning{grid-column:1/-1;color:var(--danger,#b42318)}
 .ocr-not-saved{font-size:.82rem;color:var(--muted,#687385);text-align:right}
 .ocr-notice{margin:12px 0}
+.ocr-processing-note{margin:12px 0;padding:10px 12px;border:1px solid #a8ddc1;border-radius:10px;background:#effaf4;color:#176b42;line-height:1.45}
 .ocr-photo-section{margin-top:18px;padding-top:16px;border-top:1px solid var(--border,#e5e9ef)}
 .ocr-source-label{display:grid;gap:6px;max-width:100%;margin:12px 0}
 .ocr-source-label select{max-width:100%;min-width:0}
