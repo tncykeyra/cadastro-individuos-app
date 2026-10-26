@@ -178,7 +178,12 @@ const PERSON_FIELDS = [
   ['cpf_digits', 'CPF', LABELS.cpf_digits],
   ['rg', 'RG', LABELS.rg],
   ['birthday', 'Data de nascimento', LABELS.birthday],
-  ['filiation', 'Filiação (Anotações)', LABELS.filiation, { multiline: true, joinWith: '\n', maxLines: 6 }]
+  ['filiation', 'Filiação (Anotações)', LABELS.filiation, { multiline: true, joinWith: '\n', maxLines: 6 }],
+  ['registration', 'Registro da CNH', LABELS.registration],
+  ['cnh_category', 'Categoria da CNH', LABELS.cnh_category],
+  ['cnh_expiry', 'Validade da CNH', LABELS.cnh_expiry],
+  ['issue_date', 'Data de emissão', LABELS.issue_date],
+  ['license_status', 'Situação da habilitação', LABELS.license_status]
 ];
 const VEHICLE_FIELDS = [
   ['plate', 'Placa', LABELS.plate],
