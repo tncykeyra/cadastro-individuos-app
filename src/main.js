@@ -43,7 +43,8 @@ async function loadAllActive(table,orderColumn){const rows=[];for(let start=0;;s
 async function loadPagedActive(entity,orderColumn){const fetchPage=()=>{let query=state.client.from(entity).select('*',{count:'exact'}).is('archived_at',null);if(entity==='people'&&state.letter!=='all'){const accents={A:['A','Á','À','Â','Ã','Ä'],C:['C','Ç'],E:['E','É','È','Ê','Ë'],I:['I','Í','Ì','Î','Ï'],O:['O','Ó','Ò','Ô','Õ','Ö'],U:['U','Ú','Ù','Û','Ü']};const prefixes=accents[state.letter]||[state.letter];query=query.or(prefixes.map(letter=>'full_name.ilike.'+letter+'%').join(','))}return query.order(orderColumn).order('id')};let result=await fetchPage().range(state.listPage*state.listPageSize,(state.listPage+1)*state.listPageSize-1);if(result.error)throw result.error;const count=result.count||0,pages=Math.max(1,Math.ceil(count/state.listPageSize));if(state.listPage>=pages){state.listPage=pages-1;result=await fetchPage().range(state.listPage*state.listPageSize,(state.listPage+1)*state.listPageSize-1);if(result.error)throw result.error}state.listTotal=result.count||0;state.serverPaged=true;return result.data||[]}
 async function loadRecords(requestId=state.searchRequest){state.serverPaged=false;state.listTotal=0;const query=state.query.trim();if(isUsefulSearch(query)){if(state.page==='people'){const [people,vehicles]=await Promise.all([state.client.rpc('search_people',{search_term:query,result_limit:100}),state.client.rpc('search_vehicles',{search_term:query,result_limit:100})]);if(requestId!==state.searchRequest)return;if(people.error)throw people.error;if(vehicles.error)throw vehicles.error;state.people=people.data||[];state.vehicles=vehicles.data||[]}else if(state.page==='vehicles'){const [vehicles,people]=await Promise.all([state.client.rpc('search_vehicles',{search_term:query,result_limit:100}),state.client.rpc('search_people',{search_term:query,result_limit:100})]);if(requestId!==state.searchRequest)return;if(vehicles.error)throw vehicles.error;if(people.error)throw people.error;state.vehicles=vehicles.data||[];state.people=people.data||[]}return}if(query){state.people=[];state.vehicles=[];return}if(state.page==='people'){state.people=await loadPagedActive('people','full_name');if(requestId!==state.searchRequest)return;state.vehicles=[]}else if(state.page==='vehicles'){state.vehicles=await loadPagedActive('vehicles','plate');if(requestId!==state.searchRequest)return;state.people=[]}}
 const warrantSearchResults = new Map();
-const warrantSelect = 'id,import_batch_id,warrant_number,full_name,source_agency,source_kind,source_reference,status,discharge_reported_at,discharge_reported_date,discharge_reference,discharge_confirmed_at,discharge_confirmed_date,discharge_confirmed_reference,created_at,updated_at';
+const warrantEditRecords = new Map();
+const warrantSelect = 'id,import_batch_id,warrant_number,full_name,cpf_digits,alias,mother_name,father_name,birth_date,source_agency,source_kind,source_reference,status,discharge_reported_at,discharge_reported_date,discharge_reference,discharge_confirmed_at,discharge_confirmed_date,discharge_confirmed_reference,created_at,updated_at';
 const warrantActiveStatuses = ['pending','discharge_reported'];
 function warrantDate(value){return value?new Date(value+'T00:00:00').toLocaleDateString('pt-BR'):'—'}
 function warrantStatusLabel(status){return ({pending:'Pendente — confirme a situação na fonte oficial',discharge_reported:'Baixa informada — aguardando confirmação administrativa',discharged:'Baixado',cancelled:'Cancelado',revoked:'Revogado'})[status]||'Situação registrada'}
@@ -93,8 +94,9 @@ function warrantRecordMarkup(warrant,admin,docsById,linkedPeople=[]){
   const details=admin?'<details class="warrant-person-search"><summary>Vincular a um cadastro para revisão</summary><div class="warrant-search-row"><input type="search" maxlength="120" data-warrant-search-input="'+warrant.id+'" value="'+esc(warrant.full_name||'')+'" placeholder="Pesquisar nome do indivíduo"><button class="button secondary small" type="button" data-warrant-search="'+warrant.id+'">Pesquisar</button></div><div class="warrant-search-results">'+(warrantSearchResults.has(warrant.id)?warrantSearchResults.get(warrant.id).map(person=>'<div class="warrant-search-result"><span><strong>'+esc(person.full_name)+'</strong><small>'+esc(person.birthday?'Nascimento: '+warrantDate(person.birthday):'Data de nascimento não cadastrada')+'</small></span><button type="button" class="button small" data-warrant-link="'+warrant.id+'" data-warrant-person="'+person.id+'">Adicionar para revisão</button></div>').join(''):'')+'</div><p class="warrant-caution">A associação só gera aviso aos operadores depois da confirmação de um administrador.</p></details>':'';
   const statusAction=reported?(admin?'<button class="button small" type="button" data-warrant-confirm-discharge="'+warrant.id+'" data-warrant-confirm-date="'+esc(warrant.discharge_reported_date||'')+'" data-warrant-confirm-reference="'+esc(warrant.discharge_reference||'')+'">Revisar baixa</button>':'<span class="warrant-meta">Referência informada: '+esc(warrant.discharge_reference||'—')+'</span>'):warrant.status==='pending'?'<button class="button secondary small" type="button" data-warrant-discharge="'+warrant.id+'">Mandado baixado</button>':'<span class="warrant-meta">Registro '+esc(warrantStatusLabel(warrant.status).toLocaleLowerCase('pt-BR'))+'</span>';
   const pdf=docs.length?'<button class="button secondary small" type="button" data-warrant-doc="'+docs[0].id+'" data-warrant-path="'+esc(docs[0].storage_path)+'">Ver PDF anexado</button>':'';
+  const edit=admin?'<button class="button secondary small" type="button" data-warrant-edit="'+esc(warrant.id)+'">Editar informações</button>':'';
   const linked=linkedPeople.length?'<div class="warrant-linked-people">'+linkedPeople.map(person=>'<button type="button" class="warrant-linked-person" data-open-person="'+esc(person.id)+'"><span class="warrant-linked-photo"><img data-warrant-person-photo="'+esc(person.id)+'" alt="Foto de '+esc(person.full_name)+'" hidden><span class="warrant-linked-photo-placeholder" aria-hidden="true">👤</span></span><span><small>Indivíduo vinculado</small><strong>'+esc(person.full_name)+'</strong><span class="warrant-linked-open">Abrir cadastro →</span></span></button>').join('')+'</div>':'';
-  return '<article class="warrant-record"><div class="warrant-record-top"><div><span class="warrant-source">'+esc(warrant.source_agency||'BNMP')+'</span><h3>'+esc(warrant.full_name)+'</h3><p class="warrant-meta">Mandado '+esc(warrant.warrant_number)+(warrant.source_reference?' · '+esc(warrant.source_reference):'')+'</p></div>'+status+'</div>'+linked+'<div class="warrant-record-actions">'+statusAction+pdf+'</div>'+details+'</article>';
+  return '<article class="warrant-record"><div class="warrant-record-top"><div><span class="warrant-source">'+esc(warrant.source_agency||'BNMP')+'</span><h3>'+esc(warrant.full_name)+'</h3><p class="warrant-meta">Mandado '+esc(warrant.warrant_number)+(warrant.source_reference?' · '+esc(warrant.source_reference):'')+'</p></div>'+status+'</div>'+linked+'<div class="warrant-record-actions">'+edit+statusAction+pdf+'</div>'+details+'</article>';
 }
 function warrantPdfBatchMarkup(){
   if(!isAdmin()||!warrantPdfBatch.length)return '';
@@ -128,6 +130,7 @@ async function renderWarrants(){
   let warrantMap=new Map(),personMap=new Map();
   if(candidateWarrantIds.length){const {data,error}=await state.client.from('arrest_warrants').select(warrantSelect).in('id',candidateWarrantIds);if(error)throw error;warrantMap=new Map((data||[]).map(w=>[w.id,w]))}
   if(personIds.length){for(let i=0;i<personIds.length;i+=200){const ids=personIds.slice(i,i+200);const {data,error}=await state.client.from('people').select('id,full_name,birthday,photo_path').in('id',ids);if(error)throw error;for(const person of data||[])personMap.set(person.id,person)}}
+  warrantEditRecords.clear();for(const warrant of rows)warrantEditRecords.set(warrant.id,warrant);
   const linkedPeopleByWarrant=new Map();
   for(const match of confirmedMatches){const person=personMap.get(match.person_id);if(!person)continue;const linked=linkedPeopleByWarrant.get(match.warrant_id)||[];linked.push(person);linkedPeopleByWarrant.set(match.warrant_id,linked)}
   const candidateHtml=admin?matches.map(match=>warrantCandidateMarkup(match,warrantMap.get(match.warrant_id),personMap.get(match.person_id))).filter(Boolean).join(''):'';
@@ -173,6 +176,48 @@ async function warrantImportCsv(){
 function showWarrantReportDialog(warrantId){
   const today=new Date().toISOString().slice(0,10);
   $('#recordDialog').innerHTML='<button class="close" type="button" data-close aria-label="Fechar">×</button><div class="dialog-content"><p class="eyebrow">ATUALIZAÇÃO DE STATUS</p><h2>Informar mandado baixado</h2><p class="warrant-caution">Isso registra uma informação recebida; o mandado continuará aguardando confirmação administrativa.</p><form id="warrantReportForm" data-warrant-id="'+warrantId+'" class="warrant-form"><label>Data da baixa<input name="discharge_date" type="date" required max="'+today+'" value="'+today+'"></label><label>Referência oficial da baixa<input name="reference" required maxlength="200" placeholder="Número ou documento oficial"></label><label>Observações (opcional)<textarea name="notes" rows="3" maxlength="1000"></textarea></label><div class="warrant-actions"><button class="button secondary" type="button" data-close>Cancelar</button><button class="button" type="submit">Registrar informação</button></div></form></div>';showTrackedDialog($('#recordDialog'));
+}
+function showWarrantEditDialog(warrantId){
+  if(!isAdmin())throw new Error('Apenas administradores podem editar mandados.');
+  const warrant=warrantEditRecords.get(String(warrantId));
+  if(!warrant)throw new Error('Não foi possível localizar este mandado na lista. Atualize a tela e tente novamente.');
+  $('#recordDialog').innerHTML='<button class="close" type="button" data-close aria-label="Fechar">×</button><div class="dialog-content"><p class="eyebrow">EDIÇÃO ADMINISTRATIVA</p><h2>Editar informações do mandado</h2><p class="warrant-caution">A edição fica registrada no histórico. A situação da baixa e os vínculos com indivíduos são tratados separadamente.</p><form id="warrantEditForm" data-warrant-id="'+esc(warrant.id)+'" data-warrant-updated-at="'+esc(warrant.updated_at||'')+'" class="warrant-form"><div class="warrant-form-grid"><label>Número do mandado<input name="warrant_number" required maxlength="120" autocomplete="off" value="'+esc(warrant.warrant_number||'')+'"></label><label>Nome completo<input name="full_name" required maxlength="180" autocomplete="off" value="'+esc(warrant.full_name||'')+'"></label><label>CPF (opcional)<input name="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" value="'+esc(warrant.cpf_digits||'')+'"></label><label>Data de nascimento (opcional)<input name="birth_date" type="date" value="'+esc(String(warrant.birth_date||'').slice(0,10))+'"></label><label>Órgão emissor<input name="source_agency" required maxlength="140" value="'+esc(warrant.source_agency||'BNMP')+'"></label><label>Processo/referência<input name="source_reference" maxlength="200" value="'+esc(warrant.source_reference||'')+'"></label><label>Apelido (opcional)<input name="alias" maxlength="180" value="'+esc(warrant.alias||'')+'"></label><label>Nome da mãe (opcional)<input name="mother_name" maxlength="180" value="'+esc(warrant.mother_name||'')+'"></label><label>Nome do pai (opcional)<input name="father_name" maxlength="180" value="'+esc(warrant.father_name||'')+'"></label></div><div class="warrant-summary">Situação atual: '+esc(warrantStatusLabel(warrant.status))+' · Origem: '+esc(warrant.source_kind==='csv'?'Planilha':warrant.source_kind==='pdf'?'PDF':'Manual')+'</div><p class="warrant-caution">Salvar não altera nem confirma associações existentes, baixa do mandado ou arquivos PDF anexados.</p><div class="warrant-actions"><button class="button secondary" type="button" data-close>Cancelar</button><button class="button" type="submit">Salvar alterações</button></div></form></div>';showTrackedDialog($('#recordDialog'));
+}
+async function saveWarrantEdit(event){
+  event.preventDefault();
+  if(!isAdmin())throw new Error('Apenas administradores podem editar mandados.');
+  const form=event.currentTarget,id=form.dataset.warrantId,values=Object.fromEntries(new FormData(form).entries());
+  const warrant_number=String(values.warrant_number||'').trim().toLocaleUpperCase('pt-BR');
+  const full_name=String(values.full_name||'').replace(/\s+/g,' ').trim();
+  const cpf=String(values.cpf||'').replace(/\D/g,'');
+  const source_agency=String(values.source_agency||'').trim().toLocaleUpperCase('pt-BR')||'BNMP';
+  if(warrant_number.length<1||warrant_number.length>120)throw new Error('Confira o número do mandado.');
+  if(full_name.length<2||full_name.length>180)throw new Error('Confira o nome completo.');
+  if(cpf&&(!/^\d{11}$/.test(cpf)||!isValidCpf(cpf)))throw new Error('Confira o CPF. Informe um CPF válido com 11 números.');
+  if(source_agency.length>140)throw new Error('Confira o órgão emissor.');
+  const updated={
+    warrant_number,
+    full_name,
+    cpf_digits:cpf||null,
+    birth_date:String(values.birth_date||'').trim()||null,
+    source_agency,
+    source_reference:String(values.source_reference||'').trim().slice(0,200),
+    alias:String(values.alias||'').trim().slice(0,180),
+    mother_name:String(values.mother_name||'').trim().slice(0,180),
+    father_name:String(values.father_name||'').trim().slice(0,180),
+    updated_by:state.session.user.id,
+    updated_at:new Date().toISOString()
+  };
+  let request=state.client.from('arrest_warrants').update(updated).eq('id',id);
+  if(form.dataset.warrantUpdatedAt)request=request.eq('updated_at',form.dataset.warrantUpdatedAt);
+  const {data,error}=await request.select('id').maybeSingle();
+  if(error?.code==='23505')throw new Error('Já existe um mandado com esse número e órgão emissor.');
+  if(error)throw error;
+  if(!data)throw new Error('O mandado mudou desde que você abriu a edição ou não está mais disponível. Atualize a lista e tente novamente.');
+  $('#recordDialog').close();
+  warrantSearchResults.delete(id);
+  toast('Informações do mandado atualizadas. A alteração foi registrada no histórico.');
+  await renderWarrants();
 }
 function showWarrantConfirmDialog(button){
   const id=button.dataset.warrantConfirmDischarge||button.dataset.warrantConfirmDischargeId||button.getAttribute('data-warrant-confirm-discharge');
@@ -555,6 +600,7 @@ document.addEventListener('click',async event=>{
   const search=target.closest('[data-warrant-search]');if(search){await wrap(()=>findWarrantPerson(search.dataset.warrantSearch));return}
   const link=target.closest('[data-warrant-link]');if(link){await wrap(()=>addWarrantCandidate(link.dataset.warrantLink,link.dataset.warrantPerson));return}
   const review=target.closest('[data-warrant-review]');if(review){await wrap(()=>reviewWarrantMatch(review));return}
+  const editWarrant=target.closest('[data-warrant-edit]');if(editWarrant){showWarrantEditDialog(editWarrant.dataset.warrantEdit);return}
   const report=target.closest('[data-warrant-discharge]');if(report){showWarrantReportDialog(report.dataset.warrantDischarge);return}
   const confirmDischarge=target.closest('[data-warrant-confirm-discharge]');if(confirmDischarge){showWarrantConfirmDialog(confirmDischarge);return}
   const approveProposal=target.closest('[data-warrant-proposal-approve]');if(approveProposal){await wrap(()=>approveWarrantPersonProposal(approveProposal.dataset.warrantProposalApprove,approveProposal.dataset.proposalName));return}
@@ -576,7 +622,7 @@ async function rejectWarrantPersonProposal(proposalId){
 }
 document.addEventListener('submit',async event=>{
   const form=event.target;if(!form?.id)return;
-  const handlers={warrantManualForm:saveWarrantManual,warrantReportForm:submitWarrantReport,warrantConfirmForm:submitWarrantConfirmation};
+  const handlers={warrantManualForm:saveWarrantManual,warrantEditForm:saveWarrantEdit,warrantReportForm:submitWarrantReport,warrantConfirmForm:submitWarrantConfirmation};
   const handler=handlers[form.id];if(!handler)return;event.preventDefault();
   try{await handler(event)}catch(error){toast(msg(error))}
 });
