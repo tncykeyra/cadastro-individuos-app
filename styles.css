@@ -122,3 +122,22 @@ button,.button,input,select,textarea{min-width:0;max-width:100%}
 .carousel-stage,.carousel-main,.avatar,.portrait,.vehicle-placeholder{overflow:hidden}
 @media(max-width:899px){.detail-hero{grid-template-columns:minmax(0,38%) minmax(0,1fr);gap:18px}}
 @media(max-width:620px){.detail-hero{grid-template-columns:minmax(0,1fr);gap:16px}.detail-title,.section-heading{align-items:flex-start;flex-direction:column}.detail-actions{width:100%}.detail-actions .button{flex:1 1 auto}.page-intro>*{min-width:0}.page-intro h1{overflow-wrap:anywhere}.stats{min-width:0}.list-row{grid-template-columns:minmax(48px,58px) minmax(0,1fr) auto}.list-row>*{min-width:0}.form-grid{grid-template-columns:minmax(0,1fr)}}
+
+
+/* Photos stay inside their cards; galleries wrap thumbnails instead of adding side scrollbars. */
+.record-gallery,.carousel-stage,.carousel-main{display:block;width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+.carousel-stage{overflow:hidden;border-radius:16px}
+.carousel-main{height:auto;aspect-ratio:4/3;max-height:min(65dvh,440px);position:relative}
+.carousel-main img{position:absolute;inset:0;display:block;width:100%;height:100%;min-width:0;max-width:100%;max-height:100%;object-fit:cover}
+.record-gallery-detail.portrait-gallery .carousel-main{aspect-ratio:3/4;max-height:min(65dvh,520px)}
+.record-gallery-card.portrait-gallery .carousel-main,.record-gallery-card .carousel-main{aspect-ratio:4/3;max-height:min(56dvh,340px)}
+.record-gallery .carousel-thumbnails{display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,64px));justify-content:start;gap:8px;min-width:0;max-width:100%;overflow:visible;padding:9px 1px 4px}
+.record-gallery .carousel-thumb{display:block;flex:none;width:100%;max-width:64px;min-width:0;height:auto;aspect-ratio:1;box-sizing:border-box}
+.record-gallery-card .carousel-thumbnails{grid-template-columns:repeat(auto-fill,minmax(38px,48px));gap:6px;overflow:visible}
+.record-gallery-card .carousel-thumb{width:100%;max-width:48px;height:auto;aspect-ratio:1}
+.photo-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));min-width:0;max-width:100%;overflow:visible;gap:10px}
+.photo-item{width:100%;min-width:0;max-width:100%;flex:none}
+.photo-zoom{display:block;width:100%;height:auto;aspect-ratio:4/3;max-height:min(60dvh,380px)}
+.photo-zoom img{display:block;width:100%;height:100%;min-width:0;max-width:100%;object-fit:cover}
+.person-card .avatar,.vehicle-card .carousel-main,.vehicle-card .vehicle-placeholder{width:100%;min-width:0;max-width:100%;overflow:hidden}
+@media(max-width:620px){.record-gallery-detail.portrait-gallery .carousel-main{aspect-ratio:4/5;max-height:52dvh}.record-gallery .carousel-thumbnails{grid-template-columns:repeat(auto-fill,minmax(42px,56px));gap:7px}.record-gallery-card .carousel-thumbnails{grid-template-columns:repeat(auto-fill,minmax(36px,44px));gap:5px}}
