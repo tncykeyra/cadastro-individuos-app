@@ -224,7 +224,7 @@ function showWarrantDeleteDialog(warrantId){
 async function submitWarrantDelete(event){
   event.preventDefault();
   if(!isAdmin())throw new Error('Apenas administradores podem excluir mandados.');
-  const form=event.currentTarget,id=form.dataset.warrantId,submit=event.submitter;
+  const form=event.target,id=form.dataset.warrantId,submit=event.submitter;
   if(submit)submit.disabled=true;
   try{
     const {data,error}=await state.client.rpc('admin_delete_arrest_warrant',{p_warrant_id:id});
@@ -247,7 +247,7 @@ async function submitWarrantDelete(event){
 async function saveWarrantEdit(event){
   event.preventDefault();
   if(!isAdmin())throw new Error('Apenas administradores podem editar mandados.');
-  const form=event.currentTarget,id=form.dataset.warrantId,values=Object.fromEntries(new FormData(form).entries());
+  const form=event.target,id=form.dataset.warrantId,values=Object.fromEntries(new FormData(form).entries());
   const warrant_number=String(values.warrant_number||'').trim().toLocaleUpperCase('pt-BR');
   const full_name=String(values.full_name||'').replace(/\s+/g,' ').trim();
   const cpf=String(values.cpf||'').replace(/\D/g,'');
@@ -330,7 +330,7 @@ async function saveWarrantRecord(values,file=null){
 }
 async function saveWarrantManual(event){
   event.preventDefault();if(!isAdmin())throw new Error('Apenas administradores podem incluir mandados.');
-  const form=event.currentTarget,values=Object.fromEntries(new FormData(form).entries()),file=form.querySelector('input[name="document"]')?.files?.[0]||null;
+  const form=event.target,values=Object.fromEntries(new FormData(form).entries()),file=form.querySelector('input[name="document"]')?.files?.[0]||null;
   const result=await saveWarrantRecord(values,file);
   form.reset();warrantSearchResults.clear();toast('Mandado salvo.'+result.reviewMessage+result.documentWarning);await renderWarrants();
 }
@@ -388,13 +388,13 @@ async function saveWarrantPdfBatch(){
   toast(saved+' mandado(s) salvo(s).'+(reviewCount?' Confira as revisões administrativas pendentes na lista.':'')+(failed?' '+failed+' arquivo(s) permaneceram na fila para correção.':''));
 }
 async function submitWarrantReport(event){
-  event.preventDefault();const form=event.currentTarget,warrantId=form.dataset.warrantId,values=Object.fromEntries(new FormData(form).entries());
+  event.preventDefault();const form=event.target,warrantId=form.dataset.warrantId,values=Object.fromEntries(new FormData(form).entries());
   const {error}=await state.client.rpc('report_arrest_warrant_discharge',{p_warrant_id:warrantId,p_discharge_date:values.discharge_date,p_reference:String(values.reference||'').trim(),p_notes:String(values.notes||'').trim()});
   if(error)throw error;$('#recordDialog').close();toast('Baixa informada e enviada para revisão administrativa.');await renderWarrants();
 }
 async function submitWarrantConfirmation(event){
   event.preventDefault();if(!isAdmin())throw new Error('Apenas administradores podem confirmar a baixa.');
-  const form=event.currentTarget,warrantId=form.dataset.warrantId,values=Object.fromEntries(new FormData(form).entries());
+  const form=event.target,warrantId=form.dataset.warrantId,values=Object.fromEntries(new FormData(form).entries());
   const {error}=await state.client.rpc('admin_confirm_arrest_warrant_discharge',{p_warrant_id:warrantId,p_confirmed_date:values.confirmed_date,p_reference:String(values.reference||'').trim(),p_notes:String(values.notes||'').trim()});
   if(error)throw error;$('#recordDialog').close();toast('Baixa confirmada. O aviso ativo foi encerrado.');await renderWarrants();
 }
