@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { isUsefulSearch, normalizePlate, isValidPlate, dedupePhotoSources } from './domain.js';
 import { buildRecordPdf } from './pdf.js';
-import { isValidCpf } from './ocr-domain.js';
+import { isValidCpf, mergeFiliationIntoNotes } from './ocr-domain.js';
 
 const config={url:import.meta.env.VITE_SUPABASE_URL,key:import.meta.env.VITE_SUPABASE_ANON_KEY};
 const appIconUrl=import.meta.env.BASE_URL+'icon.svg?v=9';
@@ -159,9 +159,11 @@ async function findOcrMatches(kind,values){
 function applyOcrValuesToForm(form,values){
   let applied=0;
   for(const [key,rawValue] of Object.entries(values||{})){
-    const control=form?.elements?.namedItem(key);if(!control||typeof control.value==='undefined'||control.disabled||control.readOnly)continue;
-    let value=String(rawValue??'').trim();if(key==='cpf_digits')value=value.replace(/\D/g,'');if(key==='plate')value=normalizePlate(value);
-    control.value=value;control.dispatchEvent(new Event('input',{bubbles:true}));control.dispatchEvent(new Event('change',{bubbles:true}));applied++;
+    const target=key==='filiation'?'notes':key;
+    const control=form?.elements?.namedItem(target);if(!control||typeof control.value==='undefined'||control.disabled||control.readOnly)continue;
+    let value=String(rawValue??'').trim();if(key==='cpf_digits')value=value.replace(/\D/g,'');if(key==='plate')value=normalizePlate(value);if(key==='filiation')value=mergeFiliationIntoNotes(control.value,value);
+    if(control.value!==value){control.value=value;control.dispatchEvent(new Event('input',{bubbles:true}));control.dispatchEvent(new Event('change',{bubbles:true}));}
+    applied++;
   }
   return applied;
 }
