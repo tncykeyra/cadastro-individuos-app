@@ -82,7 +82,7 @@ function renderPdfPrintPreview(container,pages){
   container.append(canvas);
   const context=canvas.getContext('2d',{alpha:false});
   if(!context)return;
-  context.fillStyle='#fff';context.fillRect(0,0,595,842);context.scale(2,2);
+  context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.scale(2,2);
   const imageLoads=page.images.map(item=>new Promise(resolve=>{
    const photo=item.photo;
    if(!photo?.bytes){resolve(null);return}
