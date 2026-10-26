@@ -488,8 +488,8 @@ revoke select on table public.arrest_warrants from authenticated;
 grant select (
   id, import_batch_id, warrant_number, full_name, source_agency, source_kind,
   source_reference, status, discharge_reported_at, discharge_reported_date,
-  discharge_reference, discharge_notes, discharge_confirmed_at,
-  discharge_confirmed_date, discharge_confirmed_reference, discharge_confirmed_notes,
+  discharge_reference, discharge_confirmed_at,
+  discharge_confirmed_date, discharge_confirmed_reference,
   created_at, updated_at
 ) on table public.arrest_warrants to authenticated;
 
