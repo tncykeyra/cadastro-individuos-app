@@ -59,3 +59,28 @@ test('flags invalid dates and vehicle plates for review', () => {
   assert.equal(Object.hasOwn(vehicle.formValues, 'plate'), false);
   assert.match(vehicle.warnings.join(' '), /Placa/);
 });
+
+
+test('recognizes physical and digital CNH label variants with parentheses and no comma', () => {
+  const result = extractDocumentFields([
+    '(2 e 1) NOME E SOBRENOME',
+    'PESSOA EXEMPLO DA SILVA',
+    '3 DATA LOCAL E UF DE NASCIMENTO',
+    '12/04/1990 LENCOIS PAULISTA/SP',
+    '4C DOC. IDENTIDADE/ORG. EMISSOR/UF',
+    '12.345.678 SSP SP',
+    '4D CPF',
+    '529.982.247-25',
+    'FILIAÇÃO',
+    'NOME DE EXEMPLO UM',
+    'NOME DE EXEMPLO DOIS',
+    '7 ASSINATURA DO PORTADOR',
+    'ASSINATURA EXEMPLO'
+  ].join('\n'), 'people', 55);
+  assert.equal(result.values.full_name, 'PESSOA EXEMPLO DA SILVA');
+  assert.equal(result.values.birthday, '1990-04-12');
+  assert.equal(result.values.rg, '12.345.678 SSP SP');
+  assert.equal(result.values.cpf_digits, '52998224725');
+  assert.equal(result.values.filiation, 'NOME DE EXEMPLO UM\nNOME DE EXEMPLO DOIS');
+  assert.deepEqual(Object.keys(result.formValues).sort(), ['birthday', 'cpf_digits', 'filiation', 'full_name', 'rg']);
+});
