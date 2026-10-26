@@ -105,3 +105,20 @@
 .pdf-share-content .dialog-actions{flex:0 0 auto;margin-top:0;padding-top:4px;bottom:0}
 .pdf-share-content .dialog-actions .button{min-height:46px;padding-inline:22px;background:#17834b}
 @media(max-width:620px){.edit-photo-gallery{grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:8px}.edit-photo-card{padding:5px}.edit-photo-actions{gap:7px}.crop-inline-controls{font-size:.7rem;gap:4px}.crop-inline-controls .button{flex:1 1 auto}.pdf-share-dialog{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;margin:0;border-radius:0;border-inline:0}.pdf-share-content{padding:10px max(10px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-right));gap:8px}.pdf-share-content .dialog-head p{font-size:.85rem}.pdf-preview-pages{padding:7px;border-radius:6px}.pdf-print-page{max-width:100%}.pdf-share-content .dialog-actions{padding:0}.pdf-share-content .dialog-actions .button{width:100%}}
+
+
+/* Layout safety: prevent intrinsic image and text sizes from widening any screen. */
+html,body{width:100%;max-width:100%}
+body{min-width:0}
+.app-shell,main,#mainContent{min-width:0;max-width:100%}
+#mainContent>*{min-width:0;max-width:100%}
+.detail-hero{grid-template-columns:minmax(0,340px) minmax(0,1fr)}
+:where(.page-intro,.detail-title,.detail-name-copy,.detail-actions,.detail-sections,.info-box,.info-value,.section-heading,.cards,.person-card,.vehicle-card,.list,.list-row,.list-row>*,.dashboard-cards,.stat,.form-grid,.form-section,.field,.photo-gallery-wrap,.carousel-stage,.carousel-main,.photo-gallery,.photo-item,.vehicle-card-copy,.vehicle-placeholder,.portrait,.avatar,.drawer-brand,.drawer-brand>div){min-width:0;max-width:100%}
+:where(h1,h2,h3,h4,p,span,strong,small,a,.row-title,.row-subtitle,.card-meta,.info-value,.detail-name-copy,.vehicle-card-copy){overflow-wrap:anywhere;word-break:normal}
+img,video,canvas,iframe,svg{max-width:100%}
+button,.button,input,select,textarea{min-width:0;max-width:100%}
+.button{white-space:normal;overflow-wrap:anywhere}
+.detail-hero img,.avatar img,.portrait img,.carousel-main img,.vehicle-placeholder img{min-width:0;max-width:100%}
+.carousel-stage,.carousel-main,.avatar,.portrait,.vehicle-placeholder{overflow:hidden}
+@media(max-width:899px){.detail-hero{grid-template-columns:minmax(0,38%) minmax(0,1fr);gap:18px}}
+@media(max-width:620px){.detail-hero{grid-template-columns:minmax(0,1fr);gap:16px}.detail-title,.section-heading{align-items:flex-start;flex-direction:column}.detail-actions{width:100%}.detail-actions .button{flex:1 1 auto}.page-intro>*{min-width:0}.page-intro h1{overflow-wrap:anywhere}.stats{min-width:0}.list-row{grid-template-columns:minmax(48px,58px) minmax(0,1fr) auto}.list-row>*{min-width:0}.form-grid{grid-template-columns:minmax(0,1fr)}}
