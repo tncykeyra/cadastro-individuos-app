@@ -92,7 +92,8 @@ returns text language sql security definer set search_path = ''
 as $$
   select case when p_name = any(array[
     'google_client_id','google_client_secret','google_refresh_token',
-    'google_drive_folder_id','backup_crypto_key','backup_cron_secret'
+    'google_drive_folder_id','backup_crypto_key','backup_cron_secret',
+    'backup_recovery_key','backup_recovery_key_delivered','backup_key_envelope_drive_id'
   ]::text[]) then (
     select ds.decrypted_secret from vault.decrypted_secrets as ds
     where ds.name = p_name limit 1
