@@ -247,3 +247,16 @@ button,.button,input,select,textarea{min-width:0;max-width:100%}
   .ocr-crop-wrap,.ocr-crop-wrap img{max-height:48dvh}
   .ocr-actions>*{flex:1 1 140px}
 }
+
+/* Backup and security panel */
+.backup-panel{margin:1rem 0;padding:1rem;border:1px solid var(--border,#d8dee1);border-radius:1rem;background:var(--surface,#fff);min-width:0}
+.backup-panel h2{margin:0 0 .55rem;font-size:1.1rem}
+.backup-panel p{line-height:1.5;color:var(--muted,#5e676b)}
+.backup-actions{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:1rem}
+.backup-panel .user-create-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,16rem),1fr));gap:.75rem;align-items:end}
+.backup-panel .field{min-width:0}
+.backup-panel input{max-width:100%;min-width:0}
+.backup-panel .button{min-height:2.8rem}
+.backup-panel .list-row{min-width:0}
+.error-text{color:#a52626}
+@media(max-width:600px){.backup-panel{padding:.85rem}.backup-actions .button{width:100%}.backup-panel .user-create-row .button{width:100%}}
