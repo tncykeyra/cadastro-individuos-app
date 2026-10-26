@@ -24,7 +24,7 @@ test('destaca a foto de capa proporcional acima do nome na primeira folha', () =
   const pdf = buildRecordPdf({
     title: 'Ficha do veículo',
     sections: [{ title: 'Dados do veículo', rows: [{ label: 'Placa', value: 'ZZZ0000' }] }],
-    photos: [{ bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), width: 1200, height: 800, is_cover: true, label: 'Foto de capa' }]
+    photos: [{ bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), width: 1200, height: 800, is_cover: true, label: 'Foto de capa' }, { bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), width: 1200, height: 800, label: 'Fotografia duplicada' }]
   });
   const text = decode(pdf);
   assert.ok(text.includes('/Subtype /Image'));
@@ -46,8 +46,8 @@ test('mantém as fotos adicionais em páginas depois da capa', () => {
     sections: [{ title: 'Identificação', rows: [{ label: 'Nome', value: 'Pessoa de teste' }] }],
     photos: [
       { bytes: jpeg, width: 600, height: 800, is_cover: true, label: 'Foto de capa' },
-      { bytes: jpeg, width: 800, height: 600, label: 'Fotografia 2' },
-      { bytes: jpeg, width: 800, height: 600, label: 'Fotografia 3' }
+      { bytes: new Uint8Array([0xff, 0xd8, 0xff, 0x01]), width: 800, height: 600, label: 'Fotografia 2' },
+      { bytes: new Uint8Array([0xff, 0xd8, 0xff, 0x02]), width: 800, height: 600, label: 'Fotografia 3' }
     ]
   });
   const text = decode(pdf);
