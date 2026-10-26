@@ -67,13 +67,13 @@ function flattenOcrLines(blocks) {
 
 function regionalTargets(blocks) {
   const patterns = [
-    ['name', /\\b(?:NOME DO CONDUTOR|NOME COMPLETO|NOME E SOBRENOME|NOME)\\b/],
-    ['cpf', /\\b(?:4D\\s*)?CPF\\b/],
-    ['rg', /\\b(?:4C\\s*)?(?:RG|IDENTIDADE|DOC\\.?\\s*IDENTIDADE)\\b/],
-    ['birth', /\\b(?:3\\s*)?DATA(?:,?\\s*LOCAL)?(?:\\s*E\\s*UF)?\\s+DE NASCIMENTO\\b|\\bDATA DE NASCIMENTO\\b|\\bNASCIMENTO\\b/],
-    ['filiation', /\\b(?:FILIA[CÇ][AÃ]O|NOME DA M[AÃ]E)\\b/]
+    ['name', /\b(?:NOME DO CONDUTOR|NOME COMPLETO|NOME E SOBRENOME|NOME)\b/],
+    ['cpf', /\b(?:4D\s*)?CPF\b/],
+    ['rg', /\b(?:4C\s*)?(?:RG|IDENTIDADE|DOC\.?\s*IDENTIDADE)\b/],
+    ['birth', /\b(?:3\s*)?DATA(?:,?\s*LOCAL)?(?:\s*E\s*UF)?\s+DE NASCIMENTO\b|\bDATA DE NASCIMENTO\b|\bNASCIMENTO\b/],
+    ['filiation', /\b(?:FILIA[CÇ][AÃ]O|NOME DA M[AÃ]E)\b/]
   ];
-  const normalize = value => String(value || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toUpperCase();
+  const normalize = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
   const found = new Map();
   for (const line of flattenOcrLines(blocks)) {
     const text = normalize(line.text);
@@ -83,7 +83,7 @@ function regionalTargets(blocks) {
 }
 
 function recognitionScore(data) {
-  const text = String(data?.text || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toUpperCase();
+  const text = String(data?.text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
   const anchors = ['NOME', 'CPF', 'IDENTIDADE', 'NASCIMENTO', 'FILIACAO', 'VALIDADE', 'REGISTRO', 'CATEGORIA'];
   const hits = anchors.filter(anchor => text.includes(anchor)).length;
   return (Number(data?.confidence) || 0) + Math.min(hits, 6) * 1.5;
@@ -212,7 +212,7 @@ async function readOne(worker, blob, onProgress = () => {}, isCancelled = () => 
     } catch { /* releitura regional é complementar; a leitura geral continua disponível */ }
     finally { bitmap?.close?.(); }
   }
-  const text = [...new Set(regional)].concat(data.text || '').filter(Boolean).join('\\n\\n');
+  const text = [...new Set(regional)].concat(data.text || '').filter(Boolean).join('\n\n');
   return { text, confidence: Number(data.confidence) || 0, quality };
 }
 
