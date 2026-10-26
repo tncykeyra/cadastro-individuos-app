@@ -72,8 +72,8 @@ test('recognizes physical and digital CNH label variants with parentheses and no
     '4D CPF',
     '529.982.247-25',
     'FILIAÇÃO',
-    'NOME DE EXEMPLO UM',
-    'NOME DE EXEMPLO DOIS',
+    'MARIA EXEMPLO UM',
+    'JOSE EXEMPLO DOIS',
     '7 ASSINATURA DO PORTADOR',
     'ASSINATURA EXEMPLO'
   ].join('\n'), 'people', 55);
@@ -81,6 +81,6 @@ test('recognizes physical and digital CNH label variants with parentheses and no
   assert.equal(result.values.birthday, '1990-04-12');
   assert.equal(result.values.rg, '12.345.678 SSP SP');
   assert.equal(result.values.cpf_digits, '52998224725');
-  assert.equal(result.values.filiation, 'NOME DE EXEMPLO UM\nNOME DE EXEMPLO DOIS');
+  assert.equal(result.values.filiation, 'MARIA EXEMPLO UM\nJOSE EXEMPLO DOIS');
   assert.deepEqual(Object.keys(result.formValues).sort(), ['birthday', 'cpf_digits', 'filiation', 'full_name', 'rg']);
 });
