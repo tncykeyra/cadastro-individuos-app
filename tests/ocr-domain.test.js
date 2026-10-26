@@ -35,11 +35,11 @@ test('joins a CNH name across lines and recognizes 4C RG, 4D CPF and birth date'
     '1 e 2 NOME E SOBRENOME',
     'JOÃO CARLOS DA SILVA',
     'OLIVEIRA',
-    '3 DATA, LOCAL E UF DE NASCIMENTO',
+    '3 DATA E LOCAL DE NASCIMENTO',
     '03/08/1980 SÃO PAULO/SP',
-    '4C DOC. IDENTIDADE / ORG. EMISSOR / UF',
+    '4C DOC. IDENTIDADE/ORG. EMISSOR/UF',
     '12.345.678 SSP SP',
-    '4D CPF',
+    '4D - CPF',
     '529.982.247-25',
     'FILIAÇÃO',
     'ALEXANDRE DOS SANTOS',
@@ -97,4 +97,7 @@ test('preserves existing notes and appends or replaces filiation without duplica
   const updated = mergeFiliationIntoNotes(appended, 'MARIA DE SOUZA');
   assert.equal(updated, 'Anotação já existente\n\nFiliação:\nMARIA DE SOUZA');
   assert.equal(extractFiliationFromNotes(updated), 'MARIA DE SOUZA');
+  const withFollowingNote = appended + '\nCrimes\nFurto';
+  const replaced = mergeFiliationIntoNotes(withFollowingNote, 'MARIA DE SOUZA');
+  assert.equal(replaced, 'Anotação já existente\n\nCrimes\nFurto\n\nFiliação:\nMARIA DE SOUZA');
 });
