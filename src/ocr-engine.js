@@ -57,10 +57,163 @@ async function imageQualityWarnings(blob) {
   return warnings;
 }
 
-async function readOne(worker, blob) {
-  const { data } = await worker.recognize(blob, {}, { text: true });
+function flattenOcrLines(blocks) {
+  const lines = [];
+  for (const block of blocks || []) for (const paragraph of block.paragraphs || []) for (const line of paragraph.lines || []) {
+    if (line?.text && line?.bbox) lines.push({ text: String(line.text), bbox: line.bbox });
+  }
+  return lines;
+}
+
+function regionalTargets(blocks) {
+  const patterns = [
+    ['name', /\\b(?:NOME DO CONDUTOR|NOME COMPLETO|NOME E SOBRENOME|NOME)\\b/],
+    ['cpf', /\\b(?:4D\\s*)?CPF\\b/],
+    ['rg', /\\b(?:4C\\s*)?(?:RG|IDENTIDADE|DOC\\.?\\s*IDENTIDADE)\\b/],
+    ['birth', /\\b(?:3\\s*)?DATA(?:,?\\s*LOCAL)?(?:\\s*E\\s*UF)?\\s+DE NASCIMENTO\\b|\\bDATA DE NASCIMENTO\\b|\\bNASCIMENTO\\b/],
+    ['filiation', /\\b(?:FILIA[CÇ][AÃ]O|NOME DA M[AÃ]E)\\b/]
+  ];
+  const normalize = value => String(value || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toUpperCase();
+  const found = new Map();
+  for (const line of flattenOcrLines(blocks)) {
+    const text = normalize(line.text);
+    for (const [key, pattern] of patterns) if (!found.has(key) && pattern.test(text)) found.set(key, line.bbox);
+  }
+  return [...found.entries()];
+}
+
+function recognitionScore(data) {
+  const text = String(data?.text || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toUpperCase();
+  const anchors = ['NOME', 'CPF', 'IDENTIDADE', 'NASCIMENTO', 'FILIACAO', 'VALIDADE', 'REGISTRO', 'CATEGORIA'];
+  const hits = anchors.filter(anchor => text.includes(anchor)).length;
+  return (Number(data?.confidence) || 0) + Math.min(hits, 6) * 1.5;
+}
+
+async function enhancedContrastVariant(blob) {
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(blob, { imageOrientation: 'from-image' });
+  } catch {
+    try { bitmap = await createImageBitmap(blob); } catch { return null; }
+  }
+  try {
+    const longest = Math.max(bitmap.width, bitmap.height);
+    const scale = Math.min(1.65, 2400 / Math.max(1, longest));
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = width; canvas.height = height;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) return null;
+    context.drawImage(bitmap, 0, 0, width, height);
+    const image = context.getImageData(0, 0, width, height);
+    const pixels = image.data;
+    for (let index = 0; index < pixels.length; index += 4) {
+      const gray = pixels[index] * .299 + pixels[index + 1] * .587 + pixels[index + 2] * .114;
+      const adjusted = Math.max(0, Math.min(255, (gray - 124) * 1.18 + 134));
+      pixels[index] = pixels[index + 1] = pixels[index + 2] = adjusted;
+    }
+    context.putImageData(image, 0, 0);
+    const enhanced = await canvasBlob(canvas, 'image/jpeg');
+    canvas.width = 0; canvas.height = 0;
+    return enhanced;
+  } catch { return null; }
+  finally { bitmap?.close?.(); }
+}
+
+async function rotatedVariant(blob, quarterTurns) {
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(blob, { imageOrientation: 'from-image' });
+  } catch {
+    try { bitmap = await createImageBitmap(blob); } catch { return null; }
+  }
+  let canvas;
+  try {
+    const scale = Math.min(1, 2200 / Math.max(bitmap.width, bitmap.height));
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const swap = Math.abs(quarterTurns % 2) === 1;
+    canvas = document.createElement('canvas');
+    canvas.width = swap ? height : width;
+    canvas.height = swap ? width : height;
+    const context = canvas.getContext('2d', { alpha: false });
+    if (!context) return null;
+    context.translate(canvas.width / 2, canvas.height / 2);
+    context.rotate(quarterTurns * Math.PI / 2);
+    context.drawImage(bitmap, -width / 2, -height / 2, width, height);
+    return await canvasBlob(canvas, 'image/jpeg');
+  } catch { return null; }
+  finally {
+    bitmap?.close?.();
+    if (canvas) { canvas.width = 0; canvas.height = 0; }
+  }
+}
+
+async function readOne(worker, blob, onProgress = () => {}, isCancelled = () => false) {
   const quality = await imageQualityWarnings(blob);
-  return { text: data.text || '', confidence: Number(data.confidence) || 0, quality };
+  let recognized = await worker.recognize(blob, { rotateAuto: true }, { text: true, blocks: true });
+  let data = recognized.data;
+  let sourceBlob = blob;
+
+  if ((Number(data.confidence) || 0) < 68 && !isCancelled()) {
+    onProgress('Fazendo uma segunda leitura local com contraste ajustado…');
+    const enhanced = await enhancedContrastVariant(blob);
+    if (enhanced && !isCancelled()) {
+      const alternate = await worker.recognize(enhanced, { rotateAuto: true }, { text: true, blocks: true });
+      if (recognitionScore(alternate.data) > recognitionScore(data) + 1) {
+        data = alternate.data;
+        sourceBlob = enhanced;
+      }
+    }
+  }
+
+  if ((Number(data.confidence) || 0) < 60 && !isCancelled()) {
+    for (const quarterTurns of [1, 3]) {
+      if (isCancelled()) break;
+      onProgress('Conferindo a orientação da CNH…');
+      const rotated = await rotatedVariant(sourceBlob, quarterTurns);
+      if (!rotated || isCancelled()) continue;
+      const alternate = await worker.recognize(rotated, { rotateAuto: true }, { text: true, blocks: true });
+      if (recognitionScore(alternate.data) > recognitionScore(data) + 1.5) {
+        data = alternate.data;
+        sourceBlob = rotated;
+      }
+    }
+  }
+
+  const regional = [];
+  if ((Number(data.confidence) || 0) < 86 && !isCancelled()) {
+    let bitmap;
+    try {
+      bitmap = await createImageBitmap(sourceBlob, { imageOrientation: 'from-image' });
+    } catch {
+      try { bitmap = await createImageBitmap(sourceBlob); } catch { bitmap = null; }
+    }
+    try {
+      const targets = regionalTargets(data.blocks).slice(0, 5);
+      for (const [key, box] of targets) {
+        if (isCancelled()) break;
+        const height = Math.max(1, box.y1 - box.y0);
+        const top = Math.max(0, Math.floor(box.y0 - height));
+        const bottom = Math.min(bitmap.height, Math.ceil(box.y1 + Math.max(height * 8, bitmap.height * .05)));
+        const left = Math.max(0, Math.floor(box.x0 - bitmap.width * .015));
+        const width = Math.max(1, bitmap.width - left);
+        const regionHeight = Math.max(1, bottom - top);
+        if (width < 80 || regionHeight < 24) continue;
+        onProgress('Conferindo uma região do documento (' + key + ')…');
+        const result = await worker.recognize(sourceBlob, {
+          rotateAuto: true,
+          rectangle: { left, top, width, height: regionHeight },
+          tessedit_pageseg_mode: '6'
+        }, { text: true });
+        if (result.data?.text?.trim()) regional.push(result.data.text.trim());
+      }
+    } catch { /* releitura regional é complementar; a leitura geral continua disponível */ }
+    finally { bitmap?.close?.(); }
+  }
+  const text = [...new Set(regional)].concat(data.text || '').filter(Boolean).join('\\n\\n');
+  return { text, confidence: Number(data.confidence) || 0, quality };
 }
 
 export async function processOcrFiles(files, { onProgress = () => {}, isCancelled = () => false } = {}) {
@@ -89,7 +242,7 @@ export async function processOcrFiles(files, { onProgress = () => {}, isCancelle
       totalPages++;
       if (totalPages > 20) throw new Error('A leitura aceita até 20 imagens/páginas por vez. Separe o restante em outra leitura.');
       notify('Lendo imagem ' + (fileIndex + 1) + ' de ' + total + '…');
-      const result = await readOne(worker, file, percent => notify('Reconhecendo texto…', percent));
+      const result = await readOne(worker, file, (status, percent) => notify(status || 'Reconhecendo texto…', percent), isCancelled);
       pages.push({ name: file.name || ('Imagem ' + (fileIndex + 1)), page: 1, text: result.text, confidence: result.confidence, quality: result.quality, blob: file });
       completed++;
       notify('Imagem lida.', 100);
@@ -116,7 +269,7 @@ export async function processOcrFiles(files, { onProgress = () => {}, isCancelle
       await page.render({ canvasContext: canvas.getContext('2d', { alpha: false }), viewport }).promise;
       const blob = await canvasBlob(canvas);
       canvas.width = 0; canvas.height = 0;
-      const result = await readOne(worker, blob, percent => notify('Lendo página ' + pageNumber + ' de ' + pdf.numPages + '…', percent));
+      const result = await readOne(worker, blob, (status, percent) => notify(status || 'Lendo página ' + pageNumber + ' de ' + pdf.numPages + '…', percent), isCancelled);
       pages.push({ name: file.name, page: pageNumber, text: result.text, confidence: result.confidence, quality: result.quality, blob });
       page.cleanup();
       completed++;
