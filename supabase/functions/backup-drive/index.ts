@@ -258,9 +258,11 @@ async function worker(admin: ReturnType<typeof serviceClient>) {
         .eq('object_name', path).maybeSingle();
       let tag = previous?.content_tag || '';
       let driveId = '';
-      const unchanged = previous && Number(previous.source_size) === size &&
-        String(previous.source_etag || '') === String(object.object_etag || '') &&
-        (!lastModified && !previous.source_last_modified || Boolean(lastModified && previous.source_last_modified && Date.parse(String(previous.source_last_modified)) === Date.parse(lastModified));
+      const sameModified = (!lastModified && !previous?.source_last_modified) ||
+        Boolean(lastModified && previous?.source_last_modified &&
+          Date.parse(String(previous.source_last_modified)) === Date.parse(lastModified));
+      const unchanged = Boolean(previous && Number(previous.source_size) === size &&
+        String(previous.source_etag || '') === String(object.object_etag || '') && sameModified);
       if (unchanged) {
         tag = String(previous.content_tag); driveId = String(previous.drive_file_id);
       } else {
