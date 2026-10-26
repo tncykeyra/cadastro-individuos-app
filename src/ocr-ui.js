@@ -71,12 +71,12 @@ export function mountOcrAssistant({ form, kind, existingRecord = null, findMatch
     dialog.querySelector('[data-ocr-files]').onclick = () => fileInput.click();
   };
   const guidance = () => {
-    show(header + '<section class="ocr-guidance"><h3>📸 COMO FOTOGRAFAR O DOCUMENTO</h3><ul><li>Coloque o documento em uma superfície plana e bem iluminada.</li><li>Enquadre o documento inteiro, sem cortar as bordas; mantenha a câmera reta.</li><li>Evite sombras, reflexos e desfoque. Fotografe frente e verso quando necessário.</li><li>Para prints, prefira a captura original e não corte nomes, números ou datas.</li></ul><p><strong>⚠️ A leitura automática pode errar. Confira todas as informações antes de salvar.</strong></p><button type="button" class="button" data-ocr-understood>✓ Entendi, continuar</button></section></div>');
+    show(header + '<section class="ocr-guidance"><h3>📸 COMO FOTOGRAFAR O DOCUMENTO</h3><ul><li>Para CNH física, abra e apoie o documento em uma superfície plana, iluminada e sem reflexo.</li><li>Enquadre todas as bordas; deixe o documento ocupar boa parte da imagem, sem cortar cantos, e mantenha a câmera paralela.</li><li>Evite sombras, brilho do plástico e desfoque. Fotografe frente e verso quando necessário.</li><li>Para CNH digital, prefira o print original ou o arquivo/PDF. Evite fotografar outro celular: reflexos, perspectiva e padrões da tela reduzem a leitura.</li><li>Quando a leitura ficar incerta, o app poderá tentar alinhar a perspectiva localmente. A foto original será preservada para o recorte.</li></ul><p><strong>⚠️ Confira os campos reconhecidos antes de aplicar ao cadastro.</strong></p><button type="button" class="button" data-ocr-understood>✓ Entendi, continuar</button></section></div>');
     dialog.querySelector('[data-ocr-understood]').onclick = () => { close(); cameraInput.click(); };
   };
   const progressView = () => {
     running = true; cancelled = false; releaseUrls();
-    show(header + '<div class="ocr-progress"><strong data-ocr-status>Preparando leitura local…</strong><progress data-ocr-progress max="100" value="0"></progress><p class="muted">A imagem não é enviada ao banco nem a um serviço de IA. Na primeira leitura, o aparelho pode baixar os arquivos do mecanismo OCR.</p><button type="button" class="button secondary" data-ocr-cancel>Cancelar leitura</button></div></div>');
+    show(header + '<div class="ocr-progress"><strong data-ocr-status>Preparando leitura local…</strong><progress data-ocr-progress max="100" value="0"></progress><p class="muted">As imagens são processadas no aparelho e não são enviadas para OCR externo. Se a confiança estiver baixa, o app poderá baixar o OpenCV oficial para tentar corrigir a perspectiva localmente.</p><button type="button" class="button secondary" data-ocr-cancel>Cancelar leitura</button></div></div>');
     dialog.querySelector('[data-ocr-cancel]').onclick = () => { cancelled = true; void cancelOcrWorker(); close(); };
   };
   const runFiles = async selected => {
@@ -91,7 +91,7 @@ export function mountOcrAssistant({ form, kind, existingRecord = null, findMatch
         if (bar) bar.value = progress.percent;
       }});
       if (cancelled) return;
-      pages = result.pages; parsed = extractDocumentFields(result.text, kind, result.confidence); parsed.warnings.push(...result.quality);
+      pages = result.pages; parsed = extractDocumentFields(result.text, kind, result.confidence); parsed.warnings.push(...result.quality); const alignedPages = result.pages.filter(page => page.perspectiveCorrected).length; if (alignedPages) parsed.processingNote = 'A perspectiva foi alinhada localmente em ' + alignedPages + ' página(s). A imagem original foi mantida para o recorte.';
       running = false; selectedSource = 0; crop = null; reviewView();
     } catch (error) {
       running = false;
@@ -105,8 +105,9 @@ export function mountOcrAssistant({ form, kind, existingRecord = null, findMatch
   const reviewView = () => {
     cropMode = false; crop = null; releaseUrls();
     const detailRows = parsed.details.map(item => '<div class="ocr-field-row"><label><span>' + escapeHtml(item.label) + '</span>' + (item.key === 'filiation' ? '<textarea data-ocr-value="' + escapeHtml(item.key) + '" rows="3" maxlength="500">' + escapeHtml(item.value) + '</textarea>' : '<input type="text" data-ocr-value="' + escapeHtml(item.key) + '" value="' + escapeHtml(item.value) + '" maxlength="240">') + '</label>' + (item.supported ? '<label class="ocr-include"><input type="checkbox" data-ocr-include="' + escapeHtml(item.key) + '" checked> Aplicar</label>' : '<span class="ocr-not-saved">Campo reconhecido apenas para conferência</span>') + (item.warning ? '<small class="ocr-warning">' + escapeHtml(item.warning) + '</small>' : '') + '</div>').join('');
+    const processingNote = parsed.processingNote ? '<p class="ocr-processing-note">✓ ' + escapeHtml(parsed.processingNote) + '</p>' : '';
     const warnings = parsed.warnings.length ? '<div class="notice ocr-notice"><strong>Confira antes de continuar</strong><ul>' + parsed.warnings.map(value => '<li>' + escapeHtml(value) + '</li>').join('') + '</ul></div>' : '';
-    show(header + '<div class="ocr-result"><h3>📄 DOCUMENTO ANALISADO</h3><p><strong>Tipo identificado:</strong> ' + escapeHtml(parsed.type) + ' · <strong>Confiança média:</strong> ' + Math.round(parsed.confidence) + '%</p>' + warnings + '<div class="ocr-review-fields">' + (detailRows || '<p class="muted">Nenhuma informação compatível foi encontrada.</p>') + '</div>' + sourceMarkup() + '<div class="ocr-actions"><button type="button" class="button secondary" data-ocr-reread>🔄 Ler novamente</button><button type="button" class="button" data-ocr-confirm>✓ Confirmar informações</button></div><p class="muted" data-ocr-status role="status" aria-live="polite"></p></div></div>');
+    show(header + '<div class="ocr-result"><h3>📄 DOCUMENTO ANALISADO</h3><p><strong>Tipo identificado:</strong> ' + escapeHtml(parsed.type) + ' · <strong>Confiança média:</strong> ' + Math.round(parsed.confidence) + '%</p>' + processingNote + warnings + '<div class="ocr-review-fields">' + (detailRows || '<p class="muted">Nenhuma informação compatível foi encontrada.</p>') + '</div>' + sourceMarkup() + '<div class="ocr-actions"><button type="button" class="button secondary" data-ocr-reread>🔄 Ler novamente</button><button type="button" class="button" data-ocr-confirm>✓ Confirmar informações</button></div><p class="muted" data-ocr-status role="status" aria-live="polite"></p></div></div>');
     dialog.querySelector('[data-ocr-reread]').onclick = home;
     dialog.querySelector('[data-ocr-confirm]').onclick = () => void confirmResults();
     bindCrop();

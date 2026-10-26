@@ -1,6 +1,7 @@
 import { createWorker } from 'tesseract.js';
 import * as pdfjs from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import { correctDocumentPerspective } from './ocr-perspective.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 let workerPromise = null;
@@ -155,6 +156,7 @@ async function readOne(worker, blob, onProgress = () => {}, isCancelled = () => 
   let recognized = await worker.recognize(blob, { rotateAuto: true }, { text: true, blocks: true });
   let data = recognized.data;
   let sourceBlob = blob;
+  let perspectiveCorrected = false;
 
   if ((Number(data.confidence) || 0) < 68 && !isCancelled()) {
     onProgress('Fazendo uma segunda leitura local com contraste ajustado…');
@@ -166,6 +168,21 @@ async function readOne(worker, blob, onProgress = () => {}, isCancelled = () => 
         sourceBlob = enhanced;
       }
     }
+  }
+
+  if ((Number(data.confidence) || 0) < 72 && !isCancelled()) {
+    try {
+      onProgress('Tentando alinhar o documento no aparelho…');
+      const aligned = await correctDocumentPerspective(blob, { onProgress: status => onProgress(status) });
+      if (aligned?.blob && !isCancelled()) {
+        const alternate = await worker.recognize(aligned.blob, { rotateAuto: true }, { text: true, blocks: true });
+        if (recognitionScore(alternate.data) > recognitionScore(data) + 1) {
+          data = alternate.data;
+          sourceBlob = aligned.blob;
+          perspectiveCorrected = true;
+        }
+      }
+    } catch { /* alinhamento é opcional; a leitura da imagem original permanece */ }
   }
 
   if ((Number(data.confidence) || 0) < 60 && !isCancelled()) {
@@ -213,7 +230,7 @@ async function readOne(worker, blob, onProgress = () => {}, isCancelled = () => 
     finally { bitmap?.close?.(); }
   }
   const text = [...new Set(regional)].concat(data.text || '').filter(Boolean).join('\n\n');
-  return { text, confidence: Number(data.confidence) || 0, quality };
+  return { text, confidence: Number(data.confidence) || 0, quality, perspectiveCorrected };
 }
 
 export async function processOcrFiles(files, { onProgress = () => {}, isCancelled = () => false } = {}) {
@@ -243,7 +260,7 @@ export async function processOcrFiles(files, { onProgress = () => {}, isCancelle
       if (totalPages > 20) throw new Error('A leitura aceita até 20 imagens/páginas por vez. Separe o restante em outra leitura.');
       notify('Lendo imagem ' + (fileIndex + 1) + ' de ' + total + '…');
       const result = await readOne(worker, file, (status, percent) => notify(status || 'Reconhecendo texto…', percent), isCancelled);
-      pages.push({ name: file.name || ('Imagem ' + (fileIndex + 1)), page: 1, text: result.text, confidence: result.confidence, quality: result.quality, blob: file });
+      pages.push({ name: file.name || ('Imagem ' + (fileIndex + 1)), page: 1, text: result.text, confidence: result.confidence, quality: result.quality, perspectiveCorrected: result.perspectiveCorrected, blob: file });
       completed++;
       notify('Imagem lida.', 100);
       continue;
@@ -270,7 +287,7 @@ export async function processOcrFiles(files, { onProgress = () => {}, isCancelle
       const blob = await canvasBlob(canvas);
       canvas.width = 0; canvas.height = 0;
       const result = await readOne(worker, blob, (status, percent) => notify(status || 'Lendo página ' + pageNumber + ' de ' + pdf.numPages + '…', percent), isCancelled);
-      pages.push({ name: file.name, page: pageNumber, text: result.text, confidence: result.confidence, quality: result.quality, blob });
+      pages.push({ name: file.name, page: pageNumber, text: result.text, confidence: result.confidence, quality: result.quality, perspectiveCorrected: result.perspectiveCorrected, blob });
       page.cleanup();
       completed++;
     }
