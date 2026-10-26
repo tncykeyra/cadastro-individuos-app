@@ -125,7 +125,7 @@ async function encrypted(admin: ReturnType<typeof serviceClient>, bytes: Uint8Ar
   const raw = await ensureEncryptionKey(admin);
   const key = await crypto.subtle.importKey('raw', raw, { name: 'AES-GCM' }, false, ['encrypt']);
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const cipher = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: utf8('cadastro-criminal-backup-v1') }, key, bytes));
+  const cipher = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: utf8('cadastro-criminal-backup-v1') }, key, bytes.slice().buffer as ArrayBuffer));
   const version = utf8('CCBK1');
   const result = new Uint8Array(version.length + iv.length + cipher.length);
   result.set(version, 0); result.set(iv, version.length); result.set(cipher, version.length + iv.length);
@@ -137,7 +137,7 @@ async function contentTag(admin: ReturnType<typeof serviceClient>, bytes: Uint8A
   const key = await crypto.subtle.deriveKey(
     { name: 'HKDF', hash: 'SHA-256', salt: utf8('cadastro-criminal'), info: utf8('media-deduplication-v1') },
     material, { name: 'HMAC', hash: 'SHA-256', length: 256 }, false, ['sign']);
-  const signature = new Uint8Array(await crypto.subtle.sign('HMAC', key, bytes));
+  const signature = new Uint8Array(await crypto.subtle.sign('HMAC', key, bytes.slice().buffer as ArrayBuffer));
   return [...signature].map(byte => byte.toString(16).padStart(2, '0')).join('');
 }
 async function createRun(admin: ReturnType<typeof serviceClient>, createdBy: string | null, triggerType: 'manual' | 'scheduled') {
@@ -263,7 +263,7 @@ async function worker(admin: ReturnType<typeof serviceClient>) {
           Date.parse(String(previous.source_last_modified)) === Date.parse(lastModified));
       const unchanged = Boolean(previous && Number(previous.source_size) === size &&
         String(previous.source_etag || '') === String(object.object_etag || '') && sameModified);
-      if (unchanged) {
+      if (unchanged && previous) {
         tag = String(previous.content_tag); driveId = String(previous.drive_file_id);
       } else {
         const { data: file, error: downloadError } = await admin.storage.from(BUCKET).download(path);
