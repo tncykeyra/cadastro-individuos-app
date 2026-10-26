@@ -260,3 +260,6 @@ button,.button,input,select,textarea{min-width:0;max-width:100%}
 .backup-panel .list-row{min-width:0}
 .error-text{color:#a52626}
 @media(max-width:600px){.backup-panel{padding:.85rem}.backup-actions .button{width:100%}.backup-panel .user-create-row .button{width:100%}}
+
+.recovery-key-value{min-width:0}
+.recovery-key-value code{display:block;max-width:100%;padding:.8rem;border-radius:.65rem;background:#f1f4f5;color:#182126;font:600 .9rem/1.5 ui-monospace,monospace;overflow-wrap:anywhere;user-select:all}
