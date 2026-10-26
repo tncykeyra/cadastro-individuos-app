@@ -68,6 +68,9 @@ function flattenOcrLines(blocks) {
 
 function regionalTargets(blocks) {
   const patterns = [
+    ['plate', /\bPLACA\b/],
+    ['make_model', /\bMARCA\s*\/\s*MODELO\b|\bMARCA\s+E\s+MODELO\b/],
+    ['color', /\bCOR\b/],
     ['name', /\b(?:NOME DO CONDUTOR|NOME COMPLETO|NOME E SOBRENOME|NOME)\b/],
     ['cpf', /\b(?:4D\s*)?CPF\b/],
     ['rg', /\b(?:4C\s*)?(?:RG|IDENTIDADE|DOC\.?\s*IDENTIDADE)\b/],
@@ -85,9 +88,9 @@ function regionalTargets(blocks) {
 
 function recognitionScore(data) {
   const text = String(data?.text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
-  const anchors = ['NOME', 'CPF', 'IDENTIDADE', 'NASCIMENTO', 'FILIACAO', 'VALIDADE', 'REGISTRO', 'CATEGORIA'];
+  const anchors = ['NOME', 'CPF', 'IDENTIDADE', 'NASCIMENTO', 'FILIACAO', 'VALIDADE', 'REGISTRO', 'CATEGORIA', 'PLACA', 'MARCA', 'MODELO', 'COR'];
   const hits = anchors.filter(anchor => text.includes(anchor)).length;
-  return (Number(data?.confidence) || 0) + Math.min(hits, 6) * 1.5;
+  return (Number(data?.confidence) || 0) + Math.min(hits, 8) * 1.5;
 }
 
 async function enhancedContrastVariant(blob) {
