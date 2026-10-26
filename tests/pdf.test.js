@@ -68,3 +68,5 @@ test('pagina registros extensos em várias páginas', () => {
   const text = decode(buildRecordPdf({ title: 'Cadastro extenso', sections: [{ title: 'Dados', rows }] }));
   assert.match(text, /\/Count [2-9]/);
 });
+
+test('preserva uma foto por pessoa associada mesmo quando os bytes são iguais', () => { const jpeg = new Uint8Array([0xff,0xd8,0xff,0xd9]); const pdf=buildRecordPdf({title:'Ficha do veículo',photos:[{bytes:jpeg,width:32,height:32,association_photo:true,dedupe_group:'person:1',label:'Foto de Ana'},{bytes:jpeg,width:32,height:32,association_photo:true,dedupe_group:'person:2',label:'Foto de Bia'}]}); assert.equal(decode(pdf).match(/\/Subtype \/Image/g)?.length,2); assert.equal(pdf.previewPages[0].images.length,0); assert.equal(pdf.previewPages[1].images.length,2); assert.ok(pdf.previewPages[1].texts.some(item=>item.text==='Foto de Ana')); assert.ok(pdf.previewPages[1].texts.some(item=>item.text==='Foto de Bia')); });
