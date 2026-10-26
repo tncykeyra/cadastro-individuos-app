@@ -16,8 +16,9 @@ jobs:
           node-version: 22
       - name: Instalar dependências
         run: npm install --no-audit --no-fund
+      - name: Testar regras de pesquisa e placas
+        run: npm test
       - name: Conferir sintaxe JavaScript
-        run: node --check src/main.js && node --check sw.js
+        run: node --check src/main.js && node --check src/domain.js && node --check sw.js
       - name: Gerar aplicativo
         run: npm run build
-
