@@ -50,7 +50,7 @@ create index if not exists arrest_warrants_import_batch_idx
 create table if not exists public.arrest_warrant_matches (
   id uuid primary key default gen_random_uuid(),
   warrant_id uuid not null references public.arrest_warrants(id) on delete restrict,
-  person_id uuid not null references public.people(id) on delete restrict,
+  person_id uuid not null references public.people(id) on delete cascade,
   match_basis text not null check (match_basis in ('cpf_exact','name_birthdate','name_exact','manual_review')),
   confidence smallint not null check (confidence between 0 and 100),
   review_status text not null default 'candidate'
@@ -136,11 +136,20 @@ returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $$
+as $
 declare
   v_action text;
 begin
-  if tg_op = 'INSERT' then
+  if tg_op = 'DELETE' then
+    insert into public.arrest_warrant_events (warrant_id, actor_id, action, detail)
+    values (
+      old.warrant_id,
+      (select auth.uid()),
+      'match_removed_with_person',
+      jsonb_build_object('basis', old.match_basis, 'confidence', old.confidence, 'review_status', old.review_status, 'person_id', old.person_id)
+    );
+    return old;
+  elsif tg_op = 'INSERT' then
     v_action := 'match_candidate_created';
   elsif old.review_status is distinct from new.review_status then
     v_action := 'match_' || new.review_status;
@@ -157,7 +166,7 @@ begin
   );
   return new;
 end;
-$$;
+$;
 
 drop trigger if exists arrest_warrants_audit_trigger on public.arrest_warrants;
 create trigger arrest_warrants_audit_trigger
@@ -166,7 +175,7 @@ for each row execute function public.audit_arrest_warrant();
 
 drop trigger if exists arrest_warrant_matches_audit_trigger on public.arrest_warrant_matches;
 create trigger arrest_warrant_matches_audit_trigger
-after insert or update on public.arrest_warrant_matches
+after insert or update or delete on public.arrest_warrant_matches
 for each row execute function public.audit_arrest_warrant_match();
 
 create or replace function public.admin_suggest_arrest_warrant_matches(p_warrant_id uuid)
@@ -244,7 +253,7 @@ begin
   set review_status = p_decision,
       reviewed_by = (select auth.uid()),
       reviewed_at = now()
-  where id = p_match_id and review_status = 'candidate';
+  where id = p_match_id and review_status = 'candidate' and person_id is not null;
 
   get diagnostics v_rows = row_count;
   if v_rows = 0 then
@@ -373,7 +382,7 @@ using (
     public.can_use_app()
     and exists (
       select 1 from public.arrest_warrant_matches m
-      where m.warrant_id = arrest_warrants.id and m.review_status = 'confirmed'
+      where m.warrant_id = arrest_warrants.id and m.review_status = 'confirmed' and m.person_id is not null
     )
   )
 );
@@ -392,7 +401,7 @@ with check (public.is_admin());
 drop policy if exists arrest_warrant_matches_staff_read_confirmed on public.arrest_warrant_matches;
 create policy arrest_warrant_matches_staff_read_confirmed
 on public.arrest_warrant_matches for select to authenticated
-using (public.is_admin() or (public.can_use_app() and review_status = 'confirmed'));
+using (public.is_admin() or (public.can_use_app() and review_status = 'confirmed' and person_id is not null));
 
 drop policy if exists arrest_warrant_matches_admin_insert on public.arrest_warrant_matches;
 create policy arrest_warrant_matches_admin_insert
@@ -429,7 +438,7 @@ using (
     public.can_use_app()
     and exists (
       select 1 from public.arrest_warrant_matches m
-      where m.warrant_id = arrest_warrant_events.warrant_id and m.review_status = 'confirmed'
+      where m.warrant_id = arrest_warrant_events.warrant_id and m.review_status = 'confirmed' and m.person_id is not null
     )
   )
 );
@@ -482,8 +491,8 @@ using (bucket_id = 'warrant-documents' and public.is_admin());
 
 
 -- Restrict direct REST reads to fields needed by the reviewed staff workflow.
--- Source CPF, birth date, aliases, and family names remain in the database for admin-only matching,
--- and are never exposed as table columns to operators.
+-- CPF, birth date, aliases, and family names remain available to server-side matching,
+-- but are not exposed as selectable table columns to client applications.
 revoke select on table public.arrest_warrants from authenticated;
 grant select (
   id, import_batch_id, warrant_number, full_name, source_agency, source_kind,
