@@ -17,14 +17,14 @@ test('gera PDF A4 de um único cadastro sem dependências externas', () => {
   assert.ok(text.endsWith('%%EOF'));
   assert.equal(pdf.previewPages.length, 1);
   assert.ok(pdf.previewPages[0].texts.some(item => item.text === 'Ficha do indivíduo'));
-  assert.ok(pdf.previewPages[0].texts.some(item => item.text === 'Pessoa de teste' && item.size === 11.5 && item.x === 30));
+  assert.ok(pdf.previewPages[0].texts.some(item => item.text === 'Pessoa de teste' && item.size === 13 && item.x === 34));
 });
 
-test('inclui fotografia JPEG proporcional na ficha A4 sem usar URLs públicas', () => {
+test('destaca a foto de capa proporcional acima do nome na primeira folha', () => {
   const pdf = buildRecordPdf({
     title: 'Ficha do veículo',
     sections: [{ title: 'Dados do veículo', rows: [{ label: 'Placa', value: 'ZZZ0000' }] }],
-    photos: [{ bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), width: 1200, height: 800, label: 'Foto de capa' }]
+    photos: [{ bytes: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), width: 1200, height: 800, is_cover: true, label: 'Foto de capa' }]
   });
   const text = decode(pdf);
   assert.ok(text.includes('/Subtype /Image'));
@@ -32,9 +32,28 @@ test('inclui fotografia JPEG proporcional na ficha A4 sem usar URLs públicas', 
   assert.ok(text.includes('/Im1'));
   assert.ok(text.includes('/Count 1'));
   assert.equal(pdf.previewPages[0].images.length, 1);
-  assert.equal(pdf.previewPages[0].images[0].height, 104);
-  assert.ok(pdf.previewPages[0].texts.some(item => item.text === 'Foto de capa'));
+  assert.equal(pdf.previewPages[0].images[0].height, 250);
+  const title = pdf.previewPages[0].texts.find(item => item.text === 'Ficha do veículo');
+  assert.ok(title);
+  assert.ok(pdf.previewPages[0].images[0].y > title.y);
   assert.ok(text.endsWith('%%EOF'));
+});
+
+test('mantém as fotos adicionais em páginas depois da capa', () => {
+  const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xd9]);
+  const pdf = buildRecordPdf({
+    title: 'Ficha do indivíduo',
+    sections: [{ title: 'Identificação', rows: [{ label: 'Nome', value: 'Pessoa de teste' }] }],
+    photos: [
+      { bytes: jpeg, width: 600, height: 800, is_cover: true, label: 'Foto de capa' },
+      { bytes: jpeg, width: 800, height: 600, label: 'Fotografia 2' },
+      { bytes: jpeg, width: 800, height: 600, label: 'Fotografia 3' }
+    ]
+  });
+  const text = decode(pdf);
+  assert.ok(text.includes('/Count 2'));
+  assert.equal(pdf.previewPages[0].images.length, 1);
+  assert.equal(pdf.previewPages[1].images.length, 2);
 });
 
 test('pagina registros extensos em várias páginas', () => {
