@@ -189,7 +189,7 @@ function warrantOcrLines(text) {
 
 function warrantOcrHeader(line) {
   const value = normalizeWarrantText(line);
-  return /^(?:cpf|rg|registro geral|documento de identidade|identidade|data de nascimento|nascimento|endereco|residencia|logradouro|filiacao|informacoes processuais|dados processuais|numero do processo|processo|numero do mandado|mandado|orgao expedidor|situacao|observacoes|nome da mae|nome do pai|nome completo|nome do requerido|nome do procurado|requerido|procurado|indiciado|acusado)\b/.test(value);
+  return /^(?:cpf|rg|registro geral|documento de identidade|identidade|data de nascimento|nascimento|endereco|residencia|logradouro|filiacao|informacoes processuais|dados processuais|numero do processo|processo|numero do mandado|mandado|orgao expedidor|situacao|observacoes|nome da mae|nome do pai|nome completo|nome da pessoa|nome do requerido|nome do procurado|requerido|procurado|indiciado|acusado)\b/.test(value);
 }
 
 function warrantOcrValueAfter(line, labelPattern) {
@@ -240,8 +240,7 @@ function warrantOcrBlock(lines, labelPattern, { maxLines = 16, maxLength = 4000 
   return '';
 }
 
-function warrantOcrName(lines, fallback) {
-  const labelPattern = /(?:em desfavor de|em face de|nome do condutor|nome completo|nome do requerido|nome do procurado|nome do acusado|nome(?!\s+(?:da\s+m[aã]e|do\s+pai))|requerido(?:\(a\))?|procurado(?:\(a\))?|indiciado(?:\(a\))?|acusado(?:\(a\))?)\s*[:\-]?\s*/i;
+function warrantOcrNameFromLabel(lines, labelPattern) {
   for (let index = 0; index < lines.length; index++) {
     const match = lines[index].match(labelPattern);
     if (!match) continue;
@@ -257,7 +256,15 @@ function warrantOcrName(lines, fallback) {
     const value = cleanField(parts.join(' ').replace(/\s+/g, ' '), 180);
     if (value.length >= 3) return value;
   }
-  return fallback || '';
+  return '';
+}
+
+function warrantOcrName(lines, fallback) {
+  const explicit = warrantOcrNameFromLabel(lines, /nome\s+da\s+pessoa\s*[:\-]?\s*/i);
+  if (explicit) return explicit;
+
+  const labelPattern = /(?:em desfavor de|em face de|nome do condutor|nome completo|nome do requerido|nome do procurado|nome do acusado|nome(?!\s+(?:da\s+m[aã]e|do\s+pai))|requerido(?:\(a\))?|procurado(?:\(a\))?|indiciado(?:\(a\))?|acusado(?:\(a\))?)\s*[:\-]?\s*/i;
+  return warrantOcrNameFromLabel(lines, labelPattern) || fallback || '';
 }
 
 /** Extrai campos para conferência local do PDF; nada é salvo pelo parser. */
@@ -266,7 +273,7 @@ export function extractWarrantPersonSuggestions(text) {
   const lines = warrantOcrLines(source);
   const base = extractWarrantSuggestions(source);
   const rg = warrantOcrField(lines, /(?:\bRG\b|registro geral|documento de identidade|identidade)\s*/i, { maxLines: 1, maxLength: 100 });
-  const address_primary = warrantOcrField(lines, /(?:endere[cç]o(?:\s+residencial)?|resid[eê]ncia|logradouro)\s*/i, { maxLines: 3, maxLength: 1000 });
+  const address_primary = warrantOcrField(lines, /(?:endere[cç]o(?:\s*\(\s*s\s*\)|s)?(?:\s+residencial)?|resid[eê]ncia|logradouro)\s*/i, { maxLines: 3, maxLength: 1000 });
   const filiation = warrantOcrBlock(lines, /filia[cç][aã]o\s*[:\-]?\s*/i, { maxLines: 8, maxLength: 2000 });
   const process_information = warrantOcrBlock(lines, /(?:informa[cç][oõ]es|dados)\s+processuais\s*[:\-]?\s*/i, { maxLines: 20, maxLength: 12000 });
   const processMatch = source.match(/(?:n[uú]mero\s+do\s+processo|processo\s*(?:n[º°.]|n[uú]mero|#))\s*[:#\-]?\s*([0-9][0-9./-]{5,50})/i)
