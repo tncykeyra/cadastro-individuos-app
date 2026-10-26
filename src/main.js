@@ -224,7 +224,7 @@ function showWarrantDeleteDialog(warrantId){
 async function submitWarrantDelete(event){
   event.preventDefault();
   if(!isAdmin())throw new Error('Apenas administradores podem excluir mandados.');
-  const form=event.currentTarget,id=form.dataset.warrantId,submit=event.submitter;
+  const form=event.target,id=form.dataset.warrantId,submit=event.submitter;
   if(submit)submit.disabled=true;
   try{
     const {data,error}=await state.client.rpc('admin_delete_arrest_warrant',{p_warrant_id:id});
@@ -247,7 +247,7 @@ async function submitWarrantDelete(event){
 async function saveWarrantEdit(event){
   event.preventDefault();
   if(!isAdmin())throw new Error('Apenas administradores podem editar mandados.');
-  const form=event.currentTarget,id=form.dataset.warrantId,values=Object.fromEntries(new FormData(form).entries());
+  const form=event.target,id=form.dataset.warrantId,values=Object.fromEntries(new FormData(form).entries());
   const warrant_number=String(values.warrant_number||'').trim().toLocaleUpperCase('pt-BR');
   const full_name=String(values.full_name||'').replace(/\s+/g,' ').trim();
   const cpf=String(values.cpf||'').replace(/\D/g,'');
@@ -330,7 +330,7 @@ async function saveWarrantRecord(values,file=null){
 }
 async function saveWarrantManual(event){
   event.preventDefault();if(!isAdmin())throw new Error('Apenas administradores podem incluir mandados.');
-  const form=event.currentTarget,values=Object.fromEntries(new FormData(form).entries()),file=form.querySelector('input[name="document"]')?.files?.[0]||null;
+  const form=event.target,values=Object.fromEntries(new FormData(form).entries()),file=form.querySelector('input[name="document"]')?.files?.[0]||null;
   const result=await saveWarrantRecord(values,file);
   form.reset();warrantSearchResults.clear();toast('Mandado salvo.'+result.reviewMessage+result.documentWarning);await renderWarrants();
 }
@@ -388,13 +388,13 @@ async function saveWarrantPdfBatch(){
   toast(saved+' mandado(s) salvo(s).'+(reviewCount?' Confira as revisões administrativas pendentes na lista.':'')+(failed?' '+failed+' arquivo(s) permaneceram na fila para correção.':''));
 }
 async function submitWarrantReport(event){
-  event.preventDefault();const form=event.currentTarget,warrantId=form.dataset.warrantId,values=Object.fromEntries(new FormData(form).entries());
+  event.preventDefault();const form=event.target,warrantId=form.dataset.warrantId,values=Object.fromEntries(new FormData(form).entries());
   const {error}=await state.client.rpc('report_arrest_warrant_discharge',{p_warrant_id:warrantId,p_discharge_date:values.discharge_date,p_reference:String(values.reference||'').trim(),p_notes:String(values.notes||'').trim()});
   if(error)throw error;$('#recordDialog').close();toast('Baixa informada e enviada para revisão administrativa.');await renderWarrants();
 }
 async function submitWarrantConfirmation(event){
   event.preventDefault();if(!isAdmin())throw new Error('Apenas administradores podem confirmar a baixa.');
-  const form=event.currentTarget,warrantId=form.dataset.warrantId,values=Object.fromEntries(new FormData(form).entries());
+  const form=event.target,warrantId=form.dataset.warrantId,values=Object.fromEntries(new FormData(form).entries());
   const {error}=await state.client.rpc('admin_confirm_arrest_warrant_discharge',{p_warrant_id:warrantId,p_confirmed_date:values.confirmed_date,p_reference:String(values.reference||'').trim(),p_notes:String(values.notes||'').trim()});
   if(error)throw error;$('#recordDialog').close();toast('Baixa confirmada. O aviso ativo foi encerrado.');await renderWarrants();
 }
@@ -470,7 +470,7 @@ async function loadPhotoSearchCovers(records){
   if(error)throw error;
   const covers=new Map();
   for(const photo of data||[]){const current=covers.get(photo.entity_id);if(!current||photo.is_cover)covers.set(photo.entity_id,photo)}
-  await Promise.all(records.map(async record=>{const photo=covers.get(record.id),path=photo?.photo_path||record.photo_path;record.photo_url=path?await galleryPhotoUrl(path):'';record.photo_position=photo?.crop_position||record.photo_position||'50% 50%'}));
+  await Promise.all(records.map(async record=>{const photo=covers.get(record.id),path=photo?.photo_path||record.photo_path;record.photo_url=path?await galleryPhotoUrl(path):'';record.photo_position=photo?.crop_position||'50% 20%'}));
 }
 async function renderPhotoSearch(){
   const search=state.photoSearch,requestId=++search.requestId;search.loading=true;search.error='';frame(photoSearchContent());
@@ -482,7 +482,7 @@ async function renderPhotoSearch(){
       if(error)throw error;if(search!==state.photoSearch||requestId!==search.requestId)return;all=data||[];total=all.length;
     }else{
       const start=search.page*search.pageSize;
-      const {data,error,count}=await state.client.from('people').select('id,full_name,cpf_digits,rg,photo_path,photo_position',{count:'exact'}).is('archived_at',null).order('full_name').order('id').range(start,start+search.pageSize-1);
+      const {data,error,count}=await state.client.from('people').select('id,full_name,cpf_digits,rg,photo_path',{count:'exact'}).is('archived_at',null).order('full_name').order('id').range(start,start+search.pageSize-1);
       if(error)throw error;if(search!==state.photoSearch||requestId!==search.requestId)return;all=data||[];total=count||0;
     }
     search.total=total;const start=search.page*search.pageSize;search.records=search.query.trim()?all.slice(start,start+search.pageSize):all;
