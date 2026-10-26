@@ -71,8 +71,10 @@ async function loadOpenCv(timeoutMs = 9000) {
         if (settled) return;
         settled = true;
         cleanup();
-        if (error) reject(error);
-        else resolve(value);
+        if (error) {
+          if (script?.dataset?.ocrOpencv && !window.cv?.Mat) script.remove();
+          reject(error);
+        } else resolve(value);
       };
       const inspect = () => {
         const current = window.cv;
