@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { isUsefulSearch, normalizePlate, isValidPlate, dedupePhotoSources } from './domain.js';
 import { buildRecordPdf } from './pdf.js';
 import { isValidCpf, mergeFiliationIntoNotes } from './ocr-domain.js';
-import { parseWarrantCsv, extractWarrantSuggestions, extractWarrantPersonSuggestions, formatWarrantOcrProgress } from './warrants.js';
+import { parseWarrantCsv, normalizeWarrantProcessNumber, extractWarrantSuggestions, extractWarrantPersonSuggestions, formatWarrantOcrProgress } from './warrants.js';
 import { processOcrFiles } from './ocr-engine.js';
 
 const config={url:import.meta.env.VITE_SUPABASE_URL,key:import.meta.env.VITE_SUPABASE_ANON_KEY};
@@ -94,7 +94,7 @@ function warrantRecordMarkup(warrant,admin,docsById,linkedPeople=[]){
   const details=admin?'<details class="warrant-person-search"><summary>Vincular a um cadastro para revisão</summary><div class="warrant-search-row"><input type="search" maxlength="120" data-warrant-search-input="'+warrant.id+'" value="'+esc(warrant.full_name||'')+'" placeholder="Pesquisar nome do indivíduo"><button class="button secondary small" type="button" data-warrant-search="'+warrant.id+'">Pesquisar</button></div><div class="warrant-search-results">'+(warrantSearchResults.has(warrant.id)?warrantSearchResults.get(warrant.id).map(person=>'<div class="warrant-search-result"><span><strong>'+esc(person.full_name)+'</strong><small>'+esc(person.birthday?'Nascimento: '+warrantDate(person.birthday):'Data de nascimento não cadastrada')+'</small></span><button type="button" class="button small" data-warrant-link="'+warrant.id+'" data-warrant-person="'+person.id+'">Adicionar para revisão</button></div>').join(''):'')+'</div><p class="warrant-caution">A associação só gera aviso aos operadores depois da confirmação de um administrador.</p></details>':'';
   const statusAction=reported?(admin?'<button class="button small" type="button" data-warrant-confirm-discharge="'+warrant.id+'" data-warrant-confirm-date="'+esc(warrant.discharge_reported_date||'')+'" data-warrant-confirm-reference="'+esc(warrant.discharge_reference||'')+'">Revisar baixa</button>':'<span class="warrant-meta">Referência informada: '+esc(warrant.discharge_reference||'—')+'</span>'):warrant.status==='pending'?'<button class="button secondary small" type="button" data-warrant-discharge="'+warrant.id+'">Mandado baixado</button>':'<span class="warrant-meta">Registro '+esc(warrantStatusLabel(warrant.status).toLocaleLowerCase('pt-BR'))+'</span>';
   const pdf=docs.length?'<button class="button secondary small" type="button" data-warrant-doc="'+docs[0].id+'" data-warrant-path="'+esc(docs[0].storage_path)+'">Ver PDF anexado</button>':'';
-  const edit=admin?'<button class="button secondary small" type="button" data-warrant-edit="'+esc(warrant.id)+'">Editar informações</button>':'';
+  const edit=admin?'<button class="button secondary small" type="button" data-warrant-edit="'+esc(warrant.id)+'">Editar informações</button><button class="button danger small" type="button" data-warrant-delete="'+esc(warrant.id)+'">Excluir</button>':'';
   const linked=linkedPeople.length?'<div class="warrant-linked-people">'+linkedPeople.map(person=>'<button type="button" class="warrant-linked-person" data-open-person="'+esc(person.id)+'"><span class="warrant-linked-photo"><img data-warrant-person-photo="'+esc(person.id)+'" alt="Foto de '+esc(person.full_name)+'" hidden><span class="warrant-linked-photo-placeholder" aria-hidden="true">👤</span></span><span><small>Indivíduo vinculado</small><strong>'+esc(person.full_name)+'</strong><span class="warrant-linked-open">Abrir cadastro →</span></span></button>').join('')+'</div>':'';
   return '<article class="warrant-record"><div class="warrant-record-top"><div><span class="warrant-source">'+esc(warrant.source_agency||'BNMP')+'</span><h3>'+esc(warrant.full_name)+'</h3><p class="warrant-meta">Mandado '+esc(warrant.warrant_number)+(warrant.source_reference?' · '+esc(warrant.source_reference):'')+'</p></div>'+status+'</div>'+linked+'<div class="warrant-record-actions">'+edit+statusAction+pdf+'</div>'+details+'</article>';
 }
@@ -138,7 +138,7 @@ async function renderWarrants(){
   const missingProposalWarrantIds=[...new Set(proposals.map(p=>p.warrant_id).filter(id=>!proposalWarrantMap.has(id)))];
   if(missingProposalWarrantIds.length){const {data,error}=await state.client.from('arrest_warrants').select('id,warrant_number,source_agency,status').in('id',missingProposalWarrantIds);if(error)throw error;for(const warrant of data||[])proposalWarrantMap.set(warrant.id,warrant)}
   const proposalHtml=admin?proposals.map(proposal=>'<article class="warrant-proposal-card"><div class="warrant-proposal-heading"><span class="warrant-review-tag">Novo cadastro aguardando aprovação</span><small>Mandado '+esc(proposalWarrantMap.get(proposal.warrant_id)?.warrant_number||'')+' · '+esc(proposalWarrantMap.get(proposal.warrant_id)?.source_agency||'BNMP')+'</small></div><h3>'+esc(proposal.full_name)+'</h3><dl class="warrant-proposal-fields">'+(proposal.cpf_digits?'<div><dt>CPF</dt><dd>'+esc(proposal.cpf_digits)+'</dd></div>':'')+(proposal.rg?'<div><dt>RG</dt><dd>'+esc(proposal.rg)+'</dd></div>':'')+(proposal.birth_date?'<div><dt>Nascimento</dt><dd>'+esc(warrantDate(proposal.birth_date))+'</dd></div>':'')+(proposal.address_primary?'<div><dt>Endereço</dt><dd>'+esc(proposal.address_primary)+'</dd></div>':'')+(proposal.filiation?'<div><dt>Filiação</dt><dd>'+esc(proposal.filiation).replace(/\n/g,'<br>')+'</dd></div>':'')+(proposal.process_information?'<div><dt>Informações processuais</dt><dd>'+esc(proposal.process_information).replace(/\n/g,'<br>')+'</dd></div>':'')+'</dl><p class="warrant-caution">Confira os dados e o documento anexado. Aprovar criará o indivíduo e vinculará o mandado; rejeitar mantém o mandado sem novo cadastro.</p><div class="warrant-actions"><button class="button" type="button" data-warrant-proposal-approve="'+esc(proposal.id)+'" data-proposal-name="'+esc(proposal.full_name)+'">Aprovar e criar indivíduo</button><button class="button secondary" type="button" data-warrant-proposal-reject="'+esc(proposal.id)+'">Rejeitar proposta</button></div></article>').join(''):'';
-  const importPreview=warrantImportPreview?'<div class="warrant-import-preview"><strong>Planilha pronta para conferência</strong><p>'+warrantImportPreview.parsed.records.length+' registros pendentes · '+(warrantImportPreview.parsed.hasCpfColumn?'coluna CPF identificada':'a planilha não contém coluna CPF')+' · '+warrantImportPreview.parsed.duplicateRows+' linhas repetidas removidas · '+warrantImportPreview.parsed.skippedNotPending+' fora da situação pendente · '+warrantImportPreview.parsed.invalidRows.length+' linhas com dados incompletos ou data inválida · '+warrantImportPreview.parsed.invalidCpfRows+' CPFs inválidos ignorados.</p>'+(warrantImportPreview.parsed.statusColumnPresent?'':'<label class="warrant-import-confirm"><input type="checkbox" data-warrant-confirm-all-pending> Confirmo que todos os registros desta planilha estão pendentes.</label>')+'<p>Os nomes só serão associados a indivíduos como candidatos para revisão. Nenhum alerta será mostrado aos operadores antes da confirmação administrativa.</p><div class="warrant-actions"><button class="button" type="button" data-warrant-import>Importar lista</button><button class="button secondary" type="button" data-warrant-cancel-import>Cancelar</button></div></div>':'';
+  const importPreview=warrantImportPreview?'<div class="warrant-import-preview"><strong>Planilha pronta para conferência</strong><p>'+warrantImportPreview.parsed.records.length+' registros pendentes · '+(warrantImportPreview.parsed.hasCpfColumn?'coluna CPF identificada':'a planilha não contém coluna CPF')+' · '+warrantImportPreview.parsed.duplicateRows+' linhas repetidas removidas ('+warrantImportPreview.parsed.duplicateProcessRows+' por processo) · '+warrantImportPreview.parsed.skippedNotPending+' fora da situação pendente · '+warrantImportPreview.parsed.invalidRows.length+' linhas com dados incompletos ou data inválida · '+warrantImportPreview.parsed.invalidCpfRows+' CPFs inválidos ignorados.</p>'+(warrantImportPreview.parsed.statusColumnPresent?'':'<label class="warrant-import-confirm"><input type="checkbox" data-warrant-confirm-all-pending> Confirmo que todos os registros desta planilha estão pendentes.</label>')+'<p>Os nomes só serão associados a indivíduos como candidatos para revisão. Nenhum alerta será mostrado aos operadores antes da confirmação administrativa.</p><div class="warrant-actions"><button class="button" type="button" data-warrant-import>Importar lista</button><button class="button secondary" type="button" data-warrant-cancel-import>Cancelar</button></div></div>':'';
   const toolsHtml=admin?'<section class="warrant-admin-tools"><div class="warrant-tool-card"><h2>Importar planilha de mandados</h2><p>Selecione CSV. O arquivo é lido no navegador; os registros são gravados de forma privada no Supabase e os possíveis nomes ficam aguardando revisão.</p><label class="button secondary warrant-file-label">Selecionar planilha CSV<input type="file" accept=".csv,text/csv" data-warrant-csv hidden></label>'+importPreview+'</div><div class="warrant-tool-card warrant-pdf-batch-tool"><h2>Importar vários mandados em PDF</h2><p>Selecione até 10 peças (máximo de 40 MB no total). Os PDFs são lidos localmente e cada mandado fica em uma ficha para conferência antes do envio.</p><label class="button secondary warrant-file-label">Selecionar PDFs<input type="file" accept="application/pdf,.pdf" data-warrant-pdf-batch multiple hidden></label></div><details class="warrant-tool-card warrant-manual-tool"><summary><strong>Novo mandado individual</strong><span>Adicionar um registro e anexar a peça em PDF; os campos serão sugeridos localmente para conferência.</span></summary><form id="warrantManualForm" class="warrant-form"><div class="warrant-form-grid"><label>Número do mandado<input name="warrant_number" required maxlength="120" autocomplete="off"></label><label>Nome completo<input name="full_name" required maxlength="180" autocomplete="off"></label><label>CPF (opcional)<input name="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00"></label><label>RG (opcional)<input name="person_rg" maxlength="100" autocomplete="off"></label><label>Data de nascimento (opcional)<input name="birth_date" type="date"></label><label>Endereço (opcional)<input name="person_address_primary" maxlength="1000" autocomplete="street-address"></label><label>Órgão emissor<input name="source_agency" value="BNMP" maxlength="140"></label><label>Processo/referência<input name="source_reference" maxlength="200"></label><label class="warrant-file-field">Peça em PDF (opcional)<input id="warrantManualPdf" name="document" type="file" accept="application/pdf,.pdf"></label><label class="warrant-full-field">Filiação<textarea name="person_filiation" rows="3" maxlength="2000"></textarea></label><label class="warrant-full-field">Informações processuais<textarea name="person_process_information" rows="4" maxlength="12000"></textarea></label></div><div class="warrant-actions"><button class="button secondary" type="button" data-warrant-read-pdf>Preencher sugestões pelo PDF</button><button class="button" type="submit">Salvar mandado</button></div><p class="warrant-caution" id="warrantPdfOcrStatus" role="status" aria-live="polite">A leitura é local. Confira cada campo antes de salvar; um novo indivíduo ficará aguardando aprovação.</p></form></details>'+warrantPdfBatchMarkup()+(candidateHtml?'<section class="warrant-review-section"><div class="warrant-section-title"><div><h2>Correspondências para revisar</h2><p>'+matches.length+' sugestão(ões); nenhuma fica visível aos operadores antes da confirmação.</p></div></div><div class="warrant-review-list">'+candidateHtml+'</div></section>':'<div class="warrant-empty-review">Não há correspondências aguardando revisão.</div>')+(proposalHtml?'<section class="warrant-review-section"><div class="warrant-section-title"><div><h2>Indivíduos novos para aprovação</h2><p>'+proposals.length+' proposta(s) aguardando decisão administrativa.</p></div></div><div class="warrant-review-list">'+proposalHtml+'</div></section>':'')+'</section>':'';
   const list=rows.length?'<div class="warrant-record-list">'+rows.map(w=>warrantRecordMarkup(w,admin,docsById,linkedPeopleByWarrant.get(w.id)||[])).join('')+'</div>':'<div class="empty">'+(admin?'Nenhum mandado cadastrado.':'Não há mandados revisados vinculados a este perfil.')+'</div>';
   frame('<section class="page-section warrants-page"><header class="warrant-page-header"><div><p class="eyebrow">CADASTRO CRIMINAL</p><h1>Mandados de prisão</h1><p class="muted">'+(admin?'Consulte todos os mandados e revise as associações pendentes.':'Consulte os mandados vinculados a indivíduos revisados pela administração.')+'</p></div>'+(admin?'<span class="warrant-admin-pill">Área administrativa</span>':'')+'</header>'+toolsHtml+'<section class="warrant-active-section"><div class="warrant-section-title"><div><h2>'+(admin?'Todos os mandados':'Mandados vinculados')+'</h2><p>'+rows.length+' registro(s)</p></div></div>'+list+'</section></section>');
@@ -150,18 +150,48 @@ async function warrantReadCsv(file){
   if(replacements>1){try{text=new TextDecoder('windows-1252').decode(await file.arrayBuffer())}catch{}}
   return parseWarrantCsv(text);
 }
+async function findExistingWarrantProcessNumbers(records){
+  const processNumbers=[...new Set((records||[]).map(record=>normalizeWarrantProcessNumber(record.source_reference)).filter(Boolean))];
+  const existing=new Set();
+  for(let offset=0;offset<processNumbers.length;offset+=100){
+    const chunk=processNumbers.slice(offset,offset+100);
+    const {data,error}=await state.client.from('arrest_warrants').select('process_number_digits').in('process_number_digits',chunk);
+    if(error)throw error;
+    for(const row of data||[])if(row.process_number_digits)existing.add(row.process_number_digits);
+  }
+  return existing;
+}
 async function warrantImportCsv(){
   if(!isAdmin()||!warrantImportPreview)throw new Error('Selecione uma planilha antes de importar.');
   const parsed=warrantImportPreview.parsed;if(!parsed.statusColumnPresent&&!document.querySelector('[data-warrant-confirm-all-pending]')?.checked)throw new Error('A planilha não tem coluna de situação. Confirme que todos os registros estão pendentes para importar.');if(!parsed.records.length)throw new Error('Não há registros pendentes válidos para importar.');
-  const userId=state.session.user.id,fileName=warrantImportPreview.fileName.slice(0,180);
-  const {data:batch,error}=await state.client.from('arrest_warrant_import_batches').insert({source_file_name:fileName,source_type:'csv',records_total:parsed.records.length,created_by:userId}).select('id').single();
-  if(error)throw error;let insertedIds=[],insertedCount=0;
-  for(let i=0;i<parsed.records.length;i+=50){
-    const payload=parsed.records.slice(i,i+50).map(row=>({...row,import_batch_id:batch.id,created_by:userId,updated_by:userId}));
-    const {data,error:insertError}=await state.client.from('arrest_warrants').upsert(payload,{onConflict:'source_agency,warrant_number',ignoreDuplicates:true}).select('id');
-    if(insertError)throw insertError;const ids=(data||[]).map(row=>row.id);insertedIds.push(...ids);insertedCount+=ids.length;
+  const existingProcessNumbers=await findExistingWarrantProcessNumbers(parsed.records);
+  const records=[];let processDuplicates=0;
+  for(const row of parsed.records){
+    const processNumber=normalizeWarrantProcessNumber(row.source_reference);
+    if(processNumber&&existingProcessNumbers.has(processNumber)){processDuplicates++;continue}
+    if(processNumber)existingProcessNumbers.add(processNumber);
+    records.push(row);
   }
-  const ignored=parsed.duplicateRows+parsed.records.length-insertedCount;
+  const duplicateProcessCount=(parsed.duplicateProcessRows||0)+processDuplicates;
+  if(!records.length){
+    warrantImportPreview=null;
+    toast('Nenhum mandado foi incluído.'+(duplicateProcessCount?' '+duplicateProcessCount+' repetido(s) pelo número do processo foram ignorados.':' Todos os registros já constam no sistema.'));
+    await renderWarrants();
+    return;
+  }
+  const userId=state.session.user.id,fileName=warrantImportPreview.fileName.slice(0,180);
+  const {data:batch,error}=await state.client.from('arrest_warrant_import_batches').insert({source_file_name:fileName,source_type:'csv',records_total:parsed.records.length+parsed.duplicateRows,created_by:userId}).select('id').single();
+  if(error)throw error;let insertedIds=[],insertedCount=0;
+  for(let i=0;i<records.length;i+=50){
+    const payload=records.slice(i,i+50).map(row=>({...row,import_batch_id:batch.id,created_by:userId,updated_by:userId}));
+    const {data,error:insertError}=await state.client.from('arrest_warrants').upsert(payload,{onConflict:'source_agency,warrant_number',ignoreDuplicates:true}).select('id');
+    if(insertError){
+      if(insertError.code==='23505'&&String(insertError.message||'').includes('process_number_digits'))throw new Error('Outro administrador acabou de incluir um mandado deste processo. Atualize a lista e tente novamente.');
+      throw insertError;
+    }
+    const ids=(data||[]).map(row=>row.id);insertedIds.push(...ids);insertedCount+=ids.length;
+  }
+  const ignored=parsed.duplicateRows+processDuplicates+records.length-insertedCount;
   const {error:updateError}=await state.client.from('arrest_warrant_import_batches').update({records_inserted:insertedCount,records_ignored:ignored}).eq('id',batch.id);
   if(updateError)throw updateError;
   let suggestionErrors=0;
@@ -170,7 +200,7 @@ async function warrantImportCsv(){
     suggestionErrors+=results.filter(result=>result.error).length;
   }
   warrantImportPreview=null;warrantSearchResults.clear();
-  toast(insertedCount+' mandado(s) importado(s). '+(suggestionErrors?'Algumas sugestões precisam ser refeitas pela revisão administrativa.':'As correspondências possíveis aguardam revisão administrativa.'));
+  toast(insertedCount+' mandado(s) importado(s). '+(duplicateProcessCount?duplicateProcessCount+' repetido(s) pelo número do processo não foram adicionados. ':'')+(suggestionErrors?'Algumas sugestões precisam ser refeitas pela revisão administrativa.':'As correspondências possíveis aguardam revisão administrativa.'));
   await renderWarrants();
 }
 function showWarrantReportDialog(warrantId){
@@ -183,6 +213,37 @@ function showWarrantEditDialog(warrantId){
   if(!warrant)throw new Error('Não foi possível localizar este mandado na lista. Atualize a tela e tente novamente.');
   $('#recordDialog').innerHTML='<button class="close" type="button" data-close aria-label="Fechar">×</button><div class="dialog-content"><p class="eyebrow">EDIÇÃO ADMINISTRATIVA</p><h2>Editar informações do mandado</h2><p class="warrant-caution">A edição fica registrada no histórico. A situação da baixa e os vínculos com indivíduos são tratados separadamente.</p><form id="warrantEditForm" data-warrant-id="'+esc(warrant.id)+'" data-warrant-updated-at="'+esc(warrant.updated_at||'')+'" class="warrant-form"><div class="warrant-form-grid"><label>Número do mandado<input name="warrant_number" required maxlength="120" autocomplete="off" value="'+esc(warrant.warrant_number||'')+'"></label><label>Nome completo<input name="full_name" required maxlength="180" autocomplete="off" value="'+esc(warrant.full_name||'')+'"></label><label>CPF (opcional)<input name="cpf" inputmode="numeric" maxlength="14" placeholder="000.000.000-00" value="'+esc(warrant.cpf_digits||'')+'"></label><label>Data de nascimento (opcional)<input name="birth_date" type="date" value="'+esc(String(warrant.birth_date||'').slice(0,10))+'"></label><label>Órgão emissor<input name="source_agency" required maxlength="140" value="'+esc(warrant.source_agency||'BNMP')+'"></label><label>Processo/referência<input name="source_reference" maxlength="200" value="'+esc(warrant.source_reference||'')+'"></label><label>Apelido (opcional)<input name="alias" maxlength="180" value="'+esc(warrant.alias||'')+'"></label><label>Nome da mãe (opcional)<input name="mother_name" maxlength="180" value="'+esc(warrant.mother_name||'')+'"></label><label>Nome do pai (opcional)<input name="father_name" maxlength="180" value="'+esc(warrant.father_name||'')+'"></label></div><div class="warrant-summary">Situação atual: '+esc(warrantStatusLabel(warrant.status))+' · Origem: '+esc(warrant.source_kind==='csv'?'Planilha':warrant.source_kind==='pdf'?'PDF':'Manual')+'</div><p class="warrant-caution">Salvar não altera nem confirma associações existentes, baixa do mandado ou arquivos PDF anexados.</p><div class="warrant-actions"><button class="button secondary" type="button" data-close>Cancelar</button><button class="button" type="submit">Salvar alterações</button></div></form></div>';showTrackedDialog($('#recordDialog'));
 }
+
+function showWarrantDeleteDialog(warrantId){
+  if(!isAdmin())throw new Error('Apenas administradores podem excluir mandados.');
+  const warrant=warrantEditRecords.get(String(warrantId));
+  if(!warrant)throw new Error('Não foi possível localizar este mandado na lista. Atualize a tela e tente novamente.');
+  $('#recordDialog').innerHTML='<button class="close" type="button" data-close aria-label="Fechar">×</button><div class="dialog-content"><p class="eyebrow">EXCLUSÃO ADMINISTRATIVA</p><h2>Excluir mandado?</h2><div class="warrant-summary"><strong>'+esc(warrant.full_name)+'</strong><br>Mandado '+esc(warrant.warrant_number)+(warrant.source_reference?'<br>Processo/referência: '+esc(warrant.source_reference):'')+'</div><p class="warrant-caution">O mandado, os vínculos e as propostas relacionadas serão removidos. O histórico de auditoria será preservado. A exclusão não pode ser desfeita.</p><form id="warrantDeleteForm" data-warrant-id="'+esc(warrant.id)+'" class="warrant-form"><div class="warrant-actions"><button class="button secondary" type="button" data-close>Cancelar</button><button class="button danger" type="submit">Excluir mandado</button></div></form></div>';
+  showTrackedDialog($('#recordDialog'));
+}
+async function submitWarrantDelete(event){
+  event.preventDefault();
+  if(!isAdmin())throw new Error('Apenas administradores podem excluir mandados.');
+  const form=event.currentTarget,id=form.dataset.warrantId,submit=event.submitter;
+  if(submit)submit.disabled=true;
+  try{
+    const {data,error}=await state.client.rpc('admin_delete_arrest_warrant',{p_warrant_id:id});
+    if(error)throw error;
+    const paths=Array.isArray(data?.storage_paths)?data.storage_paths.filter(path=>typeof path==='string'&&path):[];
+    let storageWarning='';
+    if(paths.length){
+      const {error:storageError}=await state.client.storage.from('warrant-documents').remove(paths);
+      if(storageError)storageWarning=' O registro foi removido, mas não foi possível excluir um ou mais PDFs privados do armazenamento.';
+    }
+    $('#recordDialog').close();
+    warrantSearchResults.delete(id);
+    toast(storageWarning?'Mandado excluído;'+storageWarning:'Mandado excluído. O histórico de auditoria foi preservado.');
+    await renderWarrants();
+  }finally{
+    if(submit&&$('#recordDialog')?.open)submit.disabled=false;
+  }
+}
+
 async function saveWarrantEdit(event){
   event.preventDefault();
   if(!isAdmin())throw new Error('Apenas administradores podem editar mandados.');
@@ -228,17 +289,22 @@ function showWarrantConfirmDialog(button){
 async function saveWarrantRecord(values,file=null){
   if(!isAdmin())throw new Error('Apenas administradores podem incluir mandados.');
   const number=String(values.warrant_number||'').trim().toLocaleUpperCase('pt-BR'),name=String(values.full_name||'').replace(/\s+/g,' ').trim(),cpf=String(values.cpf||values.cpf_digits||'').replace(/\D/g,'');
-  const rg=String(values.person_rg||values.rg||'').trim(),address=String(values.person_address_primary||values.address_primary||'').trim(),filiation=String(values.person_filiation||values.filiation||'').trim(),processInformation=String(values.person_process_information||values.process_information||'').trim();
+  const rg=String(values.person_rg||values.rg||'').trim(),address=String(values.person_address_primary||values.address_primary||'').trim(),filiation=String(values.person_filiation||values.filiation||'').trim(),processInformation=String(values.person_process_information||values.process_information||'').trim(),sourceReference=String(values.source_reference||'').trim(),processNumber=normalizeWarrantProcessNumber(sourceReference);
   if(!number)throw new Error('Informe o número do mandado.');
   if(!name)throw new Error('Informe o nome completo do indivíduo.');
   if(cpf&&(!/^\d{11}$/.test(cpf)||!isValidCpf(cpf)))throw new Error('Confira o CPF informado.');
   if(file&&(file.type!=='application/pdf'&&!/\.pdf$/i.test(file.name)))throw new Error('Selecione um arquivo PDF válido.');
   if(file&&file.size>20*1024*1024)throw new Error('Cada PDF deve ter até 20 MB.');
+  if(processNumber){
+    const {data:existingProcess,error:processError}=await state.client.from('arrest_warrants').select('id').eq('process_number_digits',processNumber).maybeSingle();
+    if(processError)throw processError;
+    if(existingProcess)throw new Error('Já existe um mandado com esse número de processo. O registro não foi duplicado.');
+  }
   const id=crypto.randomUUID(),userId=state.session.user.id,path=file?userId+'/'+id+'/'+crypto.randomUUID()+'.pdf':null;
   if(file){const {error}=await state.client.storage.from('warrant-documents').upload(path,file,{contentType:'application/pdf',upsert:false});if(error)throw error}
-  const payload={id,warrant_number:number,full_name:name,cpf_digits:cpf||null,birth_date:values.birth_date||null,source_agency:String(values.source_agency||'BNMP').trim().toLocaleUpperCase('pt-BR')||'BNMP',source_kind:file?'pdf':'manual',source_reference:String(values.source_reference||'').trim(),status:'pending',created_by:userId,updated_by:userId};
+  const payload={id,warrant_number:number,full_name:name,cpf_digits:cpf||null,birth_date:values.birth_date||null,source_agency:String(values.source_agency||'BNMP').trim().toLocaleUpperCase('pt-BR')||'BNMP',source_kind:file?'pdf':'manual',source_reference:sourceReference,status:'pending',created_by:userId,updated_by:userId};
   const {error:insertError}=await state.client.from('arrest_warrants').insert(payload);
-  if(insertError){if(path)await state.client.storage.from('warrant-documents').remove([path]);if(insertError.code==='23505')throw new Error('Já existe um mandado com esse número e órgão emissor. Confira a lista antes de continuar.');throw insertError}
+  if(insertError){if(path)await state.client.storage.from('warrant-documents').remove([path]);if(insertError.code==='23505'&&String(insertError.message||'').includes('process_number_digits'))throw new Error('Já existe um mandado com esse número de processo. O registro não foi duplicado.');if(insertError.code==='23505')throw new Error('Já existe um mandado com esse número e órgão emissor. Confira a lista antes de continuar.');throw insertError}
   let documentSaved=!file,documentWarning='';
   if(file){
     const {error:docError}=await state.client.from('arrest_warrant_documents').insert({warrant_id:id,storage_path:path,file_name:file.name.slice(0,220),content_type:'application/pdf',file_size_bytes:file.size,created_by:userId});
@@ -601,6 +667,7 @@ document.addEventListener('click',async event=>{
   const link=target.closest('[data-warrant-link]');if(link){await wrap(()=>addWarrantCandidate(link.dataset.warrantLink,link.dataset.warrantPerson));return}
   const review=target.closest('[data-warrant-review]');if(review){await wrap(()=>reviewWarrantMatch(review));return}
   const editWarrant=target.closest('[data-warrant-edit]');if(editWarrant){showWarrantEditDialog(editWarrant.dataset.warrantEdit);return}
+  const deleteWarrant=target.closest('[data-warrant-delete]');if(deleteWarrant){showWarrantDeleteDialog(deleteWarrant.dataset.warrantDelete);return}
   const report=target.closest('[data-warrant-discharge]');if(report){showWarrantReportDialog(report.dataset.warrantDischarge);return}
   const confirmDischarge=target.closest('[data-warrant-confirm-discharge]');if(confirmDischarge){showWarrantConfirmDialog(confirmDischarge);return}
   const approveProposal=target.closest('[data-warrant-proposal-approve]');if(approveProposal){await wrap(()=>approveWarrantPersonProposal(approveProposal.dataset.warrantProposalApprove,approveProposal.dataset.proposalName));return}
@@ -622,7 +689,7 @@ async function rejectWarrantPersonProposal(proposalId){
 }
 document.addEventListener('submit',async event=>{
   const form=event.target;if(!form?.id)return;
-  const handlers={warrantManualForm:saveWarrantManual,warrantEditForm:saveWarrantEdit,warrantReportForm:submitWarrantReport,warrantConfirmForm:submitWarrantConfirmation};
+  const handlers={warrantManualForm:saveWarrantManual,warrantEditForm:saveWarrantEdit,warrantDeleteForm:submitWarrantDelete,warrantReportForm:submitWarrantReport,warrantConfirmForm:submitWarrantConfirmation};
   const handler=handlers[form.id];if(!handler)return;event.preventDefault();
   try{await handler(event)}catch(error){toast(msg(error))}
 });
