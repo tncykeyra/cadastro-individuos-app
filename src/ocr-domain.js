@@ -2,9 +2,9 @@ const normalized = value => String(value || '').normalize('NFD').replace(/[\u030
 const cleanValue = value => String(value || '').replace(/^[\s:;=|–—-]+/, '').replace(/\s+/g, ' ').trim().slice(0, 240);
 const LABELS = {
   full_name: ['1 E 2 NOME E SOBRENOME', 'NOME E SOBRENOME', 'NOME COMPLETO', 'NOME DO CONDUTOR', 'NOME DO PROPRIETARIO', 'NOME'],
-  cpf_digits: ['4D CPF', 'CPF DO PROPRIETARIO', 'CPF/CNPJ', 'CPF'],
-  rg: ['4C DOCUMENTO DE IDENTIDADE / ORG. EMISSOR / UF', '4C DOC. IDENTIDADE / ORG. EMISSOR / UF', 'DOCUMENTO DE IDENTIDADE', 'DOC. IDENTIDADE', 'REGISTRO GERAL', 'IDENTIDADE', 'RG'],
-  birthday: ['3 DATA, LOCAL E UF DE NASCIMENTO', 'DATA, LOCAL E UF DE NASCIMENTO', 'DATA DE NASCIMENTO', 'NASCIMENTO', 'NASC.'],
+  cpf_digits: ['4D CPF', '4D-CPF', 'CPF DO PROPRIETARIO', 'CPF/CNPJ', 'CPF'],
+  rg: ['4C DOCUMENTO DE IDENTIDADE / ORG. EMISSOR / UF', '4C DOC. IDENTIDADE / ORG. EMISSOR / UF', '4C DOC. IDENTIDADE/ORG. EMISSOR/UF', 'DOC. IDENTIDADE/ORG. EMISSOR/UF', 'DOCUMENTO DE IDENTIDADE', 'DOC. IDENTIDADE', 'REGISTRO GERAL', 'IDENTIDADE', 'RG'],
+  birthday: ['3 DATA, LOCAL E UF DE NASCIMENTO', 'DATA, LOCAL E UF DE NASCIMENTO', '3 DATA E LOCAL DE NASCIMENTO', 'DATA E LOCAL DE NASCIMENTO', 'DATA DE NASCIMENTO', 'NASCIMENTO', 'NASC.'],
   filiation: ['FILIAÇÃO', 'FILIACAO', 'NOME DA MÃE', 'NOME DA MAE'],
   registration: ['NUMERO DO REGISTRO', 'REGISTRO CNH', 'REGISTRO'],
   cnh_category: ['CATEGORIA CNH', 'CATEGORIA'],
@@ -72,7 +72,7 @@ function normalizedWithMap(value) {
 }
 
 function allowedLabelPrefix(prefix) {
-  const value = prefix.trim().replace(/\.$/, '');
+  const value = prefix.trim().replace(/[:=|–—-]+$/, '').trim().replace(/\.$/, '');
   return !value || /^(?:[1-4][A-Z]?(?:\s*(?:E|&)\s*[1-4][A-Z]?)?)$/.test(value);
 }
 
