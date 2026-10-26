@@ -8,7 +8,7 @@ function imageObject(data){const header=ascii('<< /Type /XObject /Subtype /Image
 function streamObject(stream){return ascii('<< /Length '+stream.length+' >>\nstream\n'+stream+'endstream')}
 function samePhotoBytes(a,b){if(a.width!==b.width||a.height!==b.height||a.bytes?.length!==b.bytes?.length)return false;for(let index=0;index<(a.bytes?.length||0);index++)if(a.bytes[index]!==b.bytes[index])return false;return true}
 function photoByteHash(photo){let hash=2166136261;for(const byte of photo.bytes||[])hash=Math.imul(hash^byte,16777619);return(photo.width||0)+'x'+(photo.height||0)+':'+(photo.bytes?.length||0)+':'+(hash>>>0)}
-export function buildRecordPdf({title,sections=[],photos=[],generatedAt=new Date()}){
+export function buildRecordPdf({title,recordName='',sections=[],photos=[],generatedAt=new Date()}){
  const sortedPhotos=[...photos].sort((a,b)=>Number(Boolean(b.is_cover))-Number(Boolean(a.is_cover))),photoBuckets=new Map(),uniquePhotos=[];for(const photo of sortedPhotos){const key=photoByteHash(photo),bucket=photoBuckets.get(key)||[];if(bucket.some(existing=>samePhotoBytes(existing,photo)))continue;bucket.push(photo);photoBuckets.set(key,bucket);uniquePhotos.push(photo)}photos=uniquePhotos;
  const pages=[],pageWidth=595,pageHeight=842,margin=34,contentWidth=pageWidth-margin*2,bottom=margin+18;
  const cover=photos.find(photo=>photo.is_cover||photo.label==='Foto de capa')||photos[0]||null;
@@ -20,17 +20,9 @@ export function buildRecordPdf({title,sections=[],photos=[],generatedAt=new Date
   current.commands+=drawText('CADASTRO CRIMINAL',margin,824,9,'0.31 0.35 0.37');
   if(first){
    y=790;
-   if(cover){
-    const scale=Math.min((contentWidth*.76)/cover.width,250/cover.height);
-    const width=cover.width*scale,height=cover.height*scale,x=(pageWidth-width)/2,top=y;
-    const imageY=top-height,name='Im'+(current.images.length+1);
-    current.images.push({name,photo:cover});
-    current.commands+='0.86 0.88 0.89 RG 0.6 w '+x.toFixed(2)+' '+imageY.toFixed(2)+' '+width.toFixed(2)+' '+height.toFixed(2)+' re S\n';
-    current.commands+='q '+width.toFixed(2)+' 0 0 '+height.toFixed(2)+' '+x.toFixed(2)+' '+imageY.toFixed(2)+' cm /'+name+' Do Q\n';
-    y=imageY-23;
-   }
-   const titleLines=wrap(title,54);
+   const titleLines=wrap(title,60);
    for(const line of titleLines.slice(0,3)){current.commands+=drawText(line,margin,y,19,'0.11 0.15 0.17');y-=23}
+   if(recordName){const nameLines=wrap(recordName,68);for(const line of nameLines.slice(0,2)){current.commands+=drawText(line,margin,y,16,'0.16 0.19 0.21');y-=20}}
    current.commands+=drawText('Gerado em '+new Date(generatedAt).toLocaleString('pt-BR'),margin,y-1,9.5,'0.38 0.42 0.44');
    y-=18;
   }else{
@@ -43,11 +35,24 @@ export function buildRecordPdf({title,sections=[],photos=[],generatedAt=new Date
  };
  const nextInfoPage=heading=>{startPage(false,heading)};
  const sectionHeading=(name)=>{current.commands+=drawText(name,margin,y,15,'0.24 0.29 0.31');y-=7;current.commands+='0.82 0.84 0.85 RG 0.5 w '+margin+' '+y.toFixed(2)+' m '+(pageWidth-margin)+' '+y.toFixed(2)+' l S\n';y-=17};
+ let coverPlaced=false;
+ const placeCover=()=>{
+  if(!cover||coverPlaced)return;
+  const widthLimit=contentWidth*.76,heightLimit=220,scale=Math.min(widthLimit/cover.width,heightLimit/cover.height);
+  const width=cover.width*scale,height=cover.height*scale,x=(pageWidth-width)/2;
+  if(y-height-18<bottom)nextInfoPage('Foto de capa');
+  const top=y-4,imageY=top-height,name='Im'+(current.images.length+1);
+  current.commands+='0.86 0.88 0.89 RG 0.6 w '+x.toFixed(2)+' '+imageY.toFixed(2)+' '+width.toFixed(2)+' '+height.toFixed(2)+' re S\n';
+  current.images.push({name,photo:cover});
+  current.commands+='q '+width.toFixed(2)+' 0 0 '+height.toFixed(2)+' '+x.toFixed(2)+' '+imageY.toFixed(2)+' cm /'+name+' Do Q\n';
+  y=imageY-18;coverPlaced=true
+ };
  startPage(true);
  for(const section of sections){
   const sectionTitle=section.title||'Informações';
   if(y<bottom+45)nextInfoPage(sectionTitle);
   sectionHeading(sectionTitle);
+  if(!coverPlaced)placeCover();
   for(const row of section.rows||[]){
    const labelLines=wrap(row.label||'',72),valueLines=wrap(row.value,76);
    const labelStep=13,valueStep=17;
@@ -60,6 +65,7 @@ export function buildRecordPdf({title,sections=[],photos=[],generatedAt=new Date
    if(y>bottom){current.commands+='0.91 0.92 0.93 RG 0.35 w '+margin+' '+(y+2).toFixed(2)+' m '+(pageWidth-margin)+' '+(y+2).toFixed(2)+' l S\n';y-=4}
   }
  }
+ if(cover&&!coverPlaced){sectionHeading(sections[0]?.title||'Identificação e informações');placeCover()}
  if(remaining.length){
   let offset=0;
   const startPhotoPage=()=>{startPage(false,'Outras fotografias');current.commands+=drawText('Fotografias complementares',margin,y,15,'0.24 0.29 0.31');y-=30};
