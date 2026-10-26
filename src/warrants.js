@@ -82,12 +82,12 @@ export function parseWarrantCsv(text) {
     number: firstHeader(headers, key => key === 'numero' || key.includes('mero') || key.includes('mandado')),
     name: firstHeader(headers, key => key === 'nome' || key === 'nome completo' || key === 'nome do procurado'),
     alias: firstHeader(headers, key => key.includes('alcunha') || key.includes('vulgo')),
-    mother: firstHeader(headers, key => key.includes('nome da mae') || key === 'mae' || key.includes('nome mae')),
+    mother: firstHeader(headers, key => key.includes('nome da mae') || key.includes('nome da m') || key === 'mae' || key.includes('nome mae')),
     father: firstHeader(headers, key => key.includes('nome do pai') || key === 'pai'),
     birthday: firstHeader(headers, key => key.includes('nascimento')),
-    status: firstHeader(headers, key => key.includes('situacao') || key === 'status'),
+    status: firstHeader(headers, key => key.includes('situ') || key === 'status'),
     agency: firstHeader(headers, key => key.includes('expedidor') || key.includes('orgao') || key.includes('tribunal')),
-    cpf: firstHeader(headers, key => key === 'cpf' || key.includes(' cpf'))
+    cpf: firstHeader(headers, key => key === 'cpf' || key.includes('cpf'))
   };
   if (col.number < 0 || col.name < 0) throw new Error('Não encontrei as colunas de número do mandado e nome. Confira o cabeçalho do CSV.');
   const records = [], errors = [], seen = new Set();
@@ -102,7 +102,7 @@ export function parseWarrantCsv(text) {
       continue;
     }
     const statusText = normalizeWarrantText(value(col.status));
-    if (col.status >= 0 && statusText && !statusText.includes('pendente') && !statusText.includes('cumprimento')) {
+    if (col.status >= 0 && statusText && !statusText.includes('pendente')) {
       skippedNotPending++;
       continue;
     }
