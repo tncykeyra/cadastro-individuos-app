@@ -17,6 +17,7 @@ create table if not exists public.backup_runs (
   finished_at timestamptz,
   current_entity text,
   entity_cursor bigint not null default 0,
+  lease_until timestamptz,
   storage_cursor text not null default '',
   progress jsonb not null default '{}'::jsonb,
   error_code text
@@ -148,6 +149,23 @@ begin
 end;
 $$;
 
+create or replace function public.backup_claim_run()
+returns setof public.backup_runs
+language sql security definer set search_path = ''
+as $
+  update public.backup_runs as r
+  set status = 'running', started_at = coalesce(r.started_at, now()),
+      lease_until = now() + interval '2 minutes'
+  where r.id = (
+    select candidate.id from public.backup_runs as candidate
+    where candidate.status in ('queued','running')
+      and (candidate.lease_until is null or candidate.lease_until < now())
+    order by candidate.created_at
+    for update skip locked limit 1
+  )
+  returning r.*;
+$;
+
 create or replace function public.backup_read_snapshot(
   p_run_id uuid, p_entity text, p_after bigint default 0, p_limit integer default 250
 )
@@ -189,7 +207,7 @@ begin
       url := 'https://etvxrzjtnhuefxeirkxf.supabase.co/functions/v1/backup-drive',
       headers := jsonb_build_object('content-type','application/json','x-backup-cron-secret',
         (select decrypted_secret from vault.decrypted_secrets where name='backup_cron_secret')),
-      body := '{"action":"worker"}'::jsonb, timeout_milliseconds := 5000
+      body := '{"action":"worker"}'::jsonb, timeout_milliseconds := 120000
     );
   $worker$);
   select jobid into v_job_id from cron.job where jobname = 'cadastro-backup-daily';
@@ -208,11 +226,12 @@ $$;
 revoke all on function public.backup_secret_get(text) from public, anon, authenticated;
 revoke all on function public.backup_secret_set(text, text) from public, anon, authenticated;
 revoke all on function public.backup_capture_snapshot(uuid) from public, anon, authenticated;
+revoke all on function public.backup_claim_run() from public, anon, authenticated;
 revoke all on function public.backup_read_snapshot(uuid, text, bigint, integer) from public, anon, authenticated;
 revoke all on function public.backup_list_storage_objects(text, integer) from public, anon, authenticated;
 revoke all on function public.backup_configure_schedule() from public, anon, authenticated;
 grant execute on function public.backup_secret_get(text), public.backup_secret_set(text, text),
-  public.backup_capture_snapshot(uuid), public.backup_read_snapshot(uuid, text, bigint, integer),
+  public.backup_capture_snapshot(uuid), public.backup_claim_run(), public.backup_read_snapshot(uuid, text, bigint, integer),
   public.backup_list_storage_objects(text, integer), public.backup_configure_schedule()
   to service_role;
 
