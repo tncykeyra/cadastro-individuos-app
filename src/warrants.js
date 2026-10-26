@@ -241,7 +241,7 @@ function warrantOcrBlock(lines, labelPattern, { maxLines = 16, maxLength = 4000 
 }
 
 function warrantOcrName(lines, fallback) {
-  const labelPattern = /(?:em desfavor de|em face de|nome completo|nome do requerido|nome do procurado|nome do acusado|requerido(?:\(a\))?|procurado(?:\(a\))?|indiciado(?:\(a\))?|acusado(?:\(a\))?)\s*[:\-]?\s*/i;
+  const labelPattern = /(?:em desfavor de|em face de|nome do condutor|nome completo|nome do requerido|nome do procurado|nome do acusado|nome(?!\s+(?:da\s+m[aã]e|do\s+pai))|requerido(?:\(a\))?|procurado(?:\(a\))?|indiciado(?:\(a\))?|acusado(?:\(a\))?)\s*[:\-]?\s*/i;
   for (let index = 0; index < lines.length; index++) {
     const match = lines[index].match(labelPattern);
     if (!match) continue;
