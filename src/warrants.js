@@ -136,7 +136,7 @@ export function parseWarrantCsv(text) {
     reference: firstHeader(headers, key => key.includes('peca') || key.includes('processo') || key.includes('referencia'))
   };
   if (col.number < 0 || col.name < 0) throw new Error('Não encontrei as colunas de número do mandado e nome. Confira o cabeçalho do CSV.');
-  const records = [], errors = [], seen = new Set(), seenProcessNumbers = new Set();
+  const records = [], duplicateRecords = [], errors = [], seen = new Map(), seenProcessNumbers = new Set();
   let skippedNotPending = 0, duplicateRows = 0, duplicateProcessRows = 0, invalidCpfRows = 0;
   for (let index = 1; index < parsed.length; index++) {
     const raw = parsed[index];
@@ -163,22 +163,10 @@ export function parseWarrantCsv(text) {
     const source_agency = cleanField(value(col.agency), 140).toLocaleUpperCase('pt-BR') || 'BNMP';
     const source_reference = cleanField(value(col.reference), 200);
     const processNumber = normalizeWarrantProcessNumber(source_reference);
-    const uniqueKey = source_agency + '|' + warrant_number;
-    if (seen.has(uniqueKey)) {
-      duplicateRows++;
-      continue;
-    }
-    if (processNumber && seenProcessNumbers.has(processNumber)) {
-      duplicateRows++;
-      duplicateProcessRows++;
-      continue;
-    }
-    seen.add(uniqueKey);
-    if (processNumber) seenProcessNumbers.add(processNumber);
     const birthValue = value(col.birthday);
     const birthday = parseIsoDate(birthValue);
     if (birthValue && !birthday) errors.push(index + 1);
-    records.push({
+    const record = {
       warrant_number,
       full_name,
       cpf_digits,
@@ -190,10 +178,26 @@ export function parseWarrantCsv(text) {
       source_kind: 'csv',
       source_reference,
       status: 'pending'
-    });
+    };
+    const uniqueKey = source_agency + '|' + warrant_number;
+    if (seen.has(uniqueKey)) {
+      duplicateRows++;
+      duplicateRecords.push({ record, duplicate_reason: 'csv_duplicate', matched_key: uniqueKey });
+      continue;
+    }
+    if (processNumber && seenProcessNumbers.has(processNumber)) {
+      duplicateRows++;
+      duplicateProcessRows++;
+      duplicateRecords.push({ record, duplicate_reason: 'csv_duplicate', matched_key: processNumber });
+      continue;
+    }
+    seen.set(uniqueKey, record);
+    if (processNumber) seenProcessNumbers.add(processNumber);
+    records.push(record);
   }
   return {
     records,
+    duplicateRecords,
     delimiter,
     headerCount: headers.length,
     hasCpfColumn: col.cpf >= 0,
