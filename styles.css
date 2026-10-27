@@ -556,3 +556,16 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
  .warrant-proposal-details .warrant-actions .button{width:100%;min-height:48px}
 }
 .revision-body .revision-person-icon svg{display:block;width:24px;height:24px;max-width:24px;max-height:24px;flex:0 0 24px}
+
+
+/* Importação de mandados: acionador acessível e utilizável em tela sensível ao toque. */
+.warrant-pdf-input{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.warrant-pdf-selection-help{margin:10px 0 0;color:var(--muted);font-size:.9rem;line-height:1.45}
+.warrant-file-label{min-height:48px;justify-content:center;text-align:center;touch-action:manipulation}
+.warrant-pdf-batch-queue{scroll-margin-top:84px}
+@media(max-width:620px){
+  .warrant-pdf-batch-tool .warrant-file-label{width:100%;min-height:52px;padding:13px 16px}
+  .warrant-pdf-batch-heading .button{flex:0 0 auto;min-height:44px}
+  .warrant-pdf-batch-row{gap:14px}
+  .warrant-pdf-batch-fields input,.warrant-pdf-batch-fields textarea{font-size:16px}
+}
