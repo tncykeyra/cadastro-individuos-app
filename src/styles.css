@@ -577,3 +577,12 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
 .warrants-page .warrant-search-control .search-button{width:54px;min-height:52px;padding:8px;border-radius:999px;font-size:1.25rem}
 .warrants-page .warrant-list-count{display:block;margin:0;color:var(--muted);font-size:.85rem}
 @media(max-width:620px){.warrants-page .warrant-search-control{grid-template-columns:minmax(0,1fr) 48px;gap:7px}.warrants-page .warrant-search-control .search-button{width:48px;min-height:50px}.warrants-page .warrant-search-control .search{padding:14px 18px}}
+/* Minicard discreto do indivíduo no histórico de alterações. */
+.revision-body .revision-person-card{display:inline-flex;align-items:center;gap:8px;width:min(100%,300px);max-width:300px;min-height:48px;margin:2px 0 10px;padding:5px 8px;border-radius:10px}
+.revision-body .revision-person-icon{width:36px;height:36px;border-radius:7px}
+.revision-body .revision-person-icon svg{width:20px;height:20px}
+.revision-body .revision-person-copy{gap:1px}
+.revision-body .revision-person-copy strong{max-width:205px;font-size:.82rem;line-height:1.2}
+.revision-body .revision-person-copy small{font-size:.68rem}
+.revision-body .revision-person-card .revision-admin-badge{padding:3px 6px;font-size:.62rem}
+@media(max-width:620px){.revision-body .revision-person-card{width:min(100%,290px);max-width:290px;min-height:46px;padding:4px 7px}.revision-body .revision-person-icon{width:34px;height:34px}}
