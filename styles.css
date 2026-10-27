@@ -528,3 +528,31 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
 #sideNav .nav-item .nav-icon{position:relative;overflow:visible}
 #sideNav .nav-item .nav-alert-badge{position:absolute;top:-6px;right:-7px;z-index:2;display:grid;place-items:center;width:18px;height:18px;min-width:18px;padding:0;border:2px solid #fff;border-radius:50%;background:#c43f45;color:#fff;font-size:11px;font-weight:900;line-height:1;box-shadow:0 2px 5px #54151a3d}
 #sideNav .nav-item.active .nav-alert-badge{border-color:#e9edef;background:#b52f38;color:#fff}
+
+
+/* Cartão compacto para aprovar indivíduos sugeridos a partir de mandados. */
+.warrant-proposal-compact{padding:0}
+.warrant-proposal-summary{display:grid;grid-template-columns:58px minmax(0,1fr) 24px;align-items:center;gap:13px;min-width:0;padding:14px;border-radius:15px;list-style:none;cursor:pointer}
+.warrant-proposal-summary::-webkit-details-marker{display:none}
+.warrant-proposal-summary:focus-visible{outline:3px solid #50595e66;outline-offset:2px}
+.warrant-proposal-avatar{display:grid;place-items:center;width:58px;height:68px;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:#f0f2f3;color:var(--muted)}
+.warrant-proposal-avatar svg{width:30px;height:30px}
+.warrant-proposal-primary{display:grid;gap:5px;min-width:0}
+.warrant-proposal-primary .warrant-review-tag{justify-self:start}
+.warrant-proposal-primary strong{overflow-wrap:anywhere;line-height:1.3}
+.warrant-proposal-primary small{color:var(--muted);font-size:.9rem;overflow-wrap:anywhere}
+.warrant-proposal-chevron{justify-self:center;color:var(--muted);font-size:1.3rem;transition:transform .18s ease}
+.warrant-proposal-compact[open] .warrant-proposal-chevron{transform:rotate(180deg)}
+.warrant-proposal-details{min-width:0;padding:0 16px 16px;border-top:1px solid var(--line)}
+.warrant-proposal-details .warrant-proposal-heading{margin-top:12px}
+.warrant-proposal-photo-note{margin:12px 0 0;color:var(--muted);font-size:.84rem}
+.warrant-proposal-details .warrant-actions{display:flex;flex-wrap:wrap;gap:10px}
+.warrant-proposal-details .warrant-actions .button{flex:1 1 190px;min-height:46px;white-space:normal}
+@media(max-width:560px){
+ .warrant-proposal-summary{grid-template-columns:52px minmax(0,1fr) 20px;gap:10px;padding:12px}
+ .warrant-proposal-avatar{width:52px;height:62px}
+ .warrant-proposal-details{padding:0 12px 12px}
+ .warrant-proposal-details .warrant-actions{display:grid;grid-template-columns:1fr}
+ .warrant-proposal-details .warrant-actions .button{width:100%;min-height:48px}
+}
+.revision-body .revision-person-icon svg{display:block;width:24px;height:24px;max-width:24px;max-height:24px;flex:0 0 24px}
