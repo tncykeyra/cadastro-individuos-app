@@ -1,5 +1,43 @@
 import { isValidCpf } from './ocr-domain.js';
 
+/** Recompõe as linhas do texto nativo extraído pelo PDF.js, preservando a ordem visual. */
+export function formatPdfTextItems(items) {
+  const words = (items || []).filter(item => typeof item?.str === 'string' && item.str.trim()).map(item => {
+    const transform = item.transform || [];
+    return { text: item.str.trim(), x: Number(transform[4]) || 0, y: Number(transform[5]) || 0, height: Math.abs(Number(transform[3])) || Number(item.height) || 10 };
+  });
+  if (!words.length) return '';
+  const heights = words.map(word => word.height).sort((a, b) => a - b);
+  const medianHeight = heights[Math.floor(heights.length / 2)] || 10;
+  const tolerance = Math.max(2, Math.min(6, medianHeight * .42));
+  words.sort((a, b) => b.y - a.y || a.x - b.x);
+  const lines = [];
+  for (const word of words) {
+    let line = lines.find(candidate => Math.abs(candidate.y - word.y) <= tolerance);
+    if (!line) {
+      line = { y: word.y, words: [] };
+      lines.push(line);
+    }
+    line.words.push(word);
+    line.y = line.words.reduce((sum, item) => sum + item.y, 0) / line.words.length;
+  }
+  return lines
+    .sort((a, b) => b.y - a.y)
+    .map(line => line.words.sort((a, b) => a.x - b.x).map(word => word.text).join(' ').replace(/\\s+/g, ' ').trim())
+    .filter(Boolean)
+    .join('\\n');
+}
+
+/** Mantém valores apagados pelo usuário vazios, usando OCR apenas quando não há campo renderizado. */
+export function resolveWarrantBatchValues(extractedValues, editedValues, fields) {
+  const extracted = extractedValues || {};
+  const edited = editedValues || {};
+  return Object.fromEntries(fields.map(field => [
+    field,
+    Object.prototype.hasOwnProperty.call(edited, field) ? String(edited[field] ?? '') : String(extracted[field] ?? '')
+  ]));
+}
+
 export function normalizeWarrantText(value) {
   return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\uFFFD/g, '').toLocaleLowerCase('pt-BR').replace(/[^a-z0-9]+/g, ' ').trim();
 }
