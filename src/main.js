@@ -220,57 +220,75 @@ async function warrantReadCsv(file){
   if(replacements>1){try{text=new TextDecoder('windows-1252').decode(await file.arrayBuffer())}catch{}}
   return parseWarrantCsv(text);
 }
-async function findExistingWarrantProcessNumbers(records){
-  const processNumbers=[...new Set((records||[]).map(record=>normalizeWarrantProcessNumber(record.source_reference)).filter(Boolean))];
-  const existing=new Set();
-  for(let offset=0;offset<processNumbers.length;offset+=100){
-    const chunk=processNumbers.slice(offset,offset+100);
-    const {data,error}=await state.client.from('arrest_warrants').select('process_number_digits').in('process_number_digits',chunk);
-    if(error)throw error;
-    for(const row of data||[])if(row.process_number_digits)existing.add(row.process_number_digits);
-  }
-  return existing;
+function warrantDuplicateKeys(record){
+  const keys=['number:'+String(record.source_agency||'BNMP').trim().toLocaleUpperCase('pt-BR')+'|'+String(record.warrant_number||'').trim().toLocaleUpperCase('pt-BR')];
+  const processNumber=normalizeWarrantProcessNumber(record.source_reference||'');
+  if(processNumber)keys.unshift('process:'+processNumber);
+  return keys;
+}
+async function findWarrantDuplicateTargets(records){
+  const targets=new Map(),rows=[],processNumbers=[...new Set((records||[]).map(record=>normalizeWarrantProcessNumber(record.source_reference||'')).filter(Boolean))],numbers=[...new Set((records||[]).map(record=>String(record.warrant_number||'').trim().toLocaleUpperCase('pt-BR')).filter(Boolean))];
+  for(let offset=0;offset<processNumbers.length;offset+=100){const chunk=processNumbers.slice(offset,offset+100),{data,error}=await state.client.from('arrest_warrants').select('id,process_number_digits,warrant_number,source_agency').in('process_number_digits',chunk);if(error)throw error;rows.push(...(data||[]))}
+  for(let offset=0;offset<numbers.length;offset+=100){const chunk=numbers.slice(offset,offset+100),{data,error}=await state.client.from('arrest_warrants').select('id,process_number_digits,warrant_number,source_agency').in('warrant_number',chunk);if(error)throw error;rows.push(...(data||[]))}
+  for(const row of rows){if(row.process_number_digits)targets.set('process:'+row.process_number_digits,row);targets.set('number:'+String(row.source_agency||'BNMP').trim().toLocaleUpperCase('pt-BR')+'|'+String(row.warrant_number||'').trim().toLocaleUpperCase('pt-BR'),row)}
+  return targets;
+}
+function warrantTargetForRecord(record,targets){
+  for(const key of warrantDuplicateKeys(record)){const target=targets.get(key);if(target)return{warrantId:target.id,reason:key.startsWith('process:')?'process_number':'agency_warrant_number'}}
+  return null;
 }
 async function warrantImportCsv(){
   if(!isAdmin()||!warrantImportPreview)throw new Error('Selecione uma planilha antes de importar.');
-  const parsed=warrantImportPreview.parsed;if(!parsed.statusColumnPresent&&!document.querySelector('[data-warrant-confirm-all-pending]')?.checked)throw new Error('A planilha não tem coluna de situação. Confirme que todos os registros estão pendentes para importar.');if(!parsed.records.length)throw new Error('Não há registros pendentes válidos para importar.');
-  const existingProcessNumbers=await findExistingWarrantProcessNumbers(parsed.records);
-  const records=[];let processDuplicates=0;
-  for(const row of parsed.records){
-    const processNumber=normalizeWarrantProcessNumber(row.source_reference);
-    if(processNumber&&existingProcessNumbers.has(processNumber)){processDuplicates++;continue}
-    if(processNumber)existingProcessNumbers.add(processNumber);
-    records.push(row);
-  }
-  const duplicateProcessCount=(parsed.duplicateProcessRows||0)+processDuplicates;
-  if(!records.length){
-    warrantImportPreview=null;
-    toast('Nenhum mandado foi incluído.'+(duplicateProcessCount?' '+duplicateProcessCount+' repetido(s) pelo número do processo foram ignorados.':' Todos os registros já constam no sistema.'));
-    await renderWarrants();
-    return;
-  }
-  const userId=state.session.user.id,fileName=warrantImportPreview.fileName.slice(0,180);
-  const {data:batch,error}=await state.client.from('arrest_warrant_import_batches').insert({source_file_name:fileName,source_type:'csv',records_total:parsed.records.length+parsed.duplicateRows,created_by:userId}).select('id').single();
-  if(error)throw error;let insertedIds=[],insertedCount=0;
-  for(let i=0;i<records.length;i+=50){
-    const payload=records.slice(i,i+50).map(row=>({...row,import_batch_id:batch.id,created_by:userId,updated_by:userId}));
-    const {data,error:insertError}=await state.client.from('arrest_warrants').upsert(payload,{onConflict:'source_agency,warrant_number',ignoreDuplicates:true}).select('id');
+  const parsed=warrantImportPreview.parsed,allRecords=[...(parsed.records||[]),...(parsed.duplicateRecords||[]).map(item=>item.record)];
+  if(!parsed.statusColumnPresent&&!document.querySelector('[data-warrant-confirm-all-pending]')?.checked)throw new Error('A planilha não tem coluna de situação. Confirme que todos os registros estão pendentes para importar.');
+  if(!allRecords.length)throw new Error('Não há registros pendentes válidos para importar.');
+  const userId=state.session.user.id,fileName=warrantImportPreview.fileName.slice(0,180),{data:batch,error:batchError}=await state.client.from('arrest_warrant_import_batches').insert({source_file_name:fileName,source_type:'csv',records_total:allRecords.length+parsed.invalidRows.length,created_by:userId}).select('id').single();
+  if(batchError)throw batchError;
+  const before=await findWarrantDuplicateTargets(allRecords),pending=[],recordsToInsert=[];
+  for(const record of parsed.records||[]){const match=warrantTargetForRecord(record,before);if(match)pending.push({record,match,reason:match.reason});else recordsToInsert.push(record)}
+  const insertedKeys=new Map();let insertedCount=0;
+  for(let i=0;i<recordsToInsert.length;i+=50){
+    const chunk=recordsToInsert.slice(i,i+50),payload=chunk.map(row=>({...row,import_batch_id:batch.id,created_by:userId,updated_by:userId}));
+    const {data,error:insertError}=await state.client.from('arrest_warrants').upsert(payload,{onConflict:'source_agency,warrant_number',ignoreDuplicates:true}).select('id,warrant_number,source_agency,process_number_digits');
     if(insertError){
-      if(insertError.code==='23505'&&String(insertError.message||'').includes('process_number_digits'))throw new Error('Outro administrador acabou de incluir um mandado deste processo. Atualize a lista e tente novamente.');
-      throw insertError;
+      if(insertError.code!=='23505'||!String(insertError.message||'').includes('process_number_digits'))throw insertError;
+      for(const row of chunk){
+        const existing=await findWarrantDuplicateTargets([row]),match=warrantTargetForRecord(row,existing);
+        if(match){pending.push({record:row,match,reason:'concurrent_insert'});continue}
+        const one={...row,import_batch_id:batch.id,created_by:userId,updated_by:userId};
+        const single=await state.client.from('arrest_warrants').insert(one).select('id,warrant_number,source_agency,process_number_digits').single();
+        if(single.error){
+          if(single.error.code==='23505'){const refreshed=await findWarrantDuplicateTargets([row]),again=warrantTargetForRecord(row,refreshed);if(again){pending.push({record:row,match:again,reason:'concurrent_insert'});continue}}
+          throw single.error;
+        }
+        const saved=single.data;insertedCount++;for(const key of warrantDuplicateKeys({...row,process_number_digits:saved.process_number_digits}))insertedKeys.set(key,saved);
+      }
+      continue;
     }
-    const ids=(data||[]).map(row=>row.id);insertedIds.push(...ids);insertedCount+=ids.length;
+    for(const saved of data||[]){insertedCount++;for(const key of warrantDuplicateKeys({...saved,source_reference:chunk.find(row=>row.warrant_number===saved.warrant_number&&row.source_agency===saved.source_agency)?.source_reference}))insertedKeys.set(key,saved)}
   }
-  const ignored=parsed.duplicateRows+processDuplicates+records.length-insertedCount;
+  const after=await findWarrantDuplicateTargets(allRecords);
+  for(const item of parsed.duplicateRecords||[]){
+    const record=item.record;let match=warrantTargetForRecord(record,before)||warrantTargetForRecord(record,after);
+    if(!match){for(const key of warrantDuplicateKeys(record)){const inserted=insertedKeys.get(key);if(inserted){match={warrantId:inserted.id,reason:'csv_duplicate'};break}}}
+    if(!match)throw new Error('Uma linha repetida da planilha não foi ligada ao registro de origem. A importação foi mantida para revisão; atualize a tela e tente novamente.');
+    pending.push({record,match,reason:'csv_duplicate'});
+  }
+  for(const item of pending){
+    const record=item.record,payload={...record,source_kind:'csv',status:'pending'};
+    await stageDuplicateWarrantSubmission(payload,item.match.warrantId,item.reason==='csv_duplicate'?'csv_duplicate':item.reason,null,batch.id,null);
+  }
+  const ids=[...new Set([...insertedKeys.values()].map(row=>row.id))];
+  const ignored=Number(parsed.invalidRows.length||0);
   const {error:updateError}=await state.client.from('arrest_warrant_import_batches').update({records_inserted:insertedCount,records_ignored:ignored}).eq('id',batch.id);
   if(updateError)throw updateError;
   let suggestionErrors=0;
-  for(let i=0;i<insertedIds.length;i+=6){
-    const results=await Promise.all(insertedIds.slice(i,i+6).map(id=>state.client.rpc('admin_suggest_arrest_warrant_matches',{p_warrant_id:id})));
+  for(let i=0;i<ids.length;i+=6){
+    const results=await Promise.all(ids.slice(i,i+6).map(id=>state.client.rpc('admin_suggest_arrest_warrant_matches',{p_warrant_id:id})));
     suggestionErrors+=results.filter(result=>result.error).length;
   }
   warrantImportPreview=null;warrantSearchResults.clear();
-  toast(insertedCount+' mandado(s) importado(s). '+(duplicateProcessCount?duplicateProcessCount+' repetido(s) pelo número do processo não foram adicionados. ':'')+(suggestionErrors?'Algumas sugestões precisam ser refeitas pela revisão administrativa.':'As correspondências possíveis aguardam revisão administrativa.'));
+  toast(insertedCount+' mandado(s) novo(s) importado(s). '+(pending.length?pending.length+' possível(is) duplicidade(s) preservada(s) para aprovação/rejeição administrativa. ':'')+(suggestionErrors?'Algumas correspondências precisam ser refeitas pela revisão administrativa.':''));
   await renderWarrants();
 }
 function showWarrantReportDialog(warrantId){
