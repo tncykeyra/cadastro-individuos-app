@@ -448,3 +448,36 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
 .carousel-control-icon{display:grid;place-items:center;width:2.5rem;height:2.5rem;padding:0;border:1px solid var(--line,#d9dee2);border-radius:50%;background:#fff;color:var(--ink,#252b2e);font-size:1.25rem;font-weight:700;line-height:1;cursor:pointer}
 .carousel-control-icon:hover,.carousel-control-icon:focus-visible{background:#edf0f2;outline:2px solid transparent}
 @media(max-width:600px){.warrant-tabs{margin-inline:-.1rem}.warrant-section-title>button{margin-left:0}.warrant-active-section .warrant-section-title{align-items:flex-start}}
+
+
+/* Fila clara para sugestões de identidade pendentes de aprovação. */
+.identity-change-notice{grid-column:1/-1}
+.identity-proposals-panel{margin:1.5rem 0;padding:clamp(16px,3vw,24px);border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,#f8fbfa,#fff);box-shadow:0 8px 24px #1721270a}
+.identity-proposals-panel>.page-intro{align-items:center;margin:0 0 14px}
+.identity-proposals-panel>.page-intro h2{margin:0}
+.identity-proposal-count{display:grid;place-items:center;min-width:2.4rem;height:2.4rem;padding:0 .6rem;border-radius:999px;background:#e9f2ee;color:#176b46;font-weight:800}
+.identity-proposal-card{padding:clamp(14px,2.5vw,20px);margin:12px 0;border:1px solid #dfe7e4;border-radius:16px;background:#fff}
+.identity-proposal-heading{display:flex;justify-content:space-between;gap:12px}
+.identity-proposal-heading h3{margin:8px 0 3px;font-size:1.05rem}
+.identity-proposal-heading p{margin:0;color:var(--muted);font-size:.9rem}
+.identity-proposal-status{display:inline-flex;padding:5px 10px;border-radius:999px;background:#fff3d8;color:#735313;font-size:.78rem;font-weight:750}
+.identity-proposal-comparison{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px;margin:16px 0}
+.identity-proposal-comparison>div:not([aria-hidden]){display:grid;gap:4px;min-width:0;padding:12px;border-radius:12px;background:#f5f7f7}
+.identity-proposal-comparison span,.identity-proposal-comparison small{color:var(--muted);font-size:.83rem}
+.identity-proposal-comparison strong{overflow-wrap:anywhere}
+.identity-proposal-actions{display:flex;flex-wrap:wrap;gap:10px}
+.identity-proposal-actions .button{flex:1 1 180px}
+@media(max-width:520px){.identity-proposal-comparison{grid-template-columns:minmax(0,1fr);gap:7px}.identity-proposal-comparison>div[aria-hidden]{justify-self:center;transform:rotate(90deg)}.identity-proposal-actions .button{flex-basis:100%}}
+
+/* Navegação dos mandados com hierarquia visual melhor em celular e desktop. */
+.warrant-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;overflow:visible;padding:10px;margin:0 0 1.25rem;border:0;border-radius:20px;background:#edf1f2}
+.warrant-tab{width:100%;min-width:0;min-height:68px;justify-content:center;flex-wrap:wrap;gap:7px;padding:.7rem .55rem;border:1px solid #dce3e5;border-radius:16px;background:#fff;color:var(--ink);font-weight:750;line-height:1.2;text-align:center;white-space:normal;box-shadow:0 3px 10px #1721270b;transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
+.warrant-tab::before{font-size:1.05rem;line-height:1}
+.warrant-tab:nth-child(1)::before{content:"▤"}
+.warrant-tab:nth-child(2)::before{content:"＋"}
+.warrant-tab:nth-child(3)::before{content:"✓"}
+.warrant-tab:hover{transform:translateY(-1px);box-shadow:0 6px 15px #17212714}
+.warrant-tab.active{background:linear-gradient(140deg,var(--accent,#4b565b),#354147);border-color:transparent;color:#fff;box-shadow:0 7px 16px #2531372b}
+.warrant-tab span{display:inline-grid;place-items:center;min-width:1.55rem;height:1.55rem;padding:0 .42rem;border-radius:999px;background:#edf0f2;color:#344047;font-size:.78em;font-weight:800}
+.warrant-tab.active span{background:#ffffff2e;color:#fff}
+@media(max-width:480px){.warrant-tabs{gap:6px;padding:7px;border-radius:16px}.warrant-tab{min-height:62px;gap:5px;padding:.55rem .3rem;border-radius:13px;font-size:.82rem}.warrant-tab::before{font-size:.98rem}.warrant-tab span{min-width:1.35rem;height:1.35rem;padding:0 .3rem}}
