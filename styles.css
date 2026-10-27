@@ -556,3 +556,26 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
  .warrant-proposal-details .warrant-actions .button{width:100%;min-height:48px}
 }
 .revision-body .revision-person-icon svg{display:block;width:24px;height:24px;max-width:24px;max-height:24px;flex:0 0 24px}
+
+
+/* Importação de mandados: acionador acessível e utilizável em tela sensível ao toque. */
+.warrant-pdf-input{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.warrant-pdf-selection-help{margin:10px 0 0;color:var(--muted);font-size:.9rem;line-height:1.45}
+.warrant-file-label{min-height:48px;justify-content:center;text-align:center;touch-action:manipulation}
+.warrant-pdf-batch-queue{scroll-margin-top:84px}
+@media(max-width:620px){
+  .warrant-pdf-batch-tool .warrant-file-label{width:100%;min-height:52px;padding:13px 16px}
+  .warrant-pdf-batch-heading .button{flex:0 0 auto;min-height:44px}
+  .warrant-pdf-batch-row{gap:14px}
+  .warrant-pdf-batch-fields input,.warrant-pdf-batch-fields textarea{font-size:16px}
+}
+
+
+/* Controles do carrossel no padrão arredondado e de alto contraste do aplicativo. */
+.carousel-auto-control{gap:12px;margin-top:14px}
+button.carousel-control-icon{width:46px;height:46px;flex:0 0 46px;padding:0;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--brand);box-shadow:0 3px 10px #17212712;font-size:1.35rem;font-weight:750;line-height:1;transition:background .16s,border-color .16s,transform .16s,box-shadow .16s}
+button.carousel-control-icon:hover{background:#eef1f2;border-color:#ccd2d5;box-shadow:0 5px 14px #1721271c;transform:translateY(-1px)}
+button.carousel-control-icon:focus-visible{outline:3px solid #50595e55;outline-offset:3px}
+button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{background:var(--brand-dark);border-color:var(--brand-dark)}
+@media(max-width:620px){button.carousel-control-icon{width:48px;height:48px;flex-basis:48px}}

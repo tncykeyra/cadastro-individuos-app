@@ -2,6 +2,7 @@ import { createWorker } from 'tesseract.js';
 import * as pdfjs from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { correctDocumentPerspective } from './ocr-perspective.js';
+import { formatPdfTextItems } from './warrants.js';
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 let workerPromise = null;
@@ -84,6 +85,13 @@ function regionalTargets(blocks) {
     for (const [key, pattern] of patterns) if (!found.has(key) && pattern.test(text)) found.set(key, line.bbox);
   }
   return [...found.entries()];
+}
+
+function hasReadablePdfText(text) {
+  const value = String(text || '').trim();
+  const letters = (value.match(/[A-Za-zÀ-ÿ]/g) || []).length;
+  const words = value.match(/[A-Za-zÀ-ÿ0-9]{2,}/g) || [];
+  return value.length >= 55 && letters >= 28 && words.length >= 8;
 }
 
 function recognitionScore(data) {
@@ -252,7 +260,6 @@ export async function processOcrFiles(files, { onProgress = () => {}, isCancelle
   let completed = 0, total = selected.length;
   const notify = (status, percent = 0) => onProgress({ status, percent: Math.round(percent), completed, total });
   progressCallback = (percent, status) => notify(status || 'Reconhecendo texto…', percent);
-  const worker = await getWorker();
   try {
   for (let fileIndex = 0; fileIndex < selected.length; fileIndex++) {
     if (isCancelled()) throw new Error('Leitura cancelada.');
@@ -262,7 +269,7 @@ export async function processOcrFiles(files, { onProgress = () => {}, isCancelle
       totalPages++;
       if (totalPages > 20) throw new Error('A leitura aceita até 20 imagens/páginas por vez. Separe o restante em outra leitura.');
       notify('Lendo imagem ' + (fileIndex + 1) + ' de ' + total + '…');
-      const result = await readOne(worker, file, (status, percent) => notify(status || 'Reconhecendo texto…', percent), isCancelled);
+      const result = await readOne(await getWorker(), file, (status, percent) => notify(status || 'Reconhecendo texto…', percent), isCancelled);
       pages.push({ name: file.name || ('Imagem ' + (fileIndex + 1)), page: 1, text: result.text, confidence: result.confidence, quality: result.quality, perspectiveCorrected: result.perspectiveCorrected, blob: file });
       completed++;
       notify('Imagem lida.', 100);
@@ -280,6 +287,11 @@ export async function processOcrFiles(files, { onProgress = () => {}, isCancelle
         if (isCancelled()) throw new Error('Leitura cancelada.');
         notify('Preparando página ' + pageNumber + ' de ' + pdf.numPages + '…');
         const page = await pdf.getPage(pageNumber);
+        let searchableText = '';
+        try {
+          const textContent = await page.getTextContent();
+          searchableText = formatPdfTextItems(textContent.items);
+        } catch { /* PDFs escaneados seguem para OCR local pela imagem. */ }
         const base = page.getViewport({ scale: 1 });
         const scale = Math.min(2.2, 1800 / Math.max(base.width, base.height));
         const viewport = page.getViewport({ scale });
@@ -289,7 +301,9 @@ export async function processOcrFiles(files, { onProgress = () => {}, isCancelle
         await page.render({ canvasContext: canvas.getContext('2d', { alpha: false }), viewport }).promise;
         const blob = await canvasBlob(canvas);
         canvas.width = 0; canvas.height = 0;
-        const result = await readOne(worker, blob, (status, percent) => notify(status || 'Lendo página ' + pageNumber + ' de ' + pdf.numPages + '…', percent), isCancelled);
+        const result = hasReadablePdfText(searchableText)
+          ? { text: searchableText, confidence: 100, quality: [], perspectiveCorrected: false }
+          : await readOne(await getWorker(), blob, (status, percent) => notify(status || 'Lendo página ' + pageNumber + ' de ' + pdf.numPages + '…', percent), isCancelled);
         pages.push({ name: file.name, page: pageNumber, text: result.text, confidence: result.confidence, quality: result.quality, perspectiveCorrected: result.perspectiveCorrected, blob });
         page.cleanup();
         completed++;
