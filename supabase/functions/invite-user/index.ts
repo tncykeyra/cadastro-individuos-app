@@ -9,6 +9,26 @@ const cors = {
 const respond = (body: Record<string, unknown>, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: cors });
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const activationAlphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const normalizeActivationCode = (value: unknown) => String(value ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+const hashActivationCode = async (value: string) => {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(normalizeActivationCode(value)));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+};
+const generateActivationCode = () => {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  const raw = Array.from(bytes, (byte) => activationAlphabet[byte & 31]).join('');
+  return raw.match(/.{1,4}/g)?.join('-') ?? raw;
+};
+const issueActivationCode = async (admin: ReturnType<typeof createClient>, email: string, adminId: string) => {
+  const code = generateActivationCode();
+  const codeHash = await hashActivationCode(code);
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await admin.from('email_first_access_codes').upsert({
+    email, code_hash: codeHash, expires_at: expiresAt, used_at: null, created_by: adminId,
+  }, { onConflict: 'email' });
+  return { code: error ? null : code, error };
+};
 const appUrl = 'https://tncykeyra.github.io/cadastro-individuos-app/';
 
 Deno.serve(async (request) => {
@@ -20,6 +40,100 @@ Deno.serve(async (request) => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (!url || !anonKey || !serviceKey) {
     return respond({ error: 'A função de usuários não está configurada no Supabase.' }, 503);
+  }
+
+  const earlyPayload = await request.clone().json().catch(() => null) as { action?: string; email?: string; code?: string; password?: string } | null;
+  if (earlyPayload?.action === 'complete-email-first-access') {
+    const email = String(earlyPayload.email ?? '').trim().toLowerCase();
+    const code = normalizeActivationCode(earlyPayload.code);
+    const password = String(earlyPayload.password ?? '');
+    if (!emailPattern.test(email) || code.length !== 16 || password.length < 12 || password.length > 128) {
+      return respond({ error: 'Confira o e-mail, o código e use uma senha com pelo menos 12 caracteres.' }, 400);
+    }
+
+    const admin = createClient(url, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
+    });
+    const [{ data: authorizationRow, error: authorizationError }, { data: profile, error: profileError }] = await Promise.all([
+      admin.from('authorized_emails').select('email, role').eq('email', email).maybeSingle(),
+      admin.from('profiles').select('id, email, display_name, role').eq('email', email).maybeSingle(),
+    ]);
+    if (authorizationError || profileError) {
+      return respond({ error: 'Não foi possível validar o primeiro acesso agora. Tente novamente.' }, 503);
+    }
+    if (!authorizationRow || !['operator', 'admin'].includes(authorizationRow.role) || profile?.role === 'disabled') {
+      return respond({ error: 'E-mail ou código de primeiro acesso inválido ou expirado. Solicite um novo código ao administrador.' }, 400);
+    }
+
+    const codeHash = await hashActivationCode(code);
+    const now = new Date().toISOString();
+    const { data: availableCode, error: codeLookupError } = await admin
+      .from('email_first_access_codes')
+      .select('email')
+      .eq('email', email)
+      .eq('code_hash', codeHash)
+      .is('used_at', null)
+      .gt('expires_at', now)
+      .maybeSingle();
+    if (codeLookupError) return respond({ error: 'Não foi possível validar o código agora. Tente novamente.' }, 503);
+    if (!availableCode) return respond({ error: 'E-mail ou código de primeiro acesso inválido ou expirado. Solicite um novo código ao administrador.' }, 400);
+
+    const { data: claimedCode, error: claimError } = await admin
+      .from('email_first_access_codes')
+      .update({ used_at: now })
+      .eq('email', email)
+      .eq('code_hash', codeHash)
+      .is('used_at', null)
+      .gt('expires_at', now)
+      .select('email')
+      .maybeSingle();
+    if (claimError) return respond({ error: 'Não foi possível validar o código agora. Tente novamente.' }, 503);
+    if (!claimedCode) return respond({ error: 'Este código já foi usado ou expirou. Solicite um novo código ao administrador.' }, 400);
+
+    let authUser: any = null;
+    if (profile?.id) {
+      const { data, error } = await admin.auth.admin.getUserById(profile.id);
+      if (!error) authUser = data.user;
+    }
+    if (!authUser) {
+      const { data, error } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+      if (error) return respond({ error: 'Não foi possível preparar a conta. Solicite um novo código ao administrador.' }, 503);
+      authUser = (data.users ?? []).find((entry) => String(entry.email ?? '').toLowerCase() === email) ?? null;
+    }
+
+    let userId: string;
+    if (authUser) {
+      const { data, error } = await admin.auth.admin.updateUserById(authUser.id, {
+        password,
+        email_confirm: true,
+        user_metadata: { ...authUser.user_metadata, must_change_password: false },
+      });
+      if (error || !data.user) return respond({ error: 'Não foi possível definir a senha. Solicite um novo código ao administrador.' }, 500);
+      userId = data.user.id;
+    } else {
+      const displayName = email.split('@')[0].replace(/[._-]+/g, ' ').trim();
+      const { data, error } = await admin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { display_name: displayName, must_change_password: false },
+      });
+      if (error || !data.user) return respond({ error: 'Não foi possível criar a conta. Solicite um novo código ao administrador.' }, 500);
+      userId = data.user.id;
+      const { error: profileCreateError } = await admin.from('profiles').upsert({
+        id: userId, email, display_name: displayName, role: authorizationRow.role,
+      }, { onConflict: 'id' });
+      if (profileCreateError) {
+        await admin.auth.admin.deleteUser(userId);
+        return respond({ error: 'Não foi possível concluir o perfil. Solicite um novo código ao administrador.' }, 500);
+      }
+    }
+
+    if (profile?.role === 'pending') {
+      const { error } = await admin.from('profiles').update({ role: authorizationRow.role }).eq('id', profile.id);
+      if (error) return respond({ error: 'Senha definida, mas não foi possível liberar o perfil. Peça ao administrador para conferir o acesso.' }, 500);
+    }
+    return respond({ ok: true, email });
   }
 
   const authorization = request.headers.get('Authorization');
@@ -93,57 +207,45 @@ Deno.serve(async (request) => {
 
   if (payload.action === 'authorize-google') {
     const { data: existing, error: lookupError } = await admin
-      .from('authorized_emails')
-      .select('email, role')
-      .eq('email', email)
-      .maybeSingle();
+      .from('authorized_emails').select('email, role').eq('email', email).maybeSingle();
     if (lookupError) return respond({ error: 'Não foi possível consultar a lista de e-mails autorizados.' }, 500);
 
+    const { data: disabledProfile, error: disabledProfileError } = await admin
+      .from('profiles').select('id').eq('email', email).eq('role', 'disabled').limit(1).maybeSingle();
+    if (disabledProfileError) return respond({ error: 'Não foi possível verificar o perfil deste e-mail.' }, 500);
+    if (disabledProfile) return respond({ error: 'O perfil está desativado. Reative-o na lista de Usuários antes de gerar um código.' }, 409);
+
     let role: string = existing?.role === 'admin' ? 'admin' : 'operator';
-    let alreadyAuthorized = Boolean(existing);
+    const alreadyAuthorized = Boolean(existing);
     if (!existing) {
-      const { error: insertError } = await admin
-        .from('authorized_emails')
-        .insert({ email, role: 'operator' });
-      if (insertError?.code === '23505') {
-        alreadyAuthorized = true;
-      } else if (insertError) {
-        return respond({ error: 'Não foi possível autorizar o e-mail na base de dados.' }, 500);
-      }
+      const { error } = await admin.from('authorized_emails').insert({ email, role: 'operator' });
+      if (error?.code !== '23505' && error) return respond({ error: 'Não foi possível autorizar o e-mail na base de dados.' }, 500);
     } else if (existing.role !== role) {
-      const { error: updateError } = await admin
-        .from('authorized_emails')
-        .update({ role })
-        .eq('email', email);
-      if (updateError) return respond({ error: 'Não foi possível atualizar a autorização do e-mail.' }, 500);
+      const { error } = await admin.from('authorized_emails').update({ role }).eq('email', email);
+      if (error) return respond({ error: 'Não foi possível atualizar a autorização do e-mail.' }, 500);
     }
 
     const { data: authorized, error: authorizedError } = await admin
-      .from('authorized_emails')
-      .select('email, role')
-      .eq('email', email)
-      .single();
+      .from('authorized_emails').select('email, role').eq('email', email).single();
     if (authorizedError || !authorized) return respond({ error: 'Não foi possível confirmar a autorização do e-mail.' }, 500);
     role = authorized.role;
 
-    if (role === 'operator' || role === 'admin') {
-      const { data: pendingProfiles, error: pendingError } = await admin
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .eq('role', 'pending')
-        .limit(10);
-      if (pendingError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível atualizar um perfil pendente.' }, 500);
-      for (const pending of pendingProfiles ?? []) {
-        const { error: roleError } = await caller.rpc('admin_set_user_role', {
-          target_user_id: pending.id,
-          target_role: role,
-        });
-        if (roleError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível atualizar um perfil pendente.' }, 500);
-      }
+    if (!['operator', 'admin'].includes(role)) {
+      return respond({ error: 'Este papel não pode receber um código de primeiro acesso.' }, 409);
+    }
+    const { data: pendingProfiles, error: pendingError } = await admin
+      .from('profiles').select('id').eq('email', email).eq('role', 'pending').limit(10);
+    if (pendingError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível atualizar um perfil pendente.' }, 500);
+    for (const pending of pendingProfiles ?? []) {
+      const { error: roleError } = await caller.rpc('admin_set_user_role', {
+        target_user_id: pending.id, target_role: role,
+      });
+      if (roleError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível atualizar um perfil pendente.' }, 500);
     }
 
-    return respond({ ok: true, role, already_authorized: alreadyAuthorized });
+    const { code, error: codeError } = await issueActivationCode(admin, email, user.id);
+    if (codeError || !code) return respond({ error: 'O e-mail foi autorizado, mas não foi possível gerar o código. Tente novamente.' }, 500);
+    return respond({ ok: true, role, already_authorized: alreadyAuthorized, firstAccessCode: code });
   }
 
   if (payload.action === 'delete') {
@@ -199,78 +301,33 @@ Deno.serve(async (request) => {
 
   if (payload.action === 'create-email-user') {
     const { data: existingProfile, error: existingProfileError } = await admin
-      .from('profiles')
-      .select('id, role')
-      .eq('email', email)
-      .maybeSingle();
+      .from('profiles').select('id, role').eq('email', email).maybeSingle();
     if (existingProfileError) return respond({ error: 'Não foi possível consultar o acesso deste e-mail.' }, 500);
+    if (existingProfile?.role === 'disabled') {
+      return respond({ error: 'Este e-mail já tem uma conta desativada. Reative-a na lista de Usuários antes de liberar o acesso.' }, 409);
+    }
 
-    if (existingProfile) {
-      if (existingProfile.role === 'disabled') {
-        return respond({ error: 'Este e-mail já tem uma conta desativada. Reative-a na lista de Usuários antes de liberar o acesso.' }, 409);
-      }
-      const { data: authRecord, error: authLookupError } = await admin.auth.admin.getUserById(existingProfile.id);
-      if (authLookupError || !authRecord?.user) {
-        return respond({ error: 'A conta existe, mas não foi possível conferir o método de acesso. Nenhuma alteração foi feita.' }, 500);
-      }
-      const authUser = authRecord.user;
-      const providers = Array.isArray(authUser.app_metadata?.providers) ? authUser.app_metadata.providers : [];
-      const hasGoogle = providers.includes('google') || (authUser.identities ?? []).some((identity) => identity.provider === 'google');
-      const role = existingProfile.role === 'pending' ? 'operator' : existingProfile.role;
+    const { data: existingAuthorization, error: authorizationLookupError } = await admin
+      .from('authorized_emails').select('email, role').eq('email', email).maybeSingle();
+    if (authorizationLookupError) return respond({ error: 'Não foi possível consultar os e-mails autorizados.' }, 500);
 
-      if (!hasGoogle) {
-        const { error: metadataError } = await admin.auth.admin.updateUserById(existingProfile.id, {
-          user_metadata: { ...authUser.user_metadata, must_change_password: true },
-        });
-        if (metadataError) return respond({ error: 'Não foi possível preparar a criação de senha. Nenhuma alteração no perfil foi feita.' }, 500);
-      }
+    const role = existingAuthorization?.role === 'admin' || existingProfile?.role === 'admin' ? 'admin' : 'operator';
+    const { error: authorizationWriteError } = await admin
+      .from('authorized_emails').upsert({ email, role }, { onConflict: 'email' });
+    if (authorizationWriteError) return respond({ error: 'Não foi possível autorizar este e-mail.' }, 500);
 
-      if (existingProfile.role === 'pending') {
-        const { error: roleError } = await caller.rpc('admin_set_user_role', {
-          target_user_id: existingProfile.id,
-          target_role: 'operator',
-        });
-        if (roleError) {
-          if (!hasGoogle) await admin.auth.admin.updateUserById(existingProfile.id, { user_metadata: authUser.user_metadata ?? {} });
-          return respond({ error: 'Não foi possível liberar o perfil como Operador.' }, 500);
-        }
-      }
-
-      return respond({
-        ok: true,
-        created: false,
-        existing: true,
-        existingGoogle: hasGoogle,
-        email,
-        role,
+    if (existingProfile?.role === 'pending') {
+      const { error: roleError } = await caller.rpc('admin_set_user_role', {
+        target_user_id: existingProfile.id, target_role: role,
       });
+      if (roleError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível liberar o perfil.' }, 500);
     }
 
-    const displayName = email.split('@')[0].replace(/[._-]+/g, ' ').trim();
-    const { data: created, error: createError } = await admin.auth.admin.createUser({
-      email,
-      email_confirm: true,
-      user_metadata: { must_change_password: true },
+    const { code, error: codeError } = await issueActivationCode(admin, email, user.id);
+    if (codeError || !code) return respond({ error: 'O e-mail foi autorizado, mas não foi possível gerar o código. Tente novamente.' }, 500);
+    return respond({
+      ok: true, created: !existingProfile, existing: Boolean(existingProfile), email, role, firstAccessCode: code,
     });
-    if (createError || !created.user) {
-      const detail = createError?.message ?? 'Não foi possível criar a conta.';
-      if (/already (been )?registered|already exists|duplicate/i.test(detail)) {
-        return respond({ error: 'Já existe uma conta de autenticação com este e-mail. Confira a lista de Usuários antes de tentar novamente.' }, 409);
-      }
-      return respond({ error: 'Não foi possível criar a conta: ' + detail }, 400);
-    }
-
-    const { error: profileError } = await admin.from('profiles').upsert({
-      id: created.user.id,
-      email,
-      display_name: displayName,
-      role: 'operator',
-    }, { onConflict: 'id' });
-    if (profileError) {
-      await admin.auth.admin.deleteUser(created.user.id);
-      return respond({ error: 'A conta não foi finalizada porque não foi possível criar o perfil de Operador.' }, 500);
-    }
-    return respond({ ok: true, created: true, email, role: 'operator', userId: created.user.id });
   }
 
   if (payload.action === 'create-password-user') {
