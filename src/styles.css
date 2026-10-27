@@ -481,3 +481,18 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
 .warrant-tab span{display:inline-grid;place-items:center;min-width:1.55rem;height:1.55rem;padding:0 .42rem;border-radius:999px;background:#edf0f2;color:#344047;font-size:.78em;font-weight:800}
 .warrant-tab.active span{background:#ffffff2e;color:#fff}
 @media(max-width:480px){.warrant-tabs{gap:6px;padding:7px;border-radius:16px}.warrant-tab{min-height:62px;gap:5px;padding:.55rem .3rem;border-radius:13px;font-size:.82rem}.warrant-tab::before{font-size:.98rem}.warrant-tab span{min-width:1.35rem;height:1.35rem;padding:0 .3rem}}
+
+/* User administration pages and pending identity change alerts */
+.nav-icon{position:relative}
+.nav-alert-badge{position:absolute;top:-7px;right:-9px;display:grid;place-items:center;min-width:17px;height:17px;padding:0 4px;border:2px solid #fff;border-radius:999px;background:#c43f45;color:#fff;font-size:.68rem;font-weight:800;line-height:1}
+.dashboard-proposal-alert{display:flex;align-items:center;gap:14px;width:100%;margin-top:18px;padding:16px 20px;border:1px solid #f0d18a;border-radius:16px;background:#fff7e5;color:#593f00;text-align:left;font:inherit;cursor:pointer}
+.dashboard-proposal-alert[hidden]{display:none}
+.dashboard-proposal-alert>span:nth-child(2){display:grid;gap:3px;min-width:0;flex:1}
+.dashboard-proposal-alert strong{font-size:1rem}
+.dashboard-proposal-alert small{color:#766338}
+.dashboard-proposal-icon{display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:50%;background:#f1c75c;color:#342500;font-weight:900}
+.team-page-tabs{display:flex;gap:8px;overflow-x:auto;margin:18px 0 22px;padding:2px 2px 8px;scrollbar-width:thin}
+.team-page-tab{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;flex:none;padding:10px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font:inherit;font-size:.9rem;font-weight:650;cursor:pointer}
+.team-page-tab.active{border-color:var(--brand);background:var(--brand);color:#fff}
+.team-page-count{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;border-radius:999px;background:#c43f45;color:#fff;font-size:.75rem}
+@media(max-width:620px){.team-page-tabs{margin:14px -2px 18px}.team-page-tab{min-height:42px;padding:9px 12px;font-size:.82rem}.dashboard-proposal-alert{padding:14px 15px}}
