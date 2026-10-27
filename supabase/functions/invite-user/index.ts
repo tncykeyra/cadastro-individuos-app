@@ -244,8 +244,13 @@ Deno.serve(async (request) => {
     }
 
     const { code, error: codeError } = await issueActivationCode(admin, email, user.id);
-    if (codeError || !code) return respond({ error: 'O e-mail foi autorizado, mas não foi possível gerar o código. Tente novamente.' }, 500);
-    return respond({ ok: true, role, already_authorized: alreadyAuthorized, firstAccessCode: code });
+    if (codeError || !code) {
+      // The Google allowlist write is authoritative. The optional WhatsApp/password code
+      // must never turn a successful Google authorization into an apparent failure.
+      console.error('[authorize-google] optional first-access code generation failed', codeError?.code ?? 'unknown');
+      return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, firstAccessCode: null, codeUnavailable: true });
+    }
+    return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, firstAccessCode: code, codeUnavailable: false });
   }
 
   if (payload.action === 'delete') {
