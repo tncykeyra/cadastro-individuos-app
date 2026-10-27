@@ -23,9 +23,9 @@ export function formatPdfTextItems(items) {
   }
   return lines
     .sort((a, b) => b.y - a.y)
-    .map(line => line.words.sort((a, b) => a.x - b.x).map(word => word.text).join(' ').replace(/\\s+/g, ' ').trim())
+    .map(line => line.words.sort((a, b) => a.x - b.x).map(word => word.text).join(' ').replace(/\s+/g, ' ').trim())
     .filter(Boolean)
-    .join('\\n');
+    .join('\n');
 }
 
 /** Mantém valores apagados pelo usuário vazios, usando OCR apenas quando não há campo renderizado. */
