@@ -29,7 +29,7 @@ export function formatPersonName(value) {
     if (part === '-' || part === '’' || part === "'") return part;
     return part ? part.charAt(0).toLocaleUpperCase('pt-BR') + part.slice(1) : '';
   }).join('');
-  return String(value ?? '').normalize('NFC').trim().replace(/\\s+/g, ' ')
+  return String(value ?? '').normalize('NFC').trim().replace(/\s+/g, ' ')
     .toLocaleLowerCase('pt-BR').split(' ')
     .map((word, index) => index > 0 && particles.has(word) ? word : titleWord(word))
     .join(' ');
