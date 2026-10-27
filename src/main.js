@@ -384,28 +384,89 @@ function showWarrantConfirmDialog(button){
   const today=new Date().toISOString().slice(0,10);
   $('#recordDialog').innerHTML='<button class="close" type="button" data-close aria-label="Fechar">×</button><div class="dialog-content"><p class="eyebrow">REVISÃO ADMINISTRATIVA</p><h2>Confirmar baixa do mandado</h2><p class="warrant-caution">Confira a baixa na fonte oficial antes de concluir. Esta confirmação remove o aviso ativo do cadastro.</p><form id="warrantConfirmForm" data-warrant-id="'+id+'" class="warrant-form"><div class="warrant-summary">Baixa informada em '+esc(warrantDate(suggestedDate))+' · Referência: '+esc(suggestedRef||'—')+'</div><label>Data confirmada<input name="confirmed_date" type="date" required max="'+today+'" value="'+esc(suggestedDate||today)+'"></label><label>Referência oficial confirmada<input name="reference" required maxlength="200" value="'+esc(suggestedRef)+'"></label><label>Observações (opcional)<textarea name="notes" rows="3" maxlength="1000"></textarea></label><div class="warrant-actions"><button class="button secondary" type="button" data-close>Cancelar</button><button class="button" type="submit">Confirmar baixa</button></div></form></div>';showTrackedDialog($('#recordDialog'));
 }
+async function sha256Hex(value){
+  const bytes=value instanceof Blob?await value.arrayBuffer():value;
+  const digest=await crypto.subtle.digest('SHA-256',bytes);
+  return [...new Uint8Array(digest)].map(byte=>byte.toString(16).padStart(2,'0')).join('');
+}
+async function findExactWarrantPdf(file,contentSha256){
+  const matches=[];
+  for(let offset=0;;offset+=200){
+    const {data,error}=await state.client.from('arrest_warrant_documents').select('id,warrant_id,storage_path,file_size_bytes,content_sha256').eq('file_size_bytes',file.size).range(offset,offset+199);
+    if(error)throw new Error('Não foi possível conferir se o PDF já está armazenado. Nada foi incluído; tente novamente.');
+    matches.push(...(data||[]));if((data||[]).length<200)break;
+  }
+  let uncertain=null;
+  for(const document of matches){
+    if(document.content_sha256){
+      if(document.content_sha256===contentSha256)return{warrantId:document.warrant_id,documentId:document.id,reason:'pdf_exact_hash',contentSha256};
+      continue;
+    }
+    try{
+      const {data,error}=await state.client.storage.from('warrant-documents').createSignedUrl(document.storage_path,60);
+      if(error)throw error;
+      const response=await fetch(data.signedUrl);
+      if(!response.ok)throw new Error('PDF histórico indisponível para comparação.');
+      const existingHash=await sha256Hex(await response.arrayBuffer());
+      if(existingHash===contentSha256)return{warrantId:document.warrant_id,documentId:document.id,reason:'pdf_exact_hash',contentSha256};
+    }catch{
+      uncertain=uncertain||{warrantId:document.warrant_id,documentId:document.id,reason:'pdf_candidate',contentSha256};
+    }
+  }
+  return uncertain;
+}
+async function stageDuplicateWarrantSubmission(payload,matchedWarrantId,reason,file=null,importBatchId=null,contentSha256=null){
+  if(!isAdmin())throw new Error('Apenas administradores podem encaminhar mandados para revisão.');
+  if(!matchedWarrantId)throw new Error('Foi encontrada uma possível duplicidade, mas o mandado correspondente não foi identificado. Nenhuma informação foi descartada; atualize a lista e tente novamente.');
+  const id=crypto.randomUUID(),userId=state.session.user.id,path=file?userId+'/'+id+'/'+crypto.randomUUID()+'.pdf':null;
+  if(file){const {error}=await state.client.storage.from('warrant-documents').upload(path,file,{contentType:'application/pdf',upsert:false});if(error)throw error}
+  const row={id,matched_warrant_id:matchedWarrantId,import_batch_id:importBatchId,source_kind:payload.source_kind||'manual',duplicate_reason:reason,payload,storage_path:path,document_name:file?file.name.slice(0,220):null,file_size_bytes:file?file.size:null,content_sha256:file?contentSha256:null,submitted_by:userId};
+  const {error}=await state.client.from('arrest_warrant_duplicate_submissions').insert(row);
+  if(error){if(path)await state.client.storage.from('warrant-documents').remove([path]);throw error}
+  return{id,duplicatePending:true,reviewMessage:' Este mandado foi preservado e enviado para aprovação administrativa como possível duplicidade.',documentSaved:true,documentWarning:''};
+}
+async function findWarrantDuplicateTarget(payload){
+  const processNumber=normalizeWarrantProcessNumber(payload.source_reference||'');
+  if(processNumber){
+    const {data,error}=await state.client.from('arrest_warrants').select('id').eq('process_number_digits',processNumber).limit(1);
+    if(error)throw error;if(data?.[0])return{warrantId:data[0].id,reason:'process_number'};
+  }
+  const {data,error}=await state.client.from('arrest_warrants').select('id').eq('source_agency',payload.source_agency).eq('warrant_number',payload.warrant_number).limit(1);
+  if(error)throw error;if(data?.[0])return{warrantId:data[0].id,reason:'agency_warrant_number'};
+  return null;
+}
 async function saveWarrantRecord(values,file=null){
   if(!isAdmin())throw new Error('Apenas administradores podem incluir mandados.');
   const number=String(values.warrant_number||'').trim().toLocaleUpperCase('pt-BR'),name=formatPersonName(values.full_name),cpf=String(values.cpf||values.cpf_digits||'').replace(/\D/g,'');
-  const rg=String(values.person_rg||values.rg||'').trim(),address=String(values.person_address_primary||values.address_primary||'').trim(),filiation=String(values.person_filiation||values.filiation||'').trim(),processInformation=String(values.person_process_information||values.process_information||'').trim(),sourceReference=String(values.source_reference||'').trim(),processNumber=normalizeWarrantProcessNumber(sourceReference);
+  const rg=String(values.person_rg||values.rg||'').trim(),address=String(values.person_address_primary||values.address_primary||'').trim(),filiation=String(values.person_filiation||values.filiation||'').trim(),processInformation=String(values.person_process_information||values.process_information||'').trim(),sourceReference=String(values.source_reference||'').trim();
+  const sourceAgency=String(values.source_agency||'BNMP').trim().toLocaleUpperCase('pt-BR')||'BNMP';
   if(!number)throw new Error('Informe o número do mandado.');
   if(!name)throw new Error('Informe o nome completo do indivíduo.');
   if(cpf&&(!/^\d{11}$/.test(cpf)||!isValidCpf(cpf)))throw new Error('Confira o CPF informado.');
   if(file&&(file.type!=='application/pdf'&&!/\.pdf$/i.test(file.name)))throw new Error('Selecione um arquivo PDF válido.');
   if(file&&file.size>20*1024*1024)throw new Error('Cada PDF deve ter até 20 MB.');
-  if(processNumber){
-    const {data:existingProcesses,error:processError}=await state.client.from('arrest_warrants').select('id').eq('process_number_digits',processNumber).limit(1);
-    if(processError)throw processError;
-    if(existingProcesses?.length)throw new Error('Já existe um mandado com esse número de processo. O registro não foi duplicado.');
+  const payload={warrant_number:number,full_name:name,cpf_digits:cpf||null,birth_date:values.birth_date||null,source_agency:sourceAgency,source_kind:file?'pdf':String(values.source_kind||'manual'),source_reference:sourceReference,alias:String(values.alias||'').trim(),mother_name:String(values.mother_name||'').trim(),father_name:String(values.father_name||'').trim(),person_rg:rg,person_address_primary:address,person_filiation:filiation,person_process_information:processInformation,status:'pending'};
+  let contentSha256=null;
+  if(file){
+    contentSha256=await sha256Hex(file);
+    const pdfMatch=await findExactWarrantPdf(file,contentSha256);
+    if(pdfMatch)return stageDuplicateWarrantSubmission(payload,pdfMatch.warrantId,pdfMatch.reason,file,null,contentSha256);
   }
+  const duplicate=await findWarrantDuplicateTarget(payload);
+  if(duplicate)return stageDuplicateWarrantSubmission(payload,duplicate.warrantId,duplicate.reason,file,null,contentSha256);
   const id=crypto.randomUUID(),userId=state.session.user.id,path=file?userId+'/'+id+'/'+crypto.randomUUID()+'.pdf':null;
   if(file){const {error}=await state.client.storage.from('warrant-documents').upload(path,file,{contentType:'application/pdf',upsert:false});if(error)throw error}
-  const payload={id,warrant_number:number,full_name:name,cpf_digits:cpf||null,birth_date:values.birth_date||null,source_agency:String(values.source_agency||'BNMP').trim().toLocaleUpperCase('pt-BR')||'BNMP',source_kind:file?'pdf':'manual',source_reference:sourceReference,status:'pending',created_by:userId,updated_by:userId};
-  const {error:insertError}=await state.client.from('arrest_warrants').insert(payload);
-  if(insertError){if(path)await state.client.storage.from('warrant-documents').remove([path]);if(insertError.code==='23505'&&String(insertError.message||'').includes('process_number_digits'))throw new Error('Já existe um mandado com esse número de processo. O registro não foi duplicado.');if(insertError.code==='23505')throw new Error('Já existe um mandado com esse número e órgão emissor. Confira a lista antes de continuar.');throw insertError}
+  const insertPayload={id,warrant_number:number,full_name:name,cpf_digits:cpf||null,birth_date:values.birth_date||null,source_agency:sourceAgency,source_kind:file?'pdf':String(values.source_kind||'manual'),source_reference:sourceReference,status:'pending',created_by:userId,updated_by:userId};
+  const {error:insertError}=await state.client.from('arrest_warrants').insert(insertPayload);
+  if(insertError){
+    if(path)await state.client.storage.from('warrant-documents').remove([path]);
+    const concurrent=await findWarrantDuplicateTarget(payload);
+    if(concurrent)return stageDuplicateWarrantSubmission(payload,concurrent.warrantId,'concurrent_insert',file,null,contentSha256);
+    throw insertError;
+  }
   let documentSaved=!file,documentWarning='';
   if(file){
-    const {error:docError}=await state.client.from('arrest_warrant_documents').insert({warrant_id:id,storage_path:path,file_name:file.name.slice(0,220),content_type:'application/pdf',file_size_bytes:file.size,created_by:userId});
+    const {error:docError}=await state.client.from('arrest_warrant_documents').insert({warrant_id:id,storage_path:path,file_name:file.name.slice(0,220),content_type:'application/pdf',file_size_bytes:file.size,content_sha256:contentSha256,created_by:userId});
     if(docError){documentWarning=' O mandado foi criado, mas o vínculo do PDF falhou. O arquivo foi preservado na fila para nova tentativa.'}
     else documentSaved=true;
   }
@@ -426,6 +487,7 @@ async function saveWarrantRecord(values,file=null){
   }
   return {id,reviewMessage,documentSaved,documentWarning,documentPath:path};
 }
+
 async function saveWarrantManual(event){
   event.preventDefault();if(!isAdmin())throw new Error('Apenas administradores podem incluir mandados.');
   const form=event.target,values=Object.fromEntries(new FormData(form).entries()),file=form.querySelector('input[name="document"]')?.files?.[0]||null;
