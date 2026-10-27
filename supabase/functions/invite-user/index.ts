@@ -206,6 +206,7 @@ Deno.serve(async (request) => {
   }
 
   if (payload.action === 'authorize-google') {
+    try {
     const { data: existing, error: lookupError } = await admin
       .from('authorized_emails').select('email, role').eq('email', email).maybeSingle();
     if (lookupError) return respond({ error: 'Não foi possível consultar a lista de e-mails autorizados.' }, 500);
@@ -251,6 +252,16 @@ Deno.serve(async (request) => {
       return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, firstAccessCode: null, codeUnavailable: true });
     }
     return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, firstAccessCode: code, codeUnavailable: false });
+    } catch (error) {
+      // Return the persisted allowlist state if a later optional step unexpectedly fails.
+      const { data: persisted } = await admin.from('authorized_emails').select('role').eq('email', email).maybeSingle();
+      if (persisted && ['operator', 'admin'].includes(persisted.role)) {
+        console.error('[authorize-google] authorized; optional step failed', error instanceof Error ? error.name : 'UnknownError');
+        return respond({ ok: true, authorized: true, role: persisted.role, already_authorized: true, firstAccessCode: null, codeUnavailable: true });
+      }
+      console.error('[authorize-google] request failed', error instanceof Error ? error.name : 'UnknownError');
+      return respond({ error: 'Não foi possível autorizar este e-mail Google. Atualize a tela e tente novamente.' }, 500);
+    }
   }
 
   if (payload.action === 'delete') {
