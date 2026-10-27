@@ -496,3 +496,15 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
 .team-page-tab.active{border-color:var(--brand);background:var(--brand);color:#fff}
 .team-page-count{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;border-radius:999px;background:#c43f45;color:#fff;font-size:.75rem}
 @media(max-width:620px){.team-page-tabs{margin:14px -2px 18px}.team-page-tab{min-height:42px;padding:9px 12px;font-size:.82rem}.dashboard-proposal-alert{padding:14px 15px}}
+.revision.admin-change{border-left:4px solid #c89016}
+.revision-admin-badge{display:inline-flex!important;align-items:center;width:max-content;margin-top:7px;padding:4px 9px;border-radius:999px;background:#fff2cf;color:#735000;font-size:.75rem;font-weight:750;line-height:1.2}
+.revision-person-card{display:flex;align-items:center;gap:12px;width:100%;margin:2px 0 14px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#f8f9f9;color:var(--ink);text-align:left;font:inherit;cursor:pointer}
+.revision-person-card:hover{border-color:#aab1b4;background:#f2f4f4}
+.revision-person-card.admin-change{border-color:#e8c76f;background:#fff9e9}
+.revision-person-icon{display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:12px;background:#e9edef;color:var(--brand)}
+.revision-person-icon svg{width:24px;height:24px;fill:currentColor}
+.revision-person-copy{display:grid;gap:3px;min-width:0;flex:1}
+.revision-person-copy small{color:var(--muted);font-size:.78rem}
+.revision-person-copy strong{overflow-wrap:anywhere}
+.revision-person-card .revision-admin-badge{flex:none;margin:0}
+@media(max-width:620px){.revision-person-card{align-items:flex-start;flex-wrap:wrap;padding:11px}.revision-person-card .revision-admin-badge{margin-left:54px}}
