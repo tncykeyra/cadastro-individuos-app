@@ -555,3 +555,4 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
  .warrant-proposal-details .warrant-actions{display:grid;grid-template-columns:1fr}
  .warrant-proposal-details .warrant-actions .button{width:100%;min-height:48px}
 }
+.revision-body .revision-person-icon svg{display:block;width:24px;height:24px;max-width:24px;max-height:24px;flex:0 0 24px}
