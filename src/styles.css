@@ -520,3 +520,15 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
 .revision-person-copy strong{overflow-wrap:anywhere}
 .revision-person-card .revision-admin-badge{flex:none;margin:0}
 @media(max-width:620px){.revision-person-card{align-items:flex-start;flex-wrap:wrap;padding:11px}.revision-person-card .revision-admin-badge{margin-left:54px}}
+/* As abas de Usuários e Mandados seguem o padrão visual de Conta Google. */
+.team-page-tabs,.warrant-tabs{display:flex;align-items:center;flex-wrap:wrap;gap:8px;overflow:visible;margin:18px 0 22px;padding:0;border:0;border-radius:0;background:transparent;scrollbar-width:auto}
+.team-page-tab,.warrant-tab{position:relative;display:inline-flex;flex:0 1 auto;flex-direction:row;align-items:center;justify-content:center;gap:8px;width:auto;min-width:0;min-height:44px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:inherit;font-size:.9rem;font-weight:600;line-height:1.2;text-align:center;white-space:normal;box-shadow:none;transition:background .15s ease,border-color .15s ease,color .15s ease}
+.team-page-tab::before,.warrant-tab::before{content:none!important;display:none!important}
+.team-page-tab:hover,.warrant-tab:hover{transform:none;border-color:#bac2c5;background:#f6f7f7;box-shadow:none}
+.team-page-tab:focus-visible,.warrant-tab:focus-visible{outline:3px solid #71838b66;outline-offset:2px}
+.team-page-tab.active,.warrant-tab.active{border-color:var(--brand);background:var(--brand);color:#fff;box-shadow:none}
+.team-page-tab[data-team-page="identity"]{grid-column:auto;min-height:44px;flex-direction:row;align-items:center}
+.team-page-count,.team-page-tab.active .team-page-count{position:static;display:inline-grid;flex:none;place-items:center;min-width:22px;height:22px;padding:0 5px;border:0;border-radius:999px;background:#c43f45;color:#fff;font-size:.72rem;font-weight:800;line-height:1}
+.warrant-tab span,.warrant-tab.active span{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#edf0f2;color:var(--ink);font-size:.78em;font-weight:700}
+.warrant-tab.active span{background:#ffffff2e;color:#fff}
+@media(max-width:620px){.team-page-tabs,.warrant-tabs{gap:7px;margin:14px 0 18px}.team-page-tab,.warrant-tab{min-height:42px;flex:0 1 auto;padding:9px 12px;border-radius:10px;font-size:.84rem}.team-page-tab[data-team-page="identity"]{min-height:42px}}
