@@ -32,3 +32,9 @@ test('PDF OCR form values use recognized values only when an edit control is abs
     { full_name: 'Nome OCR', cpf: '' }
   );
 });
+
+test('recognizes a number following the Brazilian arrest warrant heading', () => {
+  const parsed = extractWarrantPersonSuggestions('MANDADO DE PRISÃO Nº: BNMP12345\\nNOME DA PESSOA: ANA DE SOUZA');
+  assert.equal(parsed.warrant_number, 'BNMP12345');
+  assert.equal(parsed.full_name, 'ANA DE SOUZA');
+});
