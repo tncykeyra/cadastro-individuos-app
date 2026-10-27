@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isUsefulSearch, normalizePlate, normalizeSearchTerm, isValidPlate } from '../src/domain.js';
+import { isUsefulSearch, normalizePlate, normalizeSearchTerm, isValidPlate, formatPersonName } from '../src/domain.js';
 
 test('normalizes search terms and ignores spaces/punctuation', () => {
   assert.equal(normalizeSearchTerm('  João da Silva '), 'JOAODASILVA');
@@ -20,3 +20,10 @@ test('accepts old and Mercosul plate formats only', () => {
 
 test('compara hashes visuais de fotos com tolerância pequena', async () => { const { arePhotoHashesSimilar } = await import('../src/domain.js'); assert.equal(arePhotoHashesSimilar('0000000000000000','0000000000000001'), true); assert.equal(arePhotoHashesSimilar('0000000000000000','000000000000001f'), false); assert.equal(arePhotoHashesSimilar('not-a-hash','0000000000000000'), false); });
 test('remove duplicatas visuais sem misturar fotos de pessoas associadas', async () => { const { dedupePhotoSources } = await import('../src/domain.js'); const photo = (group, suffix='0000000000000000') => ({ dedupe_group: group, difference_hash: suffix, average_hash: 'ffffffffffffffff' }); const unique = dedupePhotoSources([photo('record'), photo('record','0000000000000001'), photo('person:1'), photo('person:2')]); assert.deepEqual(unique.map(item=>item.dedupe_group), ['record','person:1','person:2']); });
+
+test('formats person names consistently in Brazilian Portuguese while preserving accents and particles', () => {
+  assert.equal(formatPersonName('  JOÃO   CARLOS DA SILVA '), 'João Carlos da Silva');
+  assert.equal(formatPersonName('luAN d’ávila'), 'Luan D’Ávila');
+  assert.equal(formatPersonName('mARIA-CLARA de souza'), 'Maria-Clara de Souza');
+  assert.equal(formatPersonName(''), '');
+});
