@@ -220,7 +220,7 @@ export function extractWarrantSuggestions(text) {
   const full_name = lineAfterLabel(source,
     /(?:em desfavor de|em face de|requerido(?:\(a\))?|indiciado(?:\(a\))?|procurado(?:\(a\))?|nome completo)\s*[:\-]?\s*([^\r\n]{3,180})/i
   );
-  const numberMatch = source.match(/(?:n[º°.]?\s*(?:do\s*)?mandado|n[uú]mero\s+(?:do\s+)?mandado|mandado\s*(?:n[º°.]|n[uú]mero|#)|\bBNMP\b)\s*[:#\-]?\s*([A-Z0-9][A-Z0-9./\-]{3,55})/i);
+  const numberMatch = source.match(/(?:n[º°.]?\s*(?:do\s*)?mandado|n[uú]mero\s+(?:do\s+)?mandado|mandado(?:\s+de\s+pris[aã]o)?\s*(?:n[º°.]|n[uú]mero|#)?|\bBNMP\b)\s*[:#\-]?\s*([A-Z0-9][A-Z0-9./\-]{3,55})/i);
   const dateMatch = source.match(/(?:data de nascimento|nascimento)\s*[:\-]?\s*(\d{1,2}[./-]\d{1,2}[./-]\d{4})/i);
   const birth_date = parseIsoDate(dateMatch?.[1] || '') || '';
   return {
