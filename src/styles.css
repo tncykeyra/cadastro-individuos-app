@@ -541,3 +541,9 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
 .dashboard-proposal-alert small{color:#8d454a}
 .dashboard-proposal-icon{display:grid;place-items:center;width:34px;height:34px;flex:none;border-radius:10px;background:#c43f45;color:#fff;font-size:1rem;font-weight:900;box-shadow:0 2px 7px #8c202533}
 @media(max-width:620px){.dashboard-proposal-alert{min-height:68px;padding:12px 14px}}
+.identity-suggestion-sent{display:flex;align-items:center;gap:12px;margin:16px 0;padding:14px 16px;border:1px solid #efc7c9;border-left:5px solid #bf3038;border-radius:12px;background:#fff3f3;color:#641b20}
+.identity-suggestion-sent-icon{display:grid;place-items:center;width:32px;height:32px;flex:none;border-radius:9px;background:#c43f45;color:#fff;font-weight:900}
+.identity-suggestion-sent>span:last-child{display:grid;gap:4px;min-width:0}
+.identity-suggestion-sent strong{color:#7c2027;font-size:.96rem}
+.identity-suggestion-sent small{color:#8d454a;line-height:1.4}
+@media(max-width:620px){.identity-suggestion-sent{margin:12px 0;padding:12px}}
