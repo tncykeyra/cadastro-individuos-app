@@ -547,3 +547,22 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
 .identity-suggestion-sent strong{color:#7c2027;font-size:.96rem}
 .identity-suggestion-sent small{color:#8d454a;line-height:1.4}
 @media(max-width:620px){.identity-suggestion-sent{margin:12px 0;padding:12px}}
+/* Reforça o padrão visual exato das abas Conta Google/E-mail sem Google. */
+.team-page-tabs .team-page-tab.team-tab,.warrant-tabs .warrant-tab.team-tab{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;width:auto;min-width:0;flex:0 1 auto;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:inherit;font-size:.9rem;font-weight:600;line-height:1.2;text-align:center;box-shadow:none;transform:none}
+.team-page-tabs .team-page-tab.team-tab::before,.warrant-tabs .warrant-tab.team-tab::before{content:none!important;display:none!important}
+.team-page-tabs .team-page-tab.team-tab.active,.warrant-tabs .warrant-tab.team-tab.active{border-color:var(--brand);background:var(--brand);color:#fff;box-shadow:none}
+.team-page-tabs .team-page-tab.team-tab:hover,.warrant-tabs .warrant-tab.team-tab:hover{border-color:#bac2c5;background:#f6f7f7;transform:none;box-shadow:none}
+.team-page-tabs .team-page-tab.team-tab.active:hover,.warrant-tabs .warrant-tab.team-tab.active:hover{border-color:var(--brand);background:var(--brand);color:#fff}
+@media(max-width:620px){.team-page-tabs .team-page-tab.team-tab,.warrant-tabs .warrant-tab.team-tab{min-height:42px;flex:0 1 auto;padding:9px 12px;font-size:.84rem}}
+/* Card compacto no histórico, com a foto de capa atual do cadastro. */
+.revision-person-card{display:flex;align-items:center;gap:9px;width:min(100%,460px);min-height:58px;margin:2px 0 12px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);text-align:left;font:inherit;cursor:pointer;box-shadow:none}
+.revision-person-card:hover{border-color:#bac2c5;background:#f8f9f9}
+.revision-person-card.admin-change{border-color:#e8c76f;background:#fffaf0}
+.revision-person-icon{display:grid;place-items:center;width:42px;height:42px;flex:none;overflow:hidden;border-radius:8px;background:#edf0f1;color:var(--brand)}
+.revision-person-icon img{display:block;width:100%;height:100%;object-fit:cover}
+.revision-person-icon svg{width:23px;height:23px;fill:currentColor}
+.revision-person-copy{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.revision-person-copy strong{overflow:hidden;font-size:.88rem;line-height:1.25;text-overflow:ellipsis;white-space:nowrap}
+.revision-person-copy small{color:var(--muted);font-size:.74rem;line-height:1.2}
+.revision-person-card .revision-admin-badge{flex:none;margin:0;padding:4px 7px;font-size:.68rem}
+@media(max-width:620px){.revision-person-card{align-items:center;flex-wrap:nowrap;min-height:54px;padding:6px 8px}.revision-person-card .revision-admin-badge{margin:0}.revision-person-icon{width:38px;height:38px}}
