@@ -211,7 +211,7 @@ Deno.serve(async (request) => {
       .from('authorized_emails').select('email, role').eq('email', email).maybeSingle();
     if (lookupError) return respond({ error: 'Não foi possível consultar a lista de e-mails autorizados.' }, 500);
 
-    const { data: disabledProfile, error: disabledProfileError } = await admin
+    const { data: disabledProfile, error: disabledProfileError } = await caller
       .from('profiles').select('id').eq('email', email).eq('role', 'disabled').limit(1).maybeSingle();
     if (disabledProfileError) return respond({ error: 'Não foi possível verificar o perfil deste e-mail.' }, 500);
     if (disabledProfile) return respond({ error: 'O perfil está desativado. Reative-o na lista de Usuários antes de gerar um código.' }, 409);
@@ -234,7 +234,7 @@ Deno.serve(async (request) => {
     if (!['operator', 'admin'].includes(role)) {
       return respond({ error: 'Este papel não pode receber um código de primeiro acesso.' }, 409);
     }
-    const { data: pendingProfiles, error: pendingError } = await admin
+    const { data: pendingProfiles, error: pendingError } = await caller
       .from('profiles').select('id').eq('email', email).eq('role', 'pending').limit(10);
     if (pendingError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível atualizar um perfil pendente.' }, 500);
     for (const pending of pendingProfiles ?? []) {
