@@ -27,7 +27,8 @@ function lastViewKey(userId){return 'cadastro:last-view:'+userId}
 const warrantPickerResumeKey='cadastro:warrant-pdf-picker-resume';
 function markWarrantPdfPickerResume(){if(state.page!=='warrants'||!isAdmin())return;state.warrantPdfPickerActive=true;clearTimeout(state.warrantPdfPickerTimer);state.warrantPdfPickerTimer=setTimeout(()=>{state.warrantPdfPickerActive=false},120000);try{localStorage.setItem(warrantPickerResumeKey,JSON.stringify({userId:state.session?.user?.id,tab:'include',createdAt:Date.now()}))}catch{}}
 function clearWarrantPdfPickerResume(){state.warrantPdfPickerActive=false;clearTimeout(state.warrantPdfPickerTimer);state.warrantPdfPickerTimer=null;try{localStorage.removeItem(warrantPickerResumeKey)}catch{}}
-window.addEventListener('focus',()=>{if(state.warrantPdfPickerActive)setTimeout(()=>{if(state.warrantPdfPickerActive)clearWarrantPdfPickerResume()},1200)});
+function finishWarrantPdfPickerSelection(){try{localStorage.removeItem(warrantPickerResumeKey)}catch{}clearTimeout(state.warrantPdfPickerTimer);state.warrantPdfPickerTimer=setTimeout(()=>{state.warrantPdfPickerActive=false;state.warrantPdfPickerTimer=null},10000)}
+window.addEventListener('focus',()=>{if(state.warrantPdfPickerActive){clearTimeout(state.warrantPdfPickerTimer);state.warrantPdfPickerTimer=setTimeout(()=>clearWarrantPdfPickerResume(),10000)}});
 function consumeWarrantPdfPickerResume(userId,role){try{const pending=JSON.parse(localStorage.getItem(warrantPickerResumeKey)||'null');clearWarrantPdfPickerResume();return Boolean(pending&&pending.userId===userId&&pending.tab==='include'&&role==='admin'&&Date.now()-Number(pending.createdAt)<10*60*1000)}catch{clearWarrantPdfPickerResume();return false}}
 function saveLastView(){const userId=state.session?.user?.id;if(!userId)return;try{localStorage.setItem(lastViewKey(userId),JSON.stringify({page:state.page,selected:state.selected,listPage:state.listPage,letter:state.letter,query:state.query,searchInput:state.searchInput,listPageSize:state.listPageSize,warrantTab:state.warrantTab,warrantQuery:state.warrantQuery,teamPage:state.teamPage}))}catch{}}
 function getLastView(userId){try{const value=JSON.parse(localStorage.getItem(lastViewKey(userId))||'null');if(!value||!['dashboard','people','vehicles','warrants','team','history'].includes(value.page))return null;if(['team','history'].includes(value.page)&&!isAdmin())return null;return {page:value.page,selected:typeof value.selected==='string'?value.selected:null,listPage:Math.max(0,Number(value.listPage)||0),letter:typeof value.letter==='string'?value.letter:'all',query:typeof value.query==='string'?value.query:'',searchInput:typeof value.searchInput==='string'?value.searchInput:'',listPageSize:Math.max(1,Number(value.listPageSize)||30),warrantTab:['list','include','review'].includes(value.warrantTab)?value.warrantTab:'list',warrantQuery:typeof value.warrantQuery==='string'?value.warrantQuery:'',teamPage:typeof value.teamPage==='string'?value.teamPage:'authorize'}}catch{return null}}
@@ -859,7 +860,7 @@ document.addEventListener('input',event=>{
 });
 document.addEventListener('change',async event=>{
   const input=event.target;
-  if(input.matches?.('[data-warrant-pdf-batch], #warrantManualPdf'))clearWarrantPdfPickerResume();
+  if(input.matches?.('[data-warrant-pdf-batch], #warrantManualPdf'))finishWarrantPdfPickerSelection();
   if(input.matches?.('[data-warrant-pdf-batch]')){
     if(!isAdmin()){toast('Apenas administradores podem importar PDFs.');return}
     try{await readWarrantPdfBatch(input.files||[])}catch(error){toast(msg(error))}finally{input.value=''}
