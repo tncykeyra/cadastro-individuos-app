@@ -569,3 +569,13 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
   .warrant-pdf-batch-row{gap:14px}
   .warrant-pdf-batch-fields input,.warrant-pdf-batch-fields textarea{font-size:16px}
 }
+
+
+/* Controles do carrossel no padrão arredondado e de alto contraste do aplicativo. */
+.carousel-auto-control{gap:12px;margin-top:14px}
+button.carousel-control-icon{width:46px;height:46px;flex:0 0 46px;padding:0;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--brand);box-shadow:0 3px 10px #17212712;font-size:1.35rem;font-weight:750;line-height:1;transition:background .16s,border-color .16s,transform .16s,box-shadow .16s}
+button.carousel-control-icon:hover{background:#eef1f2;border-color:#ccd2d5;box-shadow:0 5px 14px #1721271c;transform:translateY(-1px)}
+button.carousel-control-icon:focus-visible{outline:3px solid #50595e55;outline-offset:3px}
+button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
+button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{background:var(--brand-dark);border-color:var(--brand-dark)}
+@media(max-width:620px){button.carousel-control-icon{width:48px;height:48px;flex-basis:48px}}
