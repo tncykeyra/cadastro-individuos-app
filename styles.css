@@ -522,3 +522,9 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
  .revision-body>.revision-person-card{width:min(100%,250px);max-width:250px}
  .carousel-auto-control{justify-content:center}
 }
+
+
+/* Indicador compacto de sugestões pendentes no ícone de Indivíduos do menu lateral. */
+#sideNav .nav-item .nav-icon{position:relative;overflow:visible}
+#sideNav .nav-item .nav-alert-badge{position:absolute;top:-6px;right:-7px;z-index:2;display:grid;place-items:center;width:18px;height:18px;min-width:18px;padding:0;border:2px solid #fff;border-radius:50%;background:#c43f45;color:#fff;font-size:11px;font-weight:900;line-height:1;box-shadow:0 2px 5px #54151a3d}
+#sideNav .nav-item.active .nav-alert-badge{border-color:#e9edef;background:#b52f38;color:#fff}
