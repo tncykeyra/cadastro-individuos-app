@@ -432,3 +432,19 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
 .warrant-person-alert .warrant-alert-item>div{min-width:0}
 .warrant-person-alert .button{white-space:normal}
 @media(max-width:620px){.warrant-alert-actions{align-items:stretch}.warrant-alert-actions .button{flex:1 1 100%}.carousel-auto-control{justify-content:stretch}.carousel-auto-control .button{width:100%}}
+
+
+/* Warrant section tabs and compact mobile navigation controls */
+.warrant-tabs{display:flex;gap:.55rem;overflow-x:auto;padding:.25rem 0 1rem;margin:0 0 1.25rem;border-bottom:1px solid var(--line,#d9dee2);scrollbar-width:none}
+.warrant-tabs::-webkit-scrollbar{display:none}
+.warrant-tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:.5rem;min-height:44px;padding:.65rem 1rem;border:1px solid var(--line,#d9dee2);border-radius:999px;background:#fff;color:var(--ink,#252b2e);font:inherit;font-weight:650;cursor:pointer}
+.warrant-tab.active{background:var(--accent,#4b565b);border-color:var(--accent,#4b565b);color:#fff}
+.warrant-tab span{display:inline-grid;place-items:center;min-width:1.5rem;height:1.5rem;padding:0 .35rem;border-radius:999px;background:#edf0f2;color:inherit;font-size:.8em}
+.warrant-section-title{gap:1rem;flex-wrap:wrap}
+.warrant-section-title>button{margin-left:auto}
+.warrant-list-search label{display:grid;gap:.45rem}
+.warrant-list-search input{width:100%;min-width:0}
+.carousel-auto-control{display:flex;justify-content:center;align-items:center;gap:.5rem;margin:.55rem auto 0}
+.carousel-control-icon{display:grid;place-items:center;width:2.5rem;height:2.5rem;padding:0;border:1px solid var(--line,#d9dee2);border-radius:50%;background:#fff;color:var(--ink,#252b2e);font-size:1.25rem;font-weight:700;line-height:1;cursor:pointer}
+.carousel-control-icon:hover,.carousel-control-icon:focus-visible{background:#edf0f2;outline:2px solid transparent}
+@media(max-width:600px){.warrant-tabs{margin-inline:-.1rem}.warrant-section-title>button{margin-left:0}.warrant-active-section .warrant-section-title{align-items:flex-start}}
