@@ -34,3 +34,37 @@ export function formatPersonName(value) {
     .map((word, index) => index > 0 && particles.has(word) ? word : titleWord(word))
     .join(' ');
 }
+
+function photoSourceKey(value){
+  const source=String(value||'').trim();
+  if(!source)return '';
+  try{
+    const url=new URL(source);
+    if(url.hostname==='drive.google.com'){
+      const id=url.searchParams.get('id')||url.pathname.match(/\/d\/([^/]+)/)?.[1];
+      if(id)return 'drive:'+id
+    }
+    if(url.hostname.endsWith('.supabase.co')){
+      const storagePath=url.pathname.match(/\/storage\/v1\/object\/(?:sign|public|authenticated)\/([^/]+)\/(.*)$/);
+      if(storagePath)return 'supabase:'+storagePath[1]+'/'+decodeURIComponent(storagePath[2])
+    }
+    if(url.hostname==='storage.googleapis.com'||url.hostname.endsWith('.googleusercontent.com'))return url.origin+url.pathname;
+    return source
+  }catch{const path=source.replace(/^\/+|\/+$/g,'').replace(/\\/g,'/');return path?'supabase:people-photos/'+path:''}
+}
+export function normalizeRecordPhotos(photos,primaryCoverPath=''){
+  const byPath=new Map();
+  for(const photo of Array.isArray(photos)?photos:[]){
+    const path=String(photo?.photo_path||'').trim(),key=photoSourceKey(path);
+    if(!path||!key)continue;
+    const existing=byPath.get(key);
+    if(!existing){byPath.set(key,{...photo,photo_path:path,is_cover:Boolean(photo.is_cover)});continue}
+    if(!existing.id&&photo.id)existing.id=photo.id;
+    if(photo.is_cover)existing.is_cover=true;
+    if((!existing.crop_position||existing.crop_position==='50% 50%')&&photo.crop_position)existing.crop_position=photo.crop_position;
+    if(!existing.created_at&&photo.created_at)existing.created_at=photo.created_at
+  }
+  const unique=[...byPath.values()],primaryKey=photoSourceKey(primaryCoverPath);
+  const cover=(primaryKey&&byPath.get(primaryKey))||unique.find(photo=>photo.is_cover)||unique[0]||null;
+  return unique.map(photo=>({...photo,is_cover:photo===cover})).sort((a,b)=>Number(b.is_cover)-Number(a.is_cover))
+}

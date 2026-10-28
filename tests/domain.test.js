@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isUsefulSearch, normalizePlate, normalizeSearchTerm, isValidPlate, formatPersonName } from '../src/domain.js';
+import { isUsefulSearch, normalizePlate, normalizeSearchTerm, isValidPlate, formatPersonName, normalizeRecordPhotos } from '../src/domain.js';
 
 test('normalizes search terms and ignores spaces/punctuation', () => {
   assert.equal(normalizeSearchTerm('  João da Silva '), 'JOAODASILVA');
@@ -26,4 +26,37 @@ test('formats person names consistently in Brazilian Portuguese while preserving
   assert.equal(formatPersonName('luAN d’ávila'), 'Luan D’Ávila');
   assert.equal(formatPersonName('mARIA-CLARA de souza'), 'Maria-Clara de Souza');
   assert.equal(formatPersonName(''), '');
+});
+
+test('consolida caminhos repetidos e mantém uma única capa preferindo a capa do cadastro', () => {
+  const photos = normalizeRecordPhotos([
+    { id: 'old-cover', photo_path: 'people/1/cover.jpg', is_cover: false, crop_position: '25% 35%' },
+    { id: 'duplicate-cover', photo_path: 'people/1/cover.jpg', is_cover: true },
+    { id: 'extra', photo_path: 'people/1/extra.jpg', is_cover: true },
+  ], 'people/1/cover.jpg');
+  assert.equal(photos.length, 2);
+  assert.equal(photos[0].photo_path, 'people/1/cover.jpg');
+  assert.equal(photos[0].is_cover, true);
+  assert.equal(photos[0].crop_position, '25% 35%');
+  assert.equal(photos.filter(photo => photo.is_cover).length, 1);
+});
+
+test('reconhece a mesma foto Supabase apesar de URLs assinadas diferentes', () => {
+  const photos = normalizeRecordPhotos([
+    { id: 'one', photo_path: 'https://project.supabase.co/storage/v1/object/sign/people-photos/people/1/cover.jpg?token=one' },
+    { id: 'two', photo_path: 'https://project.supabase.co/storage/v1/object/public/people-photos/people/1/cover.jpg' },
+    { id: 'other', photo_path: 'people/1/other.jpg' },
+  ], 'people/1/cover.jpg');
+  assert.equal(photos.length, 2);
+  assert.equal(photos.filter(photo => photo.is_cover).length, 1);
+  assert.equal(photos[0].photo_path.includes('cover.jpg'), true);
+});
+
+test('escolhe uma capa estável quando não há marcação explícita', () => {
+  const photos = normalizeRecordPhotos([
+    { photo_path: 'people/2/a.jpg' },
+    { photo_path: 'people/2/b.jpg' },
+  ]);
+  assert.equal(photos[0].photo_path, 'people/2/a.jpg');
+  assert.equal(photos.filter(photo => photo.is_cover).length, 1);
 });
