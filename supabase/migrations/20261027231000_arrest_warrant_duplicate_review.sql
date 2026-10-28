@@ -14,16 +14,16 @@ create table if not exists public.arrest_warrant_duplicate_submissions (
   file_size_bytes bigint check (file_size_bytes is null or file_size_bytes between 1 and 20971520),
   content_sha256 text check (content_sha256 is null or content_sha256 ~ '^[0-9a-f]{64}$'),
   submitted_by uuid not null references auth.users(id),
-  status text not null default 'pending' check (status in ('pending','approved','rejected')),
+  status text not null default 'pending' check (status in ('pending','approved','rejected','registered')),
   reviewed_by uuid references auth.users(id),
   reviewed_at timestamptz,
   review_notes text not null default '',
   created_at timestamptz not null default now(),
   constraint arrest_warrant_duplicate_document_metadata_check
     check (
-      (storage_path is null and document_name is null and file_size_bytes is null and content_sha256 is null)
+      (storage_path is null and document_name is null and file_size_bytes is null)
       or
-      (storage_path is not null and document_name is not null and file_size_bytes is not null and content_sha256 is not null)
+      (storage_path is not null and document_name is not null and file_size_bytes is not null)
     )
 );
 
@@ -90,6 +90,8 @@ declare
   v_duplicate_size bigint;
   v_duplicate_sha text;
   v_is_exact_pdf boolean := false;
+  v_has_warrant boolean := false;
+  v_new_warrant_id uuid;
 begin
   if v_user_id is null or public.is_admin() is not true then
     raise exception 'Apenas administradores podem incluir mandados.';
@@ -158,7 +160,7 @@ begin
       v_duplicate_path := null;
       v_duplicate_name := null;
       v_duplicate_size := null;
-      v_duplicate_sha := null;
+      v_duplicate_sha := v_sha;
     else
       v_duplicate_path := p_storage_path;
       v_duplicate_name := p_document_name;
@@ -238,7 +240,7 @@ begin
   if auth.uid() is null or public.is_admin() is not true then
     raise exception 'Apenas administradores podem revisar mandados duplicados.';
   end if;
-  if p_decision not in ('approve','reject') then
+  if p_decision not in ('approve','reject','register_distinct') then
     raise exception 'Decisão inválida.';
   end if;
 
@@ -278,22 +280,23 @@ begin
   end if;
 
   update public.arrest_warrant_duplicate_submissions
-     set status = case when p_decision='approve' then 'approved' else 'rejected' end,
+     set status = case when p_decision='approve' then 'approved' when p_decision='register_distinct' then 'registered' else 'rejected' end,
          reviewed_by = auth.uid(), reviewed_at = now(), review_notes = left(coalesce(p_notes,''),1000)
    where id = p_submission_id;
 
-  if found then
+  if v_has_warrant then
     insert into public.arrest_warrant_events (warrant_id, warrant_number, actor_id, action, detail)
     values (v_warrant.id, v_warrant.warrant_number, auth.uid(),
-            case when p_decision='approve' then 'duplicate_submission_approved' else 'duplicate_submission_rejected' end,
+            case when p_decision='approve' then 'duplicate_submission_approved' when p_decision='register_distinct' then 'duplicate_submission_registered' else 'duplicate_submission_rejected' end,
             jsonb_build_object('submission_id',p_submission_id,'source_kind',v_submission.source_kind,
                                'duplicate_reason',v_submission.duplicate_reason,
                                'document_attached',v_submission.storage_path is not null));
   end if;
 
   return jsonb_build_object('submission_id',p_submission_id,
-    'status',case when p_decision='approve' then 'approved' else 'rejected' end,
-    'matched_warrant_id',v_submission.matched_warrant_id);
+    'status',case when p_decision='approve' then 'approved' when p_decision='register_distinct' then 'registered' else 'rejected' end,
+    'matched_warrant_id',v_submission.matched_warrant_id,
+    'warrant_id',coalesce(v_new_warrant_id,v_submission.matched_warrant_id));
 end;
 $function$;
 
