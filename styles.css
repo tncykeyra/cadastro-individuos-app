@@ -735,7 +735,7 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
 :root[data-theme="dark"] #mainContent :is(.row-title,.row-subtitle,.info-value,.detail-title h1,.detail-sections h2,.detail-sections h3,.person-card h3,.vehicle-card h3,.dashboard-card strong,.warrant-card h3,.warrant-record h3,.warrant-review-card h3,.warrant-review-card p,.warrant-record p,.identity-proposal-card p,.revision-person-copy strong,.association-result-copy strong,.association-result-copy>span,.association-result-copy small,.fiscalization-card h2,.fiscalization-card p){
  max-width:100%;min-width:0;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;
 }
-:root[data-theme="dark"] #mainContent :is(button,.button){
+:root[data-theme="dark"] #mainContent :is(button,.button):not(.carousel-arrow):not(.gallery-arrow):not(.carousel-main):not(.carousel-thumb):not(.photo-zoom):not(.crop-inline-open){
  max-width:100%;min-width:0;height:auto;white-space:normal;overflow-wrap:anywhere;line-height:1.25;
 }
 :root[data-theme="dark"] #mainContent :is(.fiscalization-search-count,.wizard-progress,.page-size-control,.pagination-summary){white-space:normal;overflow-wrap:anywhere}
