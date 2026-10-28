@@ -677,47 +677,92 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
 
 
 /* Tema claro/escuro: alternância persistente e superfícies legíveis em todas as páginas. */
+
+/* Tema escuro OLED: superfícies pretas com contraste e conteúdo sem cortes. */
 :root[data-theme="dark"]{
  color-scheme:dark;
- --ink:#edf1f2;--muted:#b4bec2;--brand:#66747a;--brand-dark:#aab6bb;
- --line:#3b464b;--soft:#30393e;--surface:#242d31;--page:#171e21;
- --shadow:0 14px 42px #0006;
+ --ink:#f5f5f5;--muted:#b7b7b7;--brand:#50595e;--brand-dark:#66747a;
+ --line:#303030;--soft:#080808;--surface:#000;--page:#000;
+ --shadow:0 14px 42px #0009;
 }
 :root[data-theme="dark"] body,
 :root[data-theme="dark"] main,
-:root[data-theme="dark"] .app-shell{background:var(--page);color:var(--ink)}
-:root[data-theme="dark"] .drawer{background:#20282c;border-color:var(--line)}
-:root[data-theme="dark"] .nav-item{color:#d6dddf}
-:root[data-theme="dark"] .nav-item.active{background:#354147;color:#fff}
-:root[data-theme="dark"] .bottom-nav{background:#20282cf2;border-color:var(--line)}
-:root[data-theme="dark"] .topbar{background:#303a3f}
-:root[data-theme="dark"] #mainContent :is([class*="card"],[class*="box"],[class*="panel"],[class*="list"],[class*="row"],[class*="result"],[class*="tab"],[class*="toolbar"],[class*="surface"]):not([class*="photo"]):not([class*="image"]):not([class*="alert"]):not([class*="notice"]):not([class*="error"]):not([class*="success"]):not([class*="warning"]):not([class*="badge"]):not([class*="button"]):not([class*="icon"]):not([class*="player"]){
- background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important;
+:root[data-theme="dark"] .app-shell{
+ background:#000!important;color:var(--ink);
 }
+:root[data-theme="dark"] .topbar,
+:root[data-theme="dark"] .drawer,
+:root[data-theme="dark"] .bottom-nav{
+ background:#000!important;color:var(--ink);border-color:var(--line);
+}
+:root[data-theme="dark"] .topbar{height:auto;min-height:72px;padding-block:10px}
+:root[data-theme="dark"] .topbar .top-title{
+ max-width:calc(100vw - 132px);overflow:visible;text-overflow:clip;
+ white-space:normal;overflow-wrap:anywhere;line-height:1.15;
+}
+:root[data-theme="dark"] .drawer{background:#000!important}
+:root[data-theme="dark"] .nav-item{color:#dedede}
+:root[data-theme="dark"] .nav-item.active{background:#181818!important;color:#fff}
+:root[data-theme="dark"] #mainContent{
+ width:100%;max-width:100%;min-width:0;color:var(--ink);
+}
+:root[data-theme="dark"] #mainContent :is([class*="card"],[class*="box"],[class*="panel"],[class*="list"],[class*="row"],[class*="result"],[class*="tab"],[class*="toolbar"],[class*="surface"]):not([class*="photo"]):not([class*="image"]):not([class*="alert"]):not([class*="notice"]):not([class*="error"]):not([class*="success"]):not([class*="warning"]):not([class*="badge"]):not([class*="button"]):not([class*="icon"]):not([class*="player"]),
 :root[data-theme="dark"] #mainContent :is(.detail-hero,.detail-sections>.info-box,.photo-item,.photo-empty,.empty,.dashboard-card,.stat,.person-card,.list,.list-row,.revision,.site-card,.auth-card,.fiscalization-card,.fiscalization-video-card,.fiscalization-tabs,.fiscalization-video-intro,.fiscalization-video-player,.fiscalization-category,.fiscalization-source,.fiscalization-filter,.fiscalization-tab,.team-tab,.team-tabs,.invite-form,.association-search-selected,.association-result,.warrant-card,.warrant-item,.warrant-tabs,.warrant-search-results,.warrant-person-search,.crop-editor-dialog,.dialog-inner,.dialog-head,.dialog-actions,.edit-photo-card,.photo-controls,.gallery-arrow,.pagination-summary,.pagination-controls,.alphabet-filter button,.page-select,.page-size-control,.page-jump-control){
- background-color:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important;
+ background:#000!important;background-color:#000!important;color:var(--ink)!important;border-color:var(--line)!important;
 }
-:root[data-theme="dark"] #mainContent :is(.dashboard-substat,.dashboard-video-count,.dashboard-count-note,.fiscalization-video-count,.fiscalization-video-icon,.fiscalization-placeholder,.fiscalization-category,.linked-person-icon,.vehicle-thumb,.association-result-thumb){
- background-color:#303a3f!important;color:#e4eaec!important;border-color:var(--line)!important;
-}
+:root[data-theme="dark"] #mainContent :is(.dashboard-substat,.dashboard-video-count,.dashboard-count-note,.fiscalization-video-count,.fiscalization-video-icon,.fiscalization-placeholder,.linked-person-icon,.vehicle-thumb,.association-result-thumb),
 :root[data-theme="dark"] #mainContent :is(input,textarea,select,.search,.page-select,.role-select){
- background:#30393e!important;color:var(--ink)!important;border-color:#4a565c!important;
+ background:#090909!important;background-color:#090909!important;color:var(--ink)!important;border-color:#303030!important;
 }
 :root[data-theme="dark"] #mainContent input::placeholder,
-:root[data-theme="dark"] #mainContent textarea::placeholder{color:#aab5ba}
+:root[data-theme="dark"] #mainContent textarea::placeholder{color:#b7b7b7}
 :root[data-theme="dark"] #mainContent :is(button.secondary,.button.secondary,.team-tab,.fiscalization-filter:not(.active),.alphabet-filter button:not(.active),.gallery-arrow,.page-select){
- background:#30393e!important;color:#edf1f2!important;border-color:#4a565c!important;
+ background:#202020!important;color:#f5f5f5!important;border-color:#454545!important;
 }
-:root[data-theme="dark"] #mainContent :is(.muted,.card-meta,.row-subtitle,.info-label,.dashboard-label,.pagination-summary,.fiscalization-summary,.fiscalization-note,.fiscalization-search-count){color:#b4bec2!important}
-:root[data-theme="dark"] #mainContent :is(.info-value,.row-title,.person-card h3,.dashboard-card strong,.fiscalization-card h2,.revision strong){color:var(--ink)}
+:root[data-theme="dark"] #mainContent :is(.muted,.card-meta,.row-subtitle,.info-label,.dashboard-label,.pagination-summary,.fiscalization-summary,.fiscalization-note,.fiscalization-search-count){color:#b7b7b7!important}
+:root[data-theme="dark"] #mainContent :is(.info-value,.row-title,.person-card h3,.dashboard-card strong,.fiscalization-card h2,.revision strong){color:var(--ink)!important}
 :root[data-theme="dark"] #mainContent a{color:#a9d4ff}
 :root[data-theme="dark"] #mainContent hr,
 :root[data-theme="dark"] #mainContent :is(.detail-sections,.fiscalization-details,.revision,.list-row){border-color:var(--line)}
-:root[data-theme="dark"] #mainContent :is(.photo-item,.photo-empty,.photo-gallery,.photo-gallery-wrap,.photo-dialog,.photo-zoom,.portrait,.avatar,.vehicle-thumb,.fiscalization-image-button){
- background-color:#20282c;
-}
+:root[data-theme="dark"] #mainContent :is(.photo-item,.photo-empty,.photo-gallery,.photo-gallery-wrap,.photo-dialog,.photo-zoom,.portrait,.avatar,.vehicle-thumb,.fiscalization-image-button){background-color:#111}
 :root[data-theme="dark"] #mainContent :is(.notice,.fiscalization-disclaimer){background:#44391f!important;color:#f4dfaa!important;border-color:#715e31!important}
 :root[data-theme="dark"] #mainContent :is(.error-box,.error,.danger-notice){background:#482b2d!important;color:#ffd9d9!important;border-color:#754447!important}
+
+/* Evita que nomes, identificadores e ações sejam cortados em cartões e buscas. */
+:root[data-theme="dark"] #mainContent :is(.person-card,.vehicle-card,.dashboard-card,.warrant-card,.warrant-record,.warrant-review-card,.warrant-alert-item,.warrant-proposal-card,.identity-proposal-card,.revision,.list-row,.association-result,.association-search-selected,.detail-hero,.detail-sections,.form-grid,.cards,.dashboard-grid){
+ min-width:0;max-width:100%;
+}
+:root[data-theme="dark"] #mainContent :is(.row-title,.row-subtitle,.info-value,.detail-title h1,.detail-sections h2,.detail-sections h3,.person-card h3,.vehicle-card h3,.dashboard-card strong,.warrant-card h3,.warrant-record h3,.warrant-review-card h3,.warrant-review-card p,.warrant-record p,.identity-proposal-card p,.revision-person-copy strong,.association-result-copy strong,.association-result-copy>span,.association-result-copy small,.fiscalization-card h2,.fiscalization-card p){
+ max-width:100%;min-width:0;white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;
+}
+:root[data-theme="dark"] #mainContent :is(button,.button):not(.carousel-arrow):not(.gallery-arrow):not(.carousel-main):not(.carousel-thumb):not(.photo-zoom):not(.crop-inline-open){
+ max-width:100%;min-width:0;height:auto;white-space:normal;overflow-wrap:anywhere;line-height:1.25;
+}
+:root[data-theme="dark"] #mainContent :is(.fiscalization-search-count,.wizard-progress,.page-size-control,.pagination-summary){white-space:normal;overflow-wrap:anywhere}
+
+/* Diálogos e formulários também acompanham o tema; a folha A4 do PDF segue branca. */
+:root[data-theme="dark"] dialog{
+ color-scheme:dark;color:var(--ink);background:#000;border-color:var(--line);
+}
+:root[data-theme="dark"] dialog::backdrop{background:#000d}
+:root[data-theme="dark"] dialog :is(.dialog-head,.dialog-inner,.dialog-actions,.ocr-dialog-inner){background:#000!important;color:var(--ink)!important}
+:root[data-theme="dark"] dialog :is(input,textarea,select){
+ background:#090909!important;color:var(--ink)!important;border-color:#454545!important;
+}
+:root[data-theme="dark"] dialog :is(input,textarea)::placeholder{color:#b7b7b7}
+:root[data-theme="dark"] dialog :is(button.secondary,.button.secondary){
+ background:#202020!important;color:#f5f5f5!important;border-color:#454545!important;
+}
+:root[data-theme="dark"] .pdf-share-dialog{background:#080808;color:var(--ink);border-color:var(--line)}
+:root[data-theme="dark"] .pdf-preview-pages{background:#151515}
+:root[data-theme="dark"] .ocr-dialog{background:#000!important;color:var(--ink)!important}
+:root[data-theme="dark"] .ocr-dialog :is(.ocr-field-row,.ocr-candidate,.ocr-result-card,.ocr-notice){
+ background:#111!important;color:var(--ink)!important;border-color:var(--line)!important;
+}
+:root[data-theme="dark"] .ocr-dialog :is(.ocr-field-row label,.ocr-field-row strong,.ocr-dialog p,.ocr-dialog h2,.ocr-dialog h3){color:var(--ink)}
+:root[data-theme="dark"] .app-shell>#themeToggle{
+ background:#111!important;border-color:#444!important;color:#fff!important;
+}
 .topbar .theme-toggle{
  position:absolute!important;top:50%!important;right:14px!important;transform:translateY(-50%)!important;
  display:grid!important;place-items:center!important;width:44px!important;height:44px!important;
@@ -728,17 +773,13 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
 .topbar .theme-toggle:focus-visible{outline:3px solid #fff;outline-offset:3px}
 .theme-toggle .theme-icon{display:block!important;width:24px!important;height:24px!important;max-width:24px!important;max-height:24px!important;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .theme-toggle .theme-icon-moon{fill:currentColor;stroke:none}
-:root:not([data-theme="dark"]) .theme-icon-sun,
-:root[data-theme="dark"] .theme-icon-moon{display:none!important}
+:root:not([data-theme="dark"]) .theme-icon-sun,:root[data-theme="dark"] .theme-icon-moon{display:none!important}
 .install-button{right:68px}
-.topbar .top-title{max-width:calc(100vw - 150px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:620px){
  .topbar .theme-toggle{right:10px!important;width:42px!important;height:42px!important}
  .install-button{right:58px}
- .topbar .top-title{max-width:calc(100vw - 132px);font-size:1.05rem}
+ .topbar .top-title{max-width:calc(100vw - 132px);font-size:clamp(.9rem,3.5vw,1.05rem)}
 }
-
-/* O seletor de aparência permanece acessível também quando a barra principal está oculta no login. */
 .app-shell>#themeToggle{
  position:fixed!important;top:calc(env(safe-area-inset-top,0px) + 10px)!important;right:14px!important;
  transform:none!important;display:grid!important;place-items:center!important;width:44px!important;height:44px!important;
@@ -747,28 +788,3 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
 }
 .app-shell>#themeToggle:focus-visible{outline:3px solid #fff;outline-offset:3px}
 @media(max-width:620px){.app-shell>#themeToggle{right:10px!important;width:42px!important;height:42px!important}}
-
-
-/* Tema escuro OLED: fundos pretos para reduzir o consumo em telas OLED/AMOLED. */
-:root[data-theme="dark"]{
- color-scheme:dark;
- --ink:#f5f5f5;--muted:#b7b7b7;--brand:#080808;--brand-dark:#171717;
- --line:#303030;--soft:#080808;--surface:#000;--page:#000;
- --shadow:0 14px 42px #0009;
-}
-:root[data-theme="dark"] body,
-:root[data-theme="dark"] main,
-:root[data-theme="dark"] .app-shell{background:#000!important;color:var(--ink)}
-:root[data-theme="dark"] .topbar,
-:root[data-theme="dark"] .drawer,
-:root[data-theme="dark"] .bottom-nav{background:#000!important;color:var(--ink);border-color:#303030}
-:root[data-theme="dark"] .nav-item.active{background:#181818!important;color:#fff}
-:root[data-theme="dark"] #mainContent :is([class*="card"],[class*="box"],[class*="panel"],[class*="list"],[class*="row"],[class*="result"],[class*="tab"],[class*="toolbar"],[class*="surface"]):not([class*="photo"]):not([class*="image"]):not([class*="alert"]):not([class*="notice"]):not([class*="error"]):not([class*="success"]):not([class*="warning"]):not([class*="badge"]):not([class*="button"]):not([class*="icon"]):not([class*="player"]),
-:root[data-theme="dark"] #mainContent :is(.detail-hero,.detail-sections>.info-box,.photo-item,.photo-empty,.empty,.dashboard-card,.stat,.person-card,.list,.list-row,.revision,.site-card,.auth-card,.fiscalization-card,.fiscalization-video-card,.fiscalization-tabs,.fiscalization-video-intro,.fiscalization-video-player,.fiscalization-category,.fiscalization-source,.fiscalization-filter,.fiscalization-tab,.team-tab,.team-tabs,.invite-form,.association-search-selected,.association-result,.warrant-card,.warrant-item,.warrant-tabs,.warrant-search-results,.warrant-person-search,.crop-editor-dialog,.dialog-inner,.dialog-head,.dialog-actions,.edit-photo-card,.photo-controls,.gallery-arrow,.pagination-summary,.pagination-controls,.alphabet-filter button,.page-select,.page-size-control,.page-jump-control){
- background:#000!important;background-color:#000!important;color:var(--ink)!important;border-color:#303030!important;
-}
-:root[data-theme="dark"] #mainContent :is(.dashboard-substat,.dashboard-video-count,.dashboard-count-note,.fiscalization-video-count,.fiscalization-video-icon,.fiscalization-placeholder,.linked-person-icon,.vehicle-thumb,.association-result-thumb),
-:root[data-theme="dark"] #mainContent :is(input,textarea,select,.search,.page-select,.role-select){
- background:#090909!important;background-color:#090909!important;color:var(--ink)!important;border-color:#303030!important;
-}
-:root[data-theme="dark"] .app-shell>#themeToggle{background:#111!important;border-color:#444!important;color:#fff!important}
