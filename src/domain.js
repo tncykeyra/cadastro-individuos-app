@@ -65,6 +65,7 @@ export function normalizeRecordPhotos(photos,primaryCoverPath=''){
     if(!existing.created_at&&photo.created_at)existing.created_at=photo.created_at
   }
   const unique=[...byPath.values()],primaryKey=photoSourceKey(primaryCoverPath);
-  const cover=unique.find(photo=>photo.is_cover)||((primaryKey&&byPath.get(primaryKey))||unique[0]||null);
+  // The record's primary photo_path is the canonical cover. Legacy is_cover flags can be stale.
+  const cover=(primaryKey&&byPath.get(primaryKey))||unique.find(photo=>photo.is_cover)||unique[0]||null;
   return unique.map(photo=>({...photo,is_cover:photo===cover})).sort((a,b)=>Number(b.is_cover)-Number(a.is_cover))
 }
