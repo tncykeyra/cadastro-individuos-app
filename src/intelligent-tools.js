@@ -7,16 +7,17 @@ export function parseIntelligentText(kind, rawText) {
   if (kind === 'person') {
     const nameMatch = text.match(/(?:nome(?: completo)?\s*[:\-]\s*)([^\n,;]+)/i);
     const rgMatch = text.match(/\b(?:RG|identidade)\s*[:\-]?\s*([\w.\/-]{4,20})/i);
+    const addressMatch = text.match(/(?:endereço(?:\s+residencial)?|residência|residente\s+em|mora\s+em)\s*[:\-]?\s*([^\n;]+)/i);
     const firstPart = text.split(/[\n,;]/)[0].trim();
     const name = nameMatch?.[1]?.trim() || firstPart.replace(/\bCPF\b.*$/i, '').trim();
     let remainder = text;
-    for (const field of [nameMatch?.[0] || firstPart, cpfMatch?.[0], rgMatch?.[0], dateMatch?.[0]]) {
+    for (const field of [nameMatch?.[0] || firstPart, cpfMatch?.[0], rgMatch?.[0], dateMatch?.[0], addressMatch?.[0]]) {
       if (field) remainder = remainder.replace(field, ' ');
     }
     remainder = remainder.replace(/^[\s,;|]+|[\s,;|]+$/g, '').trim();
     const notesMatch = text.match(/(?:anotações?|crimes?|ocorrência|envolvimento)\s*[:\-]\s*([\s\S]+)$/i);
     const notes = notesMatch?.[1]?.trim() || remainder;
-    return { full_name: name, cpf_digits: cpfMatch ? digits(cpfMatch[1]) : '', rg: rgMatch?.[1] || '', birthday: dateMatch?.[1] || '', notes };
+    return { full_name: name, cpf_digits: cpfMatch ? digits(cpfMatch[1]) : '', rg: rgMatch?.[1] || '', birthday: dateMatch?.[1] || '', address_primary: addressMatch?.[1]?.trim().replace(/[.,;]+$/, '') || '', notes };
   }
 
   const plateMatch = text.match(/\b([A-Z]{3}\s*\d[A-Z0-9]\s*\d{2}|[A-Z]{3}\s*\d{4})\b/i);
@@ -34,11 +35,16 @@ export function parseIntelligentText(kind, rawText) {
   };
 }
 
-export function renderIntelligentEntry() {
-  return '<section class="page-intro"><div><h1>Cadastro Inteligente</h1><p>Organize informações digitadas e confira possíveis registros existentes antes de continuar.</p></div></section>' +
-    '<section class="smart-entry-panel"><div class="smart-kind-switch" role="group" aria-label="Tipo de cadastro"><button class="button smart-kind active" type="button" data-smart-kind="person">👤 Indivíduo</button><button class="button secondary smart-kind" type="button" data-smart-kind="vehicle">🚗 Veículo</button></div>' +
-    '<label class="smart-text-label" for="smartText">Digite as informações</label><textarea id="smartText" class="search smart-text" placeholder="Ex.: João Carlos da Silva, CPF 12345678909, RG 456789, nascido em 15/03/1990..."></textarea>' +
-    '<button class="button" type="button" id="smartAnalyze">Analisar informações</button><div id="smartResult" aria-live="polite"></div></section>';
+export function renderIntelligentEntry(initialKind = 'person') {
+  const kind = initialKind === 'vehicle' ? 'vehicle' : 'person';
+  const placeholder = kind === 'vehicle'
+    ? 'Ex.: Placa ABC1D23; marca Honda; modelo CG 160 Fan; cor vermelha; observações sobre o veículo.'
+    : 'Ex.: Nome, CPF, RG, nascimento, endereço completo e anotações do indivíduo.';
+  return '<section class="page-intro"><div><h1>Cadastro Inteligente</h1><p>Digite os dados uma vez. O sistema confere nome, CPF, endereço ou placa antes de abrir o formulário e a área de fotos.</p></div></section>' +
+    '<section class="smart-entry-panel"><div class="smart-kind-switch" role="group" aria-label="Tipo de cadastro"><button class="button smart-kind '+(kind==='person'?'active':'secondary')+'" type="button" data-smart-kind="person">👤 Indivíduo</button><button class="button smart-kind '+(kind==='vehicle'?'active':'secondary')+'" type="button" data-smart-kind="vehicle">🚗 Veículo</button></div>' +
+    '<label class="smart-text-label" for="smartText">Informações para o cadastro</label><textarea id="smartText" class="search smart-text" placeholder="'+placeholder+'"></textarea>' +
+    '<div class="smart-examples"><strong>Exemplos para preencher</strong><button type="button" class="button secondary small" data-smart-example="person">Usar exemplo de indivíduo</button><button type="button" class="button secondary small" data-smart-example="vehicle">Usar exemplo de veículo</button></div>' +
+    '<button class="button" type="button" id="smartAnalyze">🔎 Conferir duplicidade e organizar dados</button><div id="smartResult" aria-live="polite"></div></section>';
 }
 
 export function inspectRecords(people, vehicles) {
