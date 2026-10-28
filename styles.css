@@ -596,3 +596,33 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
 .association-search-selected-card .association-result-copy strong{white-space:normal;overflow-wrap:anywhere}
 .association-search-selected-card .button{min-height:38px;padding:6px 12px}
 @media(max-width:420px){.association-result-thumb{width:48px;height:48px;flex-basis:48px}.association-search-selected.association-search-selected-card{grid-template-columns:48px minmax(0,1fr) auto;gap:7px;padding:8px}.association-search-selected-card .button{padding:5px 9px}}
+
+/* Biblioteca de fiscalização: cartões compactos e editáveis, responsivos. */
+.fiscalization-notice{margin:0 0 20px}
+.fiscalization-toolbar{display:grid;gap:8px;max-width:760px;margin:18px 0}
+.fiscalization-toolbar label{font-weight:700}
+.fiscalization-toolbar .search{margin:0}
+.fiscalization-group{margin:26px 0}
+.fiscalization-group>h2{margin:0 0 12px;font-size:1.25rem}
+.fiscalization-list{display:grid;gap:12px}
+.fiscalization-card{min-width:0;padding:clamp(14px,2vw,20px);border:1px solid var(--line);border-radius:16px;background:#fff;box-shadow:0 5px 18px #17212708}
+.fiscalization-card[hidden],.fiscalization-group[hidden]{display:none}
+.fiscalization-card-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.fiscalization-card-heading h2{margin:6px 0 0;font-size:1.08rem;line-height:1.35;overflow-wrap:anywhere}
+.fiscalization-category{display:inline-flex;padding:4px 9px;border-radius:999px;background:#eef0f1;color:#4c565b;font-size:.76rem;font-weight:700}
+.fiscalization-summary{margin:10px 0 0;color:var(--muted);line-height:1.5}
+.fiscalization-details{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.fiscalization-details summary{cursor:pointer;color:var(--brand);font-weight:700}
+.fiscalization-content{padding:12px 0 4px;line-height:1.6;overflow-wrap:anywhere}
+.fiscalization-source{padding:11px 12px;border-radius:10px;background:#f6f7f7;color:#565f63;font-size:.88rem;line-height:1.45}
+.fiscalization-reference{display:inline-flex;margin:3px 0 12px;color:var(--brand);font-weight:700}
+.fiscalization-images{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));gap:10px;margin-top:12px}
+.fiscalization-image-button{display:block;min-width:0;padding:0;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:#f1f3f4;cursor:zoom-in}
+.fiscalization-image-button img{display:block;width:100%;height:170px;object-fit:contain}
+.fiscalization-dialog{max-height:92dvh}
+.fiscalization-existing-images{border:1px solid var(--line);border-radius:12px;padding:12px}
+.fiscalization-existing-images legend{font-weight:700;padding:0 5px}
+.fiscalization-edit-images{display:flex;flex-wrap:wrap;gap:10px}
+.fiscalization-edit-images label{display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
+.fiscalization-disclaimer{padding:12px;border:1px solid #f2dfb5;border-radius:12px;background:#fff8e8;color:#68542b;line-height:1.45}
+@media(max-width:620px){.fiscalization-card{padding:13px}.fiscalization-images{grid-template-columns:repeat(2,minmax(0,1fr))}.fiscalization-image-button img{height:130px}.fiscalization-card-heading .button{padding:9px 12px}}
