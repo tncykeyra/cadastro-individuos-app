@@ -815,3 +815,20 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
 :root[data-theme="dark"] dialog .close:hover{background:#353535!important;border-color:#737373!important}
 :root[data-theme="dark"] dialog .close:focus-visible{outline:3px solid #b7d6ff;outline-offset:3px}
 @media(max-width:620px){.smart-fields{grid-template-columns:1fr}.smart-fields .field:last-child{grid-column:auto}.smart-entry-panel,.smart-analysis{padding:16px}.smart-kind-switch .button{flex:1}.smart-finding{align-items:flex-start;flex-direction:column}.smart-finding .button{width:100%}}
+
+/* Cadastro Inteligente: ação rápida e exemplos para uso em campo. */
+.smart-fab{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:calc(86px + env(safe-area-inset-bottom));z-index:4;display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:50px;padding:12px 18px;border:0;border-radius:999px;background:var(--brand);color:#fff;font:inherit;font-weight:700;box-shadow:0 8px 24px #17212738;cursor:pointer}
+.smart-fab:hover{background:var(--brand-dark);transform:translateY(-1px)}
+.smart-entry-panel{display:grid;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow)}
+.smart-kind-switch,.smart-examples{display:flex;flex-wrap:wrap;align-items:center;gap:9px}
+.smart-examples{padding:12px;border-radius:14px;background:var(--soft)}
+.smart-examples strong{width:100%;font-size:.92rem}
+.smart-text{min-height:150px;resize:vertical;line-height:1.5}
+.smart-analysis{display:grid;gap:14px;margin-top:18px}
+.smart-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.smart-fields .field{min-width:0}
+.smart-candidate{display:grid;gap:7px;min-width:0;padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow-wrap:anywhere}
+.smart-candidate small{color:var(--muted);line-height:1.45}
+.smart-photo-focus{outline:3px solid color-mix(in srgb,var(--brand) 35%,transparent);border-radius:14px;padding:12px;scroll-margin:24px}
+@media(max-width:620px){.smart-fab{right:14px;bottom:calc(84px + env(safe-area-inset-bottom));min-height:46px;padding:11px 15px;font-size:.92rem}.smart-fields{grid-template-columns:1fr}.smart-entry-panel{padding:15px}.smart-examples .button{flex:1 1 100%;white-space:normal}}
+@media(min-width:621px){.smart-fab{bottom:26px}}
