@@ -37,7 +37,11 @@ export function parseIntelligentText(kind, rawText) {
   };
 }
 
-export function getSmartPersonSearchTerms(values) {\n  const name = String(values?.full_name || '').trim();\n  return name.length >= 3 ? [name] : [];\n}\n\nexport function renderIntelligentEntry(initialKind = 'person') {
+export function getSmartPersonSearchTerms(values) {
+  const name = String(values?.full_name || '').trim();
+  return name.length >= 3 ? [name] : [];
+}
+export function renderIntelligentEntry(initialKind = 'person') {
   const kind = initialKind === 'vehicle' ? 'vehicle' : 'person';
   const placeholder = kind === 'vehicle'
     ? 'Ex.: Placa ABC1D23; marca Honda; modelo CG 160 Fan; cor vermelha; observações sobre o veículo.'
