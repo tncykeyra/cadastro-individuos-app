@@ -302,23 +302,28 @@ async function warrantImportCsv(){
   const insertedKeys=new Map();let insertedCount=0;
   for(let i=0;i<recordsToInsert.length;i+=50){
     const chunk=recordsToInsert.slice(i,i+50),payload=chunk.map(row=>({...row,import_batch_id:batch.id,created_by:userId,updated_by:userId}));
-    const {data,error:insertError}=await state.client.from('arrest_warrants').upsert(payload,{onConflict:'source_agency,warrant_number',ignoreDuplicates:true}).select('id,warrant_number,source_agency,process_number_digits');
+    const {data,error:insertError}=await state.client.from('arrest_warrants').insert(payload).select('id,warrant_number,source_agency,process_number_digits');
     if(insertError){
-      if(insertError.code!=='23505'||!String(insertError.message||'').includes('process_number_digits'))throw insertError;
+      if(insertError.code!=='23505')throw insertError;
+      // Recover per row so a uniqueness race or same-agency/number conflict is
+      // preserved in admin review instead of silently discarded by upsert.
       for(const row of chunk){
         const existing=await findWarrantDuplicateTargets([row]),match=warrantTargetForRecord(row,existing);
         if(match){pending.push({record:row,match,reason:'concurrent_insert'});continue}
         const one={...row,import_batch_id:batch.id,created_by:userId,updated_by:userId};
         const single=await state.client.from('arrest_warrants').insert(one).select('id,warrant_number,source_agency,process_number_digits').single();
         if(single.error){
-          if(single.error.code==='23505'){const refreshed=await findWarrantDuplicateTargets([row]),again=warrantTargetForRecord(row,refreshed);if(again){pending.push({record:row,match:again,reason:'concurrent_insert'});continue}}
+          if(single.error.code==='23505'){
+            const refreshed=await findWarrantDuplicateTargets([row]),again=warrantTargetForRecord(row,refreshed);
+            if(again){pending.push({record:row,match:again,reason:'concurrent_insert'});continue}
+          }
           throw single.error;
         }
         const saved=single.data;insertedCount++;for(const key of warrantDuplicateKeys({...row,process_number_digits:saved.process_number_digits}))insertedKeys.set(key,saved);
       }
       continue;
     }
-    for(const saved of data||[]){insertedCount++;for(const key of warrantDuplicateKeys({...saved,source_reference:chunk.find(row=>row.warrant_number===saved.warrant_number&&row.source_agency===saved.source_agency)?.source_reference}))insertedKeys.set(key,saved)}
+    for(const saved of data||[]){insertedCount++;const sourceReference=chunk.find(row=>row.warrant_number===saved.warrant_number&&row.source_agency===saved.source_agency)?.source_reference;for(const key of warrantDuplicateKeys({...saved,source_reference}))insertedKeys.set(key,saved)}
   }
   const after=await findWarrantDuplicateTargets(allRecords);
   for(const item of parsed.duplicateRecords||[]){
