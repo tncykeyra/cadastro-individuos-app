@@ -63,13 +63,30 @@ export function inspectRecords(people, vehicles) {
     if (cpf && cpf.length !== 11) findings.push({ type: 'Indivíduo', id: person.id, label: 'CPF incompleto', detail: 'O CPF armazenado não contém 11 dígitos.' });
     if (!cpf) findings.push({ type: 'Indivíduo', id: person.id, label: 'CPF ausente', detail: 'Campo opcional não preenchido.', low: true });
   }
-  for (const rows of cpfGroups.values()) if (rows.length > 1) findings.push({ type: 'Indivíduos', id: rows[0].id, label: 'Possível CPF duplicado', detail: rows.map(row => row.full_name || row.id).join(' · ') });
+  for (const rows of cpfGroups.values()) if (rows.length > 1) {
+    const identified = rows.filter(row => digits(row.cpf_digits || row.cpf).length === 11);
+    for (let i = 0; i < identified.length; i++) for (let j = i + 1; j < identified.length; j++) {
+      const left = identified[i], right = identified[j];
+      findings.push({ type: 'Indivíduos', id: left.id, duplicateId: right.id, duplicateKind: 'people', label: 'Possível CPF duplicado', detail: [left.full_name || left.id, right.full_name || right.id].join(' · ') });
+    }
+  }
   const plateGroups = new Map();
   for (const vehicle of vehicles) {
     const plate = String(vehicle.plate || '').replace(/[^a-z0-9]/gi, '').toUpperCase();
     if (plate) plateGroups.set(plate, [...(plateGroups.get(plate) || []), vehicle]);
     if (!String(vehicle.plate || '').trim()) findings.push({ type: 'Veículo', id: vehicle.id, label: 'Placa ausente', detail: 'Não foi possível validar duplicidade sem placa.', low: true });
   }
-  for (const rows of plateGroups.values()) if (rows.length > 1) findings.push({ type: 'Veículos', id: rows[0].id, label: 'Possível placa duplicada', detail: rows.map(row => [row.make, row.model, row.plate].filter(Boolean).join(' ')).join(' · ') });
+  for (const rows of plateGroups.values()) if (rows.length > 1) {
+    for (let i = 0; i < rows.length; i++) for (let j = i + 1; j < rows.length; j++) {
+      const left = rows[i], right = rows[j];
+      findings.push({ type: 'Veículos', id: left.id, duplicateId: right.id, duplicateKind: 'vehicles', label: 'Possível placa duplicada', detail: [[left.make, left.model, left.plate].filter(Boolean).join(' '), [right.make, right.model, right.plate].filter(Boolean).join(' ')].join(' · ') });
+    }
+  }
   return findings;
+}
+
+
+export function duplicateReviewPairKey(entity, leftId, rightId) {
+  const [first, second] = [String(leftId), String(rightId)].sort();
+  return [entity, first, second].join(':');
 }
