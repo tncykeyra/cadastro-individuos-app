@@ -788,3 +788,30 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
 }
 .app-shell>#themeToggle:focus-visible{outline:3px solid #fff;outline-offset:3px}
 @media(max-width:620px){.app-shell>#themeToggle{right:10px!important;width:42px!important;height:42px!important}}
+
+/* Cadastro Inteligente: formulários confirmados no fluxo existente, sem gravação automática. */
+.smart-entry-panel,.smart-analysis,.smart-review-list,.smart-checks{display:grid;gap:14px}
+.smart-entry-panel,.smart-analysis{padding:20px;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 28px #1721270a}
+.smart-kind-switch{display:flex;gap:10px;flex-wrap:wrap}
+.smart-kind.active{background:var(--brand-dark);color:#fff}
+.smart-text-label{font-weight:700}
+.smart-text{min-height:170px;resize:vertical;margin:0}
+.smart-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.smart-fields .field:last-child{grid-column:1/-1}
+.smart-candidate,.smart-finding,.smart-check{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;min-width:0}
+.smart-candidate{flex-wrap:wrap}
+.smart-candidate small,.smart-finding small,.smart-check small{display:block;color:var(--muted);margin-top:4px;overflow-wrap:anywhere}
+.smart-finding>div{min-width:0}
+.smart-check{display:grid;justify-content:stretch}
+.smart-check.ok strong{color:#287447}
+.smart-check.failed strong{color:#a72f36}
+:root[data-theme="dark"] dialog .close{
+ display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;
+ padding:0;border:1px solid #505050!important;border-radius:50%;
+ background:#242424!important;color:#fff!important;font-size:1.65rem;
+ font-weight:400;line-height:1;box-shadow:0 2px 8px #0008;
+ -webkit-tap-highlight-color:transparent;
+}
+:root[data-theme="dark"] dialog .close:hover{background:#353535!important;border-color:#737373!important}
+:root[data-theme="dark"] dialog .close:focus-visible{outline:3px solid #b7d6ff;outline-offset:3px}
+@media(max-width:620px){.smart-fields{grid-template-columns:1fr}.smart-fields .field:last-child{grid-column:auto}.smart-entry-panel,.smart-analysis{padding:16px}.smart-kind-switch .button{flex:1}.smart-finding{align-items:flex-start;flex-direction:column}.smart-finding .button{width:100%}}

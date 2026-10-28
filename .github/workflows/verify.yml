@@ -19,6 +19,6 @@ jobs:
       - name: Testar regras de pesquisa e placas
         run: npm test
       - name: Conferir sintaxe JavaScript
-        run: node --check src/main.js && node --check src/domain.js && node --check sw.js
+        run: node --check src/main.js && node --check src/domain.js && node --check src/intelligent-tools.js && node --check sw.js
       - name: Gerar aplicativo
         run: npm run build
