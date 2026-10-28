@@ -737,3 +737,13 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
  .install-button{right:58px}
  .topbar .top-title{max-width:calc(100vw - 132px);font-size:1.05rem}
 }
+
+/* O seletor de aparência permanece acessível também quando a barra principal está oculta no login. */
+.app-shell>#themeToggle{
+ position:fixed!important;top:calc(env(safe-area-inset-top,0px) + 10px)!important;right:14px!important;
+ transform:none!important;display:grid!important;place-items:center!important;width:44px!important;height:44px!important;
+ padding:9px!important;border:1px solid #ffffff55!important;border-radius:50%!important;background:#ffffff18!important;
+ color:#fff!important;z-index:20!important;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+}
+.app-shell>#themeToggle:focus-visible{outline:3px solid #fff;outline-offset:3px}
+@media(max-width:620px){.app-shell>#themeToggle{right:10px!important;width:42px!important;height:42px!important}}
