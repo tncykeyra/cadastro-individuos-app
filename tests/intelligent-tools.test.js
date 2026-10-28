@@ -44,3 +44,12 @@ test('smart entry renders examples for both entity types and preserves selected 
   assert.match(vehicle, /data-smart-kind="vehicle"[^>]*>🚗 Veículo/);
   assert.match(vehicle, /Placa ABC1D23/);
 });
+
+test('reads address labels without accents or with natural residence phrasing and keeps notes separate', () => {
+  const labeled = parseIntelligentText('person', 'Nome: Ana Souza; endereco: Rua das Acácias, 45, Jardim América, Lençóis Paulista; crimes: furto');
+  assert.match(labeled.address_primary, /Rua das Acácias, 45, Jardim América, Lençóis Paulista/i);
+  assert.equal(labeled.notes, 'furto');
+  const natural = parseIntelligentText('person', 'Ana Souza, mora na Rua das Acácias, 45, Jardim América, Lençóis Paulista; anotações: abordagem no local');
+  assert.match(natural.address_primary, /Rua das Acácias, 45, Jardim América, Lençóis Paulista/i);
+  assert.equal(natural.notes, 'abordagem no local');
+});
