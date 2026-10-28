@@ -666,3 +666,11 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
 .theme-toggle{position:absolute;right:18px;display:grid;place-items:center;width:40px;height:40px;border:1px solid #ffffff65;border-radius:50%;background:#ffffff14;color:#fff;font-size:1.35rem;line-height:1;cursor:pointer}
 .theme-toggle:hover{background:#ffffff28}
 @media(max-width:620px){.theme-toggle{right:14px;width:38px;height:38px}.install-button{right:58px}}
+
+/* Controle de aparência separado do título no canto direito do cabeçalho. */
+.topbar .theme-toggle{position:absolute;top:50%;right:16px;z-index:7;display:grid;place-items:center;width:44px;height:44px;min-width:44px;padding:0;transform:translateY(-50%);border:1px solid #ffffff80;border-radius:50%;background:#ffffff1a;color:#fff;cursor:pointer;pointer-events:auto;touch-action:manipulation}
+.topbar .theme-toggle:hover,.topbar .theme-toggle:focus-visible{background:#ffffff32;outline:2px solid #fff;outline-offset:2px}
+.topbar .theme-toggle svg{display:block;width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.topbar .top-title{max-width:calc(100% - 112px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar .install-button{right:70px}
+@media(max-width:620px){.topbar .theme-toggle{right:12px;width:42px;height:42px;min-width:42px}.topbar .install-button{right:62px;max-width:calc(100% - 120px);overflow:hidden;text-overflow:ellipsis}}
