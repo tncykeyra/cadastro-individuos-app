@@ -5,7 +5,7 @@ import { isValidCpf, mergeFiliationIntoNotes } from './ocr-domain.js';
 import { parseWarrantCsv, normalizeWarrantProcessNumber, extractWarrantSuggestions, extractWarrantPersonSuggestions, formatWarrantOcrProgress, resolveWarrantBatchValues } from './warrants.js';
 import { processOcrFiles } from './ocr-engine.js';
 import { renderFiscalizationPage, wireFiscalizationActions } from './fiscalization.js';
-import { renderIntelligentEntry, parseIntelligentText, inspectRecords } from './intelligent-tools.js';
+import { renderIntelligentEntry, parseIntelligentText, inspectRecords, getSmartPersonSearchTerms } from './intelligent-tools.js';
 
 const config={url:import.meta.env.VITE_SUPABASE_URL,key:import.meta.env.VITE_SUPABASE_ANON_KEY};
 const appIconUrl=import.meta.env.BASE_URL+'icon.svg?v=9';
@@ -743,7 +743,7 @@ async function analyzeSmartEntry(){
     const result=await state.client.from(table).select('*').eq(key,values.cpf_digits).is('archived_at',null).limit(8);
     if(result.error)throw result.error;candidates=result.data||[];
   }else if(kind==='person'){
-    const terms=[values.full_name,values.address_primary].map(value=>String(value||'').trim()).filter(value=>value.length>=3);
+    const terms=getSmartPersonSearchTerms(values);
     const results=await Promise.all(terms.map(search_term=>state.client.rpc('search_people',{search_term,result_limit:12})));
     const unique=new Map();
     for(const result of results){if(result.error)throw result.error;for(const row of result.data||[])unique.set(row.id,row)}
@@ -761,7 +761,7 @@ async function analyzeSmartEntry(){
   state.smartMatchesCount=candidates.length;
   const fields=kind==='person'?[['Nome','full_name'],['CPF','cpf_digits'],['RG','rg'],['Nascimento','birthday'],['Endereço','address_primary'],['Anotações','notes']]:[['Placa','plate'],['Marca','make'],['Modelo','model'],['Cor','color'],['Anotações','notes']];
   const form=fields.map(([label,key])=>'<label class="field '+(['notes','address_primary'].includes(key)?'full':'')+'"><span>'+label+'</span>'+(key==='notes'||key==='address_primary'?'<textarea data-smart-value="'+key+'">'+esc(values[key]||'')+'</textarea>':'<input data-smart-value="'+key+'" value="'+esc(values[key]||'')+'">')+'</label>').join('');
-  const matchMarkup=candidates.length?'<div class="notice"><strong>Possíveis cadastros encontrados por '+(kind==='person'?(values.address_primary?'nome/endereço':'nome'):'placa')+'.</strong><p>Confira os dados antes de continuar. Nome e endereço ajudam na busca, mas não confirmam identidade.</p></div>'+candidates.map(row=>'<article class="smart-candidate"><strong>'+esc(kind==='person'?row.full_name:[row.make,row.model,row.plate].filter(Boolean).join(' ')||row.plate)+'</strong><small>'+esc(kind==='person'?'CPF: '+(row.cpf_digits||'—')+' · Endereço: '+(row.address_primary||row.address_secondary||'—'):'Placa: '+(row.plate||'—'))+'</small><button class="button secondary small" type="button" data-smart-existing="'+esc(row.id)+'" data-smart-kind="'+kind+'">Conferir cadastro</button></article>').join(''):'<div class="notice">Nenhuma correspondência encontrada por CPF, nome, endereço ou placa. A conferência será repetida no formulário antes de salvar.</div>';
+  const matchMarkup=candidates.length?'<div class="notice"><strong>Possíveis cadastros encontrados por '+(kind==='person'?(values.cpf_digits.length===11?'CPF':'nome'):'placa')+'.</strong><p>Confira os dados antes de continuar. Sem CPF, o nome indica apenas uma possível correspondência.</p></div>'+candidates.map(row=>'<article class="smart-candidate"><strong>'+esc(kind==='person'?row.full_name:[row.make,row.model,row.plate].filter(Boolean).join(' ')||row.plate)+'</strong><small>'+esc(kind==='person'?'CPF: '+(row.cpf_digits||'—')+' · Endereço: '+(row.address_primary||row.address_secondary||'—'):'Placa: '+(row.plate||'—'))+'</small><button class="button secondary small" type="button" data-smart-existing="'+esc(row.id)+'" data-smart-kind="'+kind+'">Conferir cadastro</button></article>').join(''):'<div class="notice">Nenhuma correspondência encontrada por CPF, nome ou placa. A conferência será repetida no formulário antes de salvar.</div>';
   const continueMarkup=state.smartExactMatch?'':'<button class="button" type="button" data-smart-continue="'+kind+'">'+(candidates.length?'É outro cadastro — continuar para fotos':'Continuar para fotos e finalizar cadastro')+'</button>';
   const result=$('#smartResult');if(!result)return;
   result.innerHTML='<section class="smart-analysis"><h2>Confira os dados identificados</h2><div class="smart-fields">'+form+'</div>'+matchMarkup+continueMarkup+'</section>';
