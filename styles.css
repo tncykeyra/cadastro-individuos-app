@@ -747,3 +747,28 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
 }
 .app-shell>#themeToggle:focus-visible{outline:3px solid #fff;outline-offset:3px}
 @media(max-width:620px){.app-shell>#themeToggle{right:10px!important;width:42px!important;height:42px!important}}
+
+
+/* Tema escuro OLED: fundos pretos para reduzir o consumo em telas OLED/AMOLED. */
+:root[data-theme="dark"]{
+ color-scheme:dark;
+ --ink:#f5f5f5;--muted:#b7b7b7;--brand:#080808;--brand-dark:#171717;
+ --line:#303030;--soft:#080808;--surface:#000;--page:#000;
+ --shadow:0 14px 42px #0009;
+}
+:root[data-theme="dark"] body,
+:root[data-theme="dark"] main,
+:root[data-theme="dark"] .app-shell{background:#000!important;color:var(--ink)}
+:root[data-theme="dark"] .topbar,
+:root[data-theme="dark"] .drawer,
+:root[data-theme="dark"] .bottom-nav{background:#000!important;color:var(--ink);border-color:#303030}
+:root[data-theme="dark"] .nav-item.active{background:#181818!important;color:#fff}
+:root[data-theme="dark"] #mainContent :is([class*="card"],[class*="box"],[class*="panel"],[class*="list"],[class*="row"],[class*="result"],[class*="tab"],[class*="toolbar"],[class*="surface"]):not([class*="photo"]):not([class*="image"]):not([class*="alert"]):not([class*="notice"]):not([class*="error"]):not([class*="success"]):not([class*="warning"]):not([class*="badge"]):not([class*="button"]):not([class*="icon"]):not([class*="player"]),
+:root[data-theme="dark"] #mainContent :is(.detail-hero,.detail-sections>.info-box,.photo-item,.photo-empty,.empty,.dashboard-card,.stat,.person-card,.list,.list-row,.revision,.site-card,.auth-card,.fiscalization-card,.fiscalization-video-card,.fiscalization-tabs,.fiscalization-video-intro,.fiscalization-video-player,.fiscalization-category,.fiscalization-source,.fiscalization-filter,.fiscalization-tab,.team-tab,.team-tabs,.invite-form,.association-search-selected,.association-result,.warrant-card,.warrant-item,.warrant-tabs,.warrant-search-results,.warrant-person-search,.crop-editor-dialog,.dialog-inner,.dialog-head,.dialog-actions,.edit-photo-card,.photo-controls,.gallery-arrow,.pagination-summary,.pagination-controls,.alphabet-filter button,.page-select,.page-size-control,.page-jump-control){
+ background:#000!important;background-color:#000!important;color:var(--ink)!important;border-color:#303030!important;
+}
+:root[data-theme="dark"] #mainContent :is(.dashboard-substat,.dashboard-video-count,.dashboard-count-note,.fiscalization-video-count,.fiscalization-video-icon,.fiscalization-placeholder,.linked-person-icon,.vehicle-thumb,.association-result-thumb),
+:root[data-theme="dark"] #mainContent :is(input,textarea,select,.search,.page-select,.role-select){
+ background:#090909!important;background-color:#090909!important;color:var(--ink)!important;border-color:#303030!important;
+}
+:root[data-theme="dark"] .app-shell>#themeToggle{background:#111!important;border-color:#444!important;color:#fff!important}
