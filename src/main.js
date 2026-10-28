@@ -748,13 +748,15 @@ async function renderSmartReviewPage(){
     state.client.from('duplicate_record_reviews').select('entity,left_id,right_id,decision')
   ]);
   if(decisionsResult.error)throw new Error('A revisão de duplicidades precisa da migração administrativa antes de ser usada: '+msg(decisionsResult.error));
-  for(let offset=0;offset<people.length;offset+=100)await galleryPhotosForRecords('people',people.slice(offset,offset+100));
-  for(let offset=0;offset<vehicles.length;offset+=100)await galleryPhotosForRecords('vehicles',vehicles.slice(offset,offset+100));
   const decisions=new Map((decisionsResult.data||[]).map(row=>[duplicateReviewPairKey(row.entity,row.left_id,row.right_id),row.decision]));
   const findings=inspectRecords(people,vehicles).filter(item=>!item.low);
   const duplicates=findings.filter(item=>item.duplicateId&&item.duplicateKind),ordinary=findings.filter(item=>!item.duplicateId);
   const byId={people:new Map(people.map(row=>[String(row.id),row])),vehicles:new Map(vehicles.map(row=>[String(row.id),row]))};
-  const openPairs=duplicates.filter(item=>decisions.get(duplicateReviewPairKey(item.duplicateKind,item.id,item.duplicateId))!=='separate');
+  const visibleDuplicates=duplicates.filter(item=>decisions.get(duplicateReviewPairKey(item.duplicateKind,item.id,item.duplicateId))!=='separate');
+  const photoRecords={people:[],vehicles:[]};
+  for(const item of visibleDuplicates)for(const id of [item.id,item.duplicateId]){const record=byId[item.duplicateKind].get(String(id));if(record&&!photoRecords[item.duplicateKind].includes(record))photoRecords[item.duplicateKind].push(record)}
+  for(const entity of ['people','vehicles'])for(let offset=0;offset<photoRecords[entity].length;offset+=100)await galleryPhotosForRecords(entity,photoRecords[entity].slice(offset,offset+100));
+  const openPairs=visibleDuplicates;
   const pairRows=openPairs.length?openPairs.map(item=>{
     const entity=item.duplicateKind,left=byId[entity].get(String(item.id)),right=byId[entity].get(String(item.duplicateId));
     if(!left||!right)return '';
