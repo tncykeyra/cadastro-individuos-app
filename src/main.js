@@ -938,14 +938,24 @@ async function showLinkForm(entity,id){
     try{await galleryPhotosForRecords(entity,candidates)}catch(error){console.warn('Não foi possível carregar as fotos da associação.',error)}
     for(const record of candidates){
       const image=[...container.querySelectorAll('[data-association-photo]')].find(item=>item.dataset.associationPhoto===String(record.id));
-      const photo=record.photos?.find(item=>item.is_cover&&item.url)||record.photos?.find(item=>item.url);
-      if(!image||!photo?.url)continue;
+      const photos=(record.photos||[]).filter(item=>item?.url);
+      if(!image||!photos.length)continue;
+      let index=0;
+      const placeholder=image.nextElementSibling;
       image.addEventListener('load',()=>{
         if(!image.isConnected)return;
         image.hidden=false;
-        const placeholder=image.nextElementSibling;if(placeholder)placeholder.hidden=true
-      },{once:true});
-      image.src=photo.url
+        if(placeholder)placeholder.hidden=true
+      });
+      image.addEventListener('error',()=>{
+        if(!image.isConnected)return;
+        index+=1;
+        const fallback=photos[index];
+        if(fallback?.url){image.src=fallback.url;return}
+        image.hidden=true;
+        if(placeholder)placeholder.hidden=false
+      });
+      image.src=photos[0].url
     }
   };
   const associationOption=(record,kind,title,description,icon)=>'<button class="association-search-option" type="button" role="option" data-association-'+kind+'="'+esc(record.id)+'"><span class="association-result-row">'+associationThumb(record,icon)+'<span class="association-result-copy"><strong>'+esc(title)+'</strong><span>'+esc(description)+'</span></span></span></button>';
