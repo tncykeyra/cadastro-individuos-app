@@ -14,7 +14,19 @@ const label={dashboard:'Dashboard',people:'Indivíduos',vehicles:'Veículos',war
 const photoUrls=new Map(),photoUrlExpiresAt=new Map(),photoCachedKeys=new Set(),photoBlobInflight=new Map();let photoDbPromise=null;let warrantImportPreview=null;const MAX_WARRANT_PDF_BATCH=50,MAX_WARRANT_PDF_FILE_BYTES=20*1024*1024,MAX_WARRANT_PDF_BATCH_BYTES=40*1024*1024;let warrantPdfBatch=[];let warrantPdfBatchSaving=false;let warrantPdfBatchReading=false;
 const msg=e=>e?.message||'Não foi possível concluir. Tente novamente.';
 function toast(text){const el=$('#toast');el.textContent=text;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600)}
-function nav(){const allowed=!!state.session&&['operator','admin'].includes(state.profile?.role);const admin=state.profile?.role==='admin';const sideItems=allowed?[['dashboard','Dashboard'],['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados'],...(admin?[['team','Usuários'],['history','Histórico']]:[])]:[];const bottomItems=allowed?[['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados']]:[];$('#bottomNav').hidden=!allowed;$('#sideNav').hidden=!allowed;$('#menuToggle').hidden=!allowed;$('#drawer').hidden=!allowed;if(!allowed)$('#drawer').classList.remove('open');document.body.classList.toggle('auth-mode',!allowed);const renderItems=(items,sidebar=false)=>items.map(([id,name])=>{const showAlert=sidebar&&admin&&((id==='people'&&Number(state.pendingIdentityCount)>0)||(id==='warrants'&&Number(state.pendingWarrantReviewCount)>0)||(id==='vehicles'&&Number(state.pendingVehiclePlateCount)>0)),alertLabel=id==='people'?'Sugestões de nome ou CPF pendentes':id==='vehicles'?'Sugestões de placa pendentes':'Revisões de mandados pendentes';return '<button class="nav-item '+(state.page===id?'active':'')+'" data-page="'+id+'"><span class="nav-icon">'+ (id==='people'?personIcon():id==='vehicles'?carIcon().replace('car-icon','car-icon menu-svg'):icon[id]) +(showAlert?'<span class="nav-alert-badge" aria-label="'+alertLabel+'" title="'+alertLabel+'">!</span>':'')+'</span><span>'+name+'</span></button>'}).join('');$('#sideNav').innerHTML=renderItems(sideItems,true);$('#bottomNav').innerHTML=renderItems(bottomItems);$('#pageTitle').textContent=state.selected?(state.page==='people'?'Detalhes do indivíduo':state.page==='vehicles'?'Detalhes do veículo':label[state.page]||'Mandados'):label[state.page]||'Indivíduos';$('#signOut').hidden=!state.session}async function refreshWarrantReviewBadge(){if(!isAdmin()){state.pendingWarrantReviewCount=0;nav();return}try{const [matches,proposals]=await Promise.all([state.client.from('arrest_warrant_matches').select('id',{count:'exact',head:true}).eq('review_status','candidate'),state.client.from('arrest_warrant_person_proposals').select('id',{count:'exact',head:true}).eq('status','pending')]);if(matches.error||proposals.error)throw matches.error||proposals.error;state.pendingWarrantReviewCount=(matches.count||0)+(proposals.count||0)}catch(error){state.pendingWarrantReviewCount=null;console.warn('Não foi possível atualizar o alerta de mandados.',error)}nav()}
+function nav(){const allowed=!!state.session&&['operator','admin'].includes(state.profile?.role);const admin=state.profile?.role==='admin';const sideItems=allowed?[['dashboard','Dashboard'],['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados'],...(admin?[['team','Usuários'],['history','Histórico']]:[])]:[];const bottomItems=allowed?[['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados']]:[];$('#bottomNav').hidden=!allowed;$('#sideNav').hidden=!allowed;$('#menuToggle').hidden=!allowed;$('#drawer').hidden=!allowed;if(!allowed)$('#drawer').classList.remove('open');document.body.classList.toggle('auth-mode',!allowed);const renderItems=(items,sidebar=false)=>items.map(([id,name])=>{const showAlert=sidebar&&admin&&((id==='people'&&Number(state.pendingIdentityCount)>0)||(id==='warrants'&&Number(state.pendingWarrantReviewCount)>0)||(id==='vehicles'&&Number(state.pendingVehiclePlateCount)>0)),alertLabel=id==='people'?'Sugestões de nome ou CPF pendentes':id==='vehicles'?'Sugestões de placa pendentes':'Revisões de mandados pendentes';return '<button class="nav-item '+(state.page===id?'active':'')+'" data-page="'+id+'"><span class="nav-icon">'+ (id==='people'?personIcon():id==='vehicles'?carIcon().replace('car-icon','car-icon menu-svg'):icon[id]) +(showAlert?'<span class="nav-alert-badge" aria-label="'+alertLabel+'" title="'+alertLabel+'">!</span>':'')+'</span><span>'+name+'</span></button>'}).join('');$('#sideNav').innerHTML=renderItems(sideItems,true);$('#bottomNav').innerHTML=renderItems(bottomItems);$('#pageTitle').textContent=state.selected?(state.page==='people'?'Detalhes do indivíduo':state.page==='vehicles'?'Detalhes do veículo':label[state.page]||'Mandados'):label[state.page]||'Indivíduos';$('#signOut').hidden=!state.session}async function refreshWarrantReviewBadge(){
+  if(!isAdmin()){state.pendingWarrantReviewCount=0;nav();return}
+  try{
+    const [matches,proposals,duplicates]=await Promise.all([
+      state.client.from('arrest_warrant_matches').select('id',{count:'exact',head:true}).eq('review_status','candidate'),
+      state.client.from('arrest_warrant_person_proposals').select('id',{count:'exact',head:true}).eq('status','pending'),
+      state.client.from('arrest_warrant_duplicate_submissions').select('id',{count:'exact',head:true}).eq('status','pending')
+    ]);
+    const error=matches.error||proposals.error||duplicates.error;if(error)throw error;
+    state.pendingWarrantReviewCount=(matches.count||0)+(proposals.count||0)+(duplicates.count||0);
+  }catch(error){state.pendingWarrantReviewCount=null;console.warn('Não foi possível atualizar o alerta de mandados.',error)}
+  nav();
+}
 async function refreshVehiclePlateProposalBadge(){if(!isAdmin()){state.pendingVehiclePlateCount=0;nav();return}try{const {count,error}=await state.client.from('vehicle_plate_change_proposals').select('id',{count:'exact',head:true}).eq('status','pending');if(error)throw error;state.pendingVehiclePlateCount=count||0}catch(error){state.pendingVehiclePlateCount=null;console.warn('Não foi possível atualizar o alerta de placas.',error)}nav();const alert=document.querySelector('#dashboardVehiclePlateAlert'),countLabel=document.querySelector('#dashboardVehiclePlateCount');if(alert)alert.hidden=!Number(state.pendingVehiclePlateCount);if(countLabel)countLabel.textContent=String(state.pendingVehiclePlateCount||0)}
 function captureAppView(){return{page:state.page,selected:state.selected,query:state.query,searchInput:state.searchInput,listPage:state.listPage,letter:state.letter}}
 function pushAppRoute(){state.routeStack.push(captureAppView());history.pushState({cadastroRoute:true},'',location.href)}
@@ -463,49 +475,44 @@ async function saveWarrantRecord(values,file=null){
   if(cpf&&(!/^\d{11}$/.test(cpf)||!isValidCpf(cpf)))throw new Error('Confira o CPF informado.');
   if(file&&(file.type!=='application/pdf'&&!/\.pdf$/i.test(file.name)))throw new Error('Selecione um arquivo PDF válido.');
   if(file&&file.size>20*1024*1024)throw new Error('Cada PDF deve ter até 20 MB.');
-  const payload={warrant_number:number,full_name:name,cpf_digits:cpf||null,birth_date:values.birth_date||null,source_agency:sourceAgency,source_kind:file?'pdf':String(values.source_kind||'manual'),source_reference:sourceReference,alias:String(values.alias||'').trim(),mother_name:String(values.mother_name||'').trim(),father_name:String(values.father_name||'').trim(),person_rg:rg,person_address_primary:address,person_filiation:filiation,person_process_information:processInformation,status:'pending'};
-  let contentSha256=null;
-  if(file){
-    contentSha256=await sha256Hex(file);
-    const pdfMatch=await findExactWarrantPdf(file,contentSha256);
-    if(pdfMatch)return stageDuplicateWarrantSubmission(payload,pdfMatch.warrantId,pdfMatch.reason,file,null,contentSha256);
-  }
-  const duplicate=await findWarrantDuplicateTarget(payload);
-  if(duplicate)return stageDuplicateWarrantSubmission(payload,duplicate.warrantId,duplicate.reason,file,null,contentSha256);
-  const id=crypto.randomUUID(),userId=state.session.user.id,path=file?userId+'/'+id+'/'+crypto.randomUUID()+'.pdf':null;
+  const sourceKind=file?'pdf':String(values.source_kind||'manual');
+  const payload={warrant_number:number,full_name:name,cpf_digits:cpf||null,birth_date:values.birth_date||null,source_agency:sourceAgency,source_kind:sourceKind,source_reference:sourceReference,alias:String(values.alias||'').trim(),mother_name:String(values.mother_name||'').trim(),father_name:String(values.father_name||'').trim(),person_rg:rg,person_address_primary:address,person_filiation:filiation,person_process_information:processInformation,status:'pending'};
+  const userId=state.session.user.id,path=file?userId+'/'+crypto.randomUUID()+'/'+crypto.randomUUID()+'.pdf':null,contentSha256=file?await sha256Hex(file):null;
   if(file){const {error}=await state.client.storage.from('warrant-documents').upload(path,file,{contentType:'application/pdf',upsert:false});if(error)throw error}
-  const insertPayload={id,warrant_number:number,full_name:name,cpf_digits:cpf||null,birth_date:values.birth_date||null,source_agency:sourceAgency,source_kind:file?'pdf':String(values.source_kind||'manual'),source_reference:sourceReference,status:'pending',created_by:userId,updated_by:userId};
-  const {error:insertError}=await state.client.from('arrest_warrants').insert(insertPayload);
-  if(insertError){
+  let intake;
+  try{
+    const {data,error}=await state.client.rpc('admin_create_arrest_warrant_intake',{
+      p_payload:payload,p_storage_path:path,p_document_name:file?file.name.slice(0,220):null,
+      p_file_size_bytes:file?file.size:null,p_content_sha256:contentSha256
+    });
+    if(error)throw error;intake=data;
+  }catch(error){
     if(path)await state.client.storage.from('warrant-documents').remove([path]);
-    const concurrent=await findWarrantDuplicateTarget(payload);
-    if(concurrent)return stageDuplicateWarrantSubmission(payload,concurrent.warrantId,'concurrent_insert',file,null,contentSha256);
-    throw insertError;
+    throw error;
   }
-  let documentSaved=!file,documentWarning='';
-  if(file){
-    const {error:docError}=await state.client.from('arrest_warrant_documents').insert({warrant_id:id,storage_path:path,file_name:file.name.slice(0,220),content_type:'application/pdf',file_size_bytes:file.size,content_sha256:contentSha256,created_by:userId});
-    if(docError){documentWarning=' O mandado foi criado, mas o vínculo do PDF falhou. O arquivo foi preservado na fila para nova tentativa.'}
-    else documentSaved=true;
+  if(intake?.duplicate){
+    if(path&&intake.discard_uploaded_file)await state.client.storage.from('warrant-documents').remove([path]);
+    return{id:intake.warrant_id,duplicatePending:true,duplicateSubmissionId:intake.submission_id,reviewMessage:intake.already_pending?'Esta mesma submissão já está aguardando revisão administrativa.':'Possível duplicidade preservada e enviada à revisão administrativa. Nenhum novo mandado ativo foi criado.',documentSaved:true,documentWarning:''};
   }
-  let reviewMessage='';const {data:matchCount,error:matchError}=await state.client.rpc('admin_suggest_arrest_warrant_matches_with_rg',{p_warrant_id:id,p_rg:rg||null});
+  const warrantId=intake?.warrant_id;if(!warrantId)throw new Error('O servidor não confirmou a gravação do mandado.');
+  let reviewMessage='';
+  const {data:matchCount,error:matchError}=await state.client.rpc('admin_suggest_arrest_warrant_matches_with_rg',{p_warrant_id:warrantId,p_rg:rg||null});
   if(matchError){reviewMessage=' As correspondências não puderam ser verificadas; revise manualmente antes de criar um indivíduo.'}
   else{
-    const {data:existingMatches,error:existingError}=await state.client.from('arrest_warrant_matches').select('id').eq('warrant_id',id).in('review_status',['candidate','confirmed']).limit(1);
+    const {data:existingMatches,error:existingError}=await state.client.from('arrest_warrant_matches').select('id').eq('warrant_id',warrantId).in('review_status',['candidate','confirmed']).limit(1);
     if(existingError){reviewMessage=' A revisão de possíveis duplicidades ficou pendente.'}
     else if((matchCount||0)>0||(existingMatches||[]).length){reviewMessage=' Possíveis cadastros existentes aguardam revisão; nenhum indivíduo novo foi criado.'}
     else{
       const {error:proposalError}=await state.client.rpc('admin_create_arrest_warrant_person_proposal',{
-        p_warrant_id:id,p_full_name:name,p_rg:rg,p_cpf_digits:cpf||null,p_birth_date:values.birth_date||null,
+        p_warrant_id:warrantId,p_full_name:name,p_rg:rg,p_cpf_digits:cpf||null,p_birth_date:values.birth_date||null,
         p_address_primary:address,p_filiation:filiation,p_process_information:processInformation
       });
       if(proposalError)reviewMessage=' Não foi possível criar a proposta de indivíduo: '+msg(proposalError);
       else reviewMessage=' Nenhum cadastro compatível foi encontrado; a proposta de indivíduo está aguardando aprovação administrativa.';
     }
   }
-  return {id,reviewMessage,documentSaved,documentWarning,documentPath:path};
+  return{id:warrantId,reviewMessage,documentSaved:true,documentWarning:''};
 }
-
 async function saveWarrantManual(event){
   event.preventDefault();if(!isAdmin())throw new Error('Apenas administradores podem incluir mandados.');
   const form=event.target,values=Object.fromEntries(new FormData(form).entries()),file=form.querySelector('input[name="document"]')?.files?.[0]||null;
