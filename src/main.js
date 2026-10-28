@@ -133,7 +133,7 @@ async function personWarrantAlertMarkup(personId){
   if(we)throw we;if(!warrants?.length)return '';
   const documentsByWarrant=new Map(),{data:documents,error:documentError}=await state.client.from('arrest_warrant_documents').select('id,warrant_id,storage_path,file_name').in('warrant_id',warrants.map(w=>w.id));
   if(!documentError)for(const doc of documents||[]){const group=documentsByWarrant.get(doc.warrant_id)||[];group.push(doc);documentsByWarrant.set(doc.warrant_id,group)}
-  return '<section class="warrant-person-alert" aria-label="Avisos de mandados de prisão"><div class="warrant-section-title"><span class="warrant-alert-icon" aria-hidden="true">⚖</span><div><h2>Aviso de mandado de prisão</h2><p>Registro interno para conferência. Confirme a situação na fonte oficial.</p></div><button class="button secondary small" type="button" data-page="warrants">Ver mandados</button></div><div class="warrant-alert-list">'+warrants.map(w=>{const docs=documentsByWarrant.get(w.id)||[],pdfButtons=docs.map((doc,index)=>'<button class="button secondary small" type="button" data-warrant-doc="'+esc(doc.id)+'" data-warrant-path="'+esc(doc.storage_path)+'" aria-label="Abrir PDF do mandado'+(doc.file_name?' '+esc(doc.file_name):'')+'">📄 '+(docs.length>1?'PDF '+(index+1):'Ver PDF do mandado')+'</button>').join('');return '<article class="warrant-alert-item"><div><strong>'+esc(formatPersonName(w.full_name||'Registro vinculado'))+'</strong><div class="warrant-meta">'+esc(warrantNumberLine(w.warrant_number))+(w.source_agency?' · '+esc(w.source_agency):' · BNMP')+(w.source_reference?' · Processo: '+esc(w.source_reference):'')+'</div><p class="warrant-status '+(w.status==='discharge_reported'?'reported':'pending')+'">'+esc(warrantStatusLabel(w.status))+'</p>'+(w.status==='discharge_reported'?'<div class="warrant-meta">Baixa informada em '+esc(warrantDate(w.discharge_reported_date))+' · Referência: '+esc(w.discharge_reference||'—')+'</div>':'')+'</div><div class="warrant-alert-actions">'+(w.status==='pending'?'<button class="button secondary small" type="button" data-warrant-discharge="'+w.id+'">Mandado baixado</button>':isAdmin()?'<button class="button small" type="button" data-warrant-confirm-discharge="'+w.id+'" data-warrant-confirm-date="'+esc(w.discharge_reported_date||'')+'" data-warrant-confirm-reference="'+esc(w.discharge_reported_reference||w.discharge_reference||'')+'">Revisar baixa</button>':'')+pdfButtons+'</div></article>'}).join('')+'</div></section>';
+  return '<section class="warrant-person-alert" aria-label="Avisos de mandados de prisão"><div class="warrant-section-title"><span class="warrant-alert-icon" aria-hidden="true">⚖</span><div><h2>Aviso de mandado de prisão</h2><p>Registro interno para conferência. Confirme a situação na fonte oficial.</p></div><button class="button secondary small" type="button" data-page="warrants">Ver mandados</button></div><div class="warrant-alert-list">'+warrants.map(w=>{const docs=documentsByWarrant.get(w.id)||[],pdfButtons=docs.map((doc,index)=>'<button class="button secondary small" type="button" data-warrant-doc="'+esc(doc.id)+'" data-warrant-path="'+esc(doc.storage_path)+'" aria-label="Abrir PDF do mandado'+(doc.file_name?' '+esc(doc.file_name):'')+'">📄 '+(docs.length>1?'PDF '+(index+1):'Ver PDF do mandado')+'</button>').join('');return '<article class="warrant-alert-item"><div><strong>'+esc(formatPersonName(w.full_name||'Registro vinculado'))+'</strong><div class="warrant-meta">'+esc(warrantNumberLine(w.warrant_number))+(w.source_agency?' · '+esc(w.source_agency):' · BNMP')+(w.source_reference?' · Processo: '+esc(w.source_reference):'')+'</div><p class="warrant-status '+(w.status==='discharge_reported'?'reported':w.status==='pending'?'pending':'closed')+'">'+esc(warrantStatusLabel(w.status))+'</p>'+(w.status==='discharge_reported'?'<div class="warrant-meta">Baixa informada em '+esc(warrantDate(w.discharge_reported_date))+' · Referência: '+esc(w.discharge_reference||'—')+'</div>':'')+'</div><div class="warrant-alert-actions">'+(w.status==='pending'?'<button class="button secondary small" type="button" data-warrant-discharge="'+w.id+'">Mandado baixado</button>':w.status==='discharge_reported'&&isAdmin()?'<button class="button small" type="button" data-warrant-confirm-discharge="'+w.id+'" data-warrant-confirm-date="'+esc(w.discharge_reported_date||'')+'" data-warrant-confirm-reference="'+esc(w.discharge_reported_reference||w.discharge_reference||'')+'">Revisar baixa</button>':'')+pdfButtons+'</div></article>'}).join('')+'</div></section>';
 }
 function warrantCandidateMarkup(match,warrant,person){
   if(!warrant||!person)return '';
@@ -558,7 +558,7 @@ async function saveWarrantManual(event){
   event.preventDefault();if(!isAdmin())throw new Error('Apenas administradores podem incluir mandados.');
   const form=event.target,values=Object.fromEntries(new FormData(form).entries()),file=form.querySelector('input[name="document"]')?.files?.[0]||null;
   const result=await saveWarrantRecord(values,file);
-  form.reset();warrantSearchResults.clear();toast('Mandado salvo.'+result.reviewMessage+result.documentWarning);await renderWarrants();
+  form.reset();warrantSearchResults.clear();toast(result.duplicatePending?'Possível duplicidade preservada para revisão administrativa.':('Mandado salvo.'+result.reviewMessage+result.documentWarning));await refreshWarrantReviewBadge();await renderWarrants();
 }
 function warrantBatchStatus(index,message){
   const status=document.querySelector('[data-warrant-pdf-batch-status="'+index+'"]');
@@ -601,7 +601,7 @@ async function saveWarrantPdfBatch(){
   if(warrantPdfBatchSaving) return;
   if(!warrantPdfBatch.length)throw new Error('Selecione ao menos um PDF.');
   warrantPdfBatchSaving=true;
-  const initialCount=warrantPdfBatch.length;let saved=0,failed=0,partial=0,reviewCount=0;
+  const initialCount=warrantPdfBatch.length;let saved=0,failed=0,partial=0,reviewCount=0,duplicateCount=0;
   try{
     for(let index=0;index<warrantPdfBatch.length;index++){
       const entry=warrantPdfBatch[index],row=document.querySelector('[data-warrant-pdf-batch-row="'+index+'"]');
@@ -625,16 +625,16 @@ async function saveWarrantPdfBatch(){
             warrantBatchStatus(index,entry.status);continue;
           }
         }
-        entry.saved=true;saved++;if(result.reviewMessage)reviewCount++;
-        entry.status='Mandado e PDF salvos.'+result.reviewMessage;
+        entry.saved=true;saved++;if(result.duplicatePending)duplicateCount++;else if(result.reviewMessage)reviewCount++;
+        entry.status=result.duplicatePending?'Possível duplicidade preservada para revisão administrativa.':'Mandado e PDF salvos.'+result.reviewMessage;
         warrantBatchStatus(index,entry.status);
       }catch(error){failed++;entry.status='Não concluído: '+msg(error);warrantBatchStatus(index,entry.status)}
     }
   }finally{warrantPdfBatchSaving=false}
   warrantPdfBatch=warrantPdfBatch.filter(entry=>!entry.saved);
   if(saved)warrantSearchResults.clear();
-  await renderWarrants();
-  toast(saved+' mandado(s) e PDF(s) concluído(s).'+(reviewCount?' Confira as revisões administrativas pendentes na lista.':'')+(partial?' '+partial+' mandado(s) foram criados, mas o vínculo do PDF precisa de nova tentativa.':'')+(failed?' '+failed+' arquivo(s) permaneceram na fila para correção.':''));
+  await refreshWarrantReviewBadge();await renderWarrants();
+  toast(saved+' arquivo(s) processado(s).'+(duplicateCount?' '+duplicateCount+' possível(is) duplicidade(s) preservada(s) para revisão administrativa.':'')+(reviewCount?' Confira as revisões administrativas pendentes na lista.':'')+(partial?' '+partial+' mandado(s) foram criados, mas o vínculo do PDF precisa de nova tentativa.':'')+(failed?' '+failed+' arquivo(s) permaneceram na fila para correção.':''));
 }
 async function submitWarrantReport(event){
   event.preventDefault();const form=event.target,warrantId=form.dataset.warrantId,values=Object.fromEntries(new FormData(form).entries());
