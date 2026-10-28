@@ -8,7 +8,7 @@ test('normalizes Brazilian CNJ process numbers and digit-only values', () => {
   assert.equal(normalizeWarrantProcessNumber('Referência administrativa 123'), '');
 });
 
-test('skips duplicate process numbers within one pending warrant CSV', () => {
+test('retains duplicate process rows for administrator review instead of discarding them', () => {
   const csv = [
     'Número do mandado;Nome completo;Processo;Situação',
     'MP-001;Pessoa de Teste Um;1000000-00.2024.8.26.0000;Pendente',
@@ -20,4 +20,7 @@ test('skips duplicate process numbers within one pending warrant CSV', () => {
   assert.equal(parsed.duplicateRows, 1);
   assert.equal(parsed.duplicateProcessRows, 1);
   assert.deepEqual(parsed.records.map(row => row.warrant_number), ['MP-001', 'MP-003']);
+  assert.equal(parsed.duplicateRecords.length, 1);
+  assert.equal(parsed.duplicateRecords[0].record.warrant_number, 'MP-002');
+  assert.equal(parsed.duplicateRecords[0].duplicate_reason, 'csv_duplicate');
 });
