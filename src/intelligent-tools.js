@@ -10,7 +10,6 @@ export function parseIntelligentText(kind, rawText) {
     const addressLabels = '(?:endere[cç]o(?:\\s+residencial)?|resid[eê]ncia|residente\\s+(?:em|na|no)|mora\\s+(?:em|na|no))';
     const nextPersonLabel = '(?:nome(?:\\s+completo)?|cpf|rg|identidade|nascimento|data\\s+de\\s+nascimento|anota[cç][oõ]es|crimes?|ocorr[eê]ncia|envolvimento)';
     const addressMatch = text.match(new RegExp(addressLabels + '\\s*[:\\-]?\\s*([\\s\\S]*?)(?=(?:[,;\\n]\\s*' + nextPersonLabel + '\\s*[:\\-]?)|$)', 'i'));
-    const addressMatch = text.match(new RegExp(addressLabels + '\\s*[:\\-]?\\s*([\\s\\S]*?)(?=(?:[,;\\n]\\s*' + nextPersonLabel + '\\s*[:\\-]?)|$)', 'i'));]+)/i);
     const firstPart = text.split(/[\n,;]/)[0].trim();
     const name = nameMatch?.[1]?.trim() || firstPart.replace(/\bCPF\b.*$/i, '').trim();
     let remainder = text;
