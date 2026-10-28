@@ -19,7 +19,7 @@ function imageMarkup(paths, urls, title) {
 }
 
 function guideCard(guide, urls, admin) {
-  return '<article class="fiscalization-card"><div class="fiscalization-card-heading"><div><span class="fiscalization-category">' + esc(guide.category) + '</span><h2>' + esc(guide.title) + '</h2></div>' +
+  return '<article class="fiscalization-card" data-guide-category="' + esc(guide.category || 'Geral') + '"><div class="fiscalization-card-heading"><div><span class="fiscalization-category">' + esc(guide.category) + '</span><h2>' + esc(guide.title) + '</h2></div>' +
     (admin ? '<button type="button" class="button secondary small" data-fiscalization-edit="' + esc(guide.id) + '">Editar</button>' : '') +
     '</div>' + (guide.summary ? '<p class="fiscalization-summary">' + esc(guide.summary) + '</p>' : '') +
     '<details class="fiscalization-details"><summary>Ver orientação e detalhes</summary><div class="fiscalization-content">' + esc(guide.content).replace(/\n/g, '<br>') + '</div>' +
@@ -46,28 +46,56 @@ function editorDialog(guide, admin) {
     '<div class="dialog-actions"><button class="button secondary" type="button" data-fiscalization-close>Cancelar</button><button class="button" type="submit">Salvar material</button></div></form></dialog>';
 }
 
+const ETILOMETER_VIDEOS = [
+  { id: 'ENsEuMQh1zg', title: 'Como fazer o teste — modo 1', description: 'Demonstração do procedimento de teste no etilômetro.' },
+  { id: 'zdW_IJhq4pY', title: 'Como fazer o teste — modo 2', description: 'Demonstração de uma segunda forma de realizar o teste.' },
+  { id: 'EuETJDfjTa8', title: 'Impressão — recusa', description: 'Orientação sobre a impressão relacionada à recusa do teste.' },
+  { id: 'gwG0L7FpW7M', title: 'Impressão — teste anterior', description: 'Orientação para imprimir o resultado do teste anterior.' }
+];
+
+function videoCard(video) {
+  return '<article class="fiscalization-video-card"><div class="fiscalization-video-heading"><span class="fiscalization-video-icon" aria-hidden="true">▶</span><div><span class="fiscalization-category">Etilômetro</span><h2>' + esc(video.title) + '</h2></div></div>' +
+    '<p class="fiscalization-summary">' + esc(video.description) + '</p>' +
+    '<div class="fiscalization-video-player" data-video-player="' + esc(video.id) + '"><div class="fiscalization-video-placeholder"><span aria-hidden="true">▶</span><p>O vídeo será carregado ao tocar em assistir.</p><button class="button" type="button" data-play-video="' + esc(video.id) + '" data-video-title="' + esc(video.title) + '">▶ Assistir vídeo</button></div></div>' +
+    '<a class="fiscalization-reference" href="https://www.youtube.com/watch?v=' + esc(video.id) + '" target="_blank" rel="noopener noreferrer">Abrir no YouTube ↗</a></article>';
+}
+
 export async function renderFiscalizationPage(client, isAdmin) {
   const { data, error } = await client.from('fiscalization_guides')
     .select('id,category,title,summary,content,source_note,reference_url,image_paths,sort_order,updated_at')
     .order('sort_order', { ascending: true }).order('category', { ascending: true }).order('title', { ascending: true });
   if (error) throw error;
-  const paths = [...new Set((data || []).flatMap(item => item.image_paths || []))];
+  const guides = data || [];
+  const paths = [...new Set(guides.flatMap(item => item.image_paths || []))];
   const urls = await signedImages(client, paths);
   const groups = new Map();
-  for (const guide of data || []) {
+  for (const guide of guides) {
     const key = guide.category || 'Geral';
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(guide);
   }
-  const content = groups.size ? [...groups].map(([category, guides]) =>
-    '<section class="fiscalization-group"><h2>' + esc(category) + '</h2><div class="fiscalization-list">' +
-    guides.map(guide => guideCard(guide, urls, isAdmin)).join('') + '</div></section>').join('') :
-    '<div class="empty">Nenhum material cadastrado.</div>';
-  return '<section class="page-intro"><div><h1>Fiscalização</h1><p>Materiais de consulta organizados por assunto.</p></div>' +
+  const content = groups.size ? [...groups].map(([category, items]) =>
+    '<section class="fiscalization-group" data-guide-group="' + esc(category) + '"><h2>' + esc(category) + '</h2><div class="fiscalization-list">' +
+    items.map(guide => guideCard(guide, urls, isAdmin)).join('') + '</div></section>').join('') :
+    '<div class="empty" data-guides-empty>Nenhum material cadastrado.</div>';
+  const categoryFilters = ['Todos', ...groups.keys()].map((category, index) =>
+    '<button type="button" class="fiscalization-filter' + (index === 0 ? ' active' : '') + '" data-category-filter="' + (index === 0 ? 'all' : esc(category)) + '" aria-pressed="' + (index === 0 ? 'true' : 'false') + '">' + esc(category) + '</button>'
+  ).join('');
+  return '<section class="page-intro"><div><h1>Fiscalização</h1><p>Consulte orientações rápidas e vídeos de apoio para uso em campo.</p></div>' +
     (isAdmin ? '<button type="button" class="button" data-fiscalization-new>＋ Novo material</button>' : '') +
-    '</section><aside class="notice fiscalization-notice"><strong>Referência interna:</strong> conteúdo transcrito de materiais fornecidos pela equipe. Confirme sempre a legislação e os manuais oficiais vigentes; imagens e anotações não substituem a fonte oficial.</aside>' +
-    '<div class="fiscalization-toolbar"><label for="fiscalizationSearch">Pesquisar material</label><input id="fiscalizationSearch" class="search" type="search" placeholder="Digite assunto, artigo ou palavra-chave" autocomplete="off"></div>' +
-    '<div id="fiscalizationGuides">' + content + '</div>' + editorDialog(null, isAdmin) +
+    '</section><div class="fiscalization-tabs" role="tablist" aria-label="Materiais de fiscalização">' +
+    '<button type="button" class="fiscalization-tab active" role="tab" id="fiscalizationTabGuides" aria-selected="true" aria-controls="fiscalizationGuidesPanel" data-fiscalization-tab="guides"><span aria-hidden="true">▤</span> Fiscalização</button>' +
+    '<button type="button" class="fiscalization-tab" role="tab" id="fiscalizationTabVideos" aria-selected="false" aria-controls="fiscalizationVideosPanel" data-fiscalization-tab="videos"><span aria-hidden="true">▶</span> Etilômetro</button></div>' +
+    '<section id="fiscalizationGuidesPanel" class="fiscalization-panel" role="tabpanel" aria-labelledby="fiscalizationTabGuides" data-fiscalization-panel="guides">' +
+    '<aside class="notice fiscalization-notice"><strong>Material de apoio interno:</strong> confira as normas vigentes e os procedimentos oficiais antes de aplicar. As orientações e imagens não substituem a fonte oficial.</aside>' +
+    '<div class="fiscalization-toolbar"><label for="fiscalizationSearch">Pesquisar orientações</label><div class="search-control"><input id="fiscalizationSearch" class="search" type="search" placeholder="Assunto, artigo ou palavra-chave" autocomplete="off"><span class="fiscalization-search-count" data-guides-count>' + guides.length + ' materiais</span></div></div>' +
+    '<div class="fiscalization-filters" aria-label="Filtrar por categoria">' + categoryFilters + '</div>' +
+    '<div id="fiscalizationGuides">' + content + '</div><div class="empty" data-guides-empty hidden>Nenhum material corresponde à pesquisa.</div></section>' +
+    '<section id="fiscalizationVideosPanel" class="fiscalization-panel" role="tabpanel" aria-labelledby="fiscalizationTabVideos" data-fiscalization-panel="videos" hidden>' +
+    '<div class="fiscalization-video-intro"><div><span class="fiscalization-kicker">VÍDEOS DE APOIO</span><h2>Procedimentos do etilômetro</h2><p>Escolha um vídeo para carregar e assistir. O conteúdo é reproduzido no próprio aplicativo.</p></div><span class="fiscalization-video-count">4 vídeos</span></div>' +
+    '<div class="fiscalization-video-grid">' + ETILOMETER_VIDEOS.map(videoCard).join('') + '</div>' +
+    '<p class="fiscalization-video-note">Os vídeos são hospedados no YouTube e só estabelecem conexão quando você toca em “Assistir vídeo”.</p></section>' +
+    editorDialog(null, isAdmin) +
     '<dialog class="photo-dialog" id="fiscalizationImageDialog"><button class="close photo-close" type="button" data-fiscalization-image-close aria-label="Fechar imagem">×</button><img alt="Imagem ampliada"></dialog>';
 }
 
