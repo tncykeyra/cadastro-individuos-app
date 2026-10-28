@@ -28,3 +28,19 @@ test('review flags exact normalized duplicate CPF and plate without modifying re
   assert.equal(people[0].full_name, 'Pessoa Um');
   assert.equal(vehicles[0].plate, 'abc-1234');
 });
+
+test('captures an individual address and keeps it separate from notes', () => {
+  const result = parseIntelligentText('person', 'Nome: Maria Aparecida de Souza; CPF: 111.111.111-11 (exemplo); RG: 12.345.678-9; nascimento: 10/05/1985; endereço: Rua das Flores, 123, Centro, Lençóis Paulista; anotações: abordada para verificação.');
+  assert.equal(result.full_name, 'Maria Aparecida de Souza');
+  assert.equal(result.address_primary, 'Rua das Flores, 123, Centro, Lençóis Paulista');
+  assert.equal(result.notes, 'abordada para verificação.');
+});
+
+test('smart entry renders examples for both entity types and preserves selected type', async () => {
+  const { renderIntelligentEntry } = await import('../src/intelligent-tools.js');
+  const person = renderIntelligentEntry('person');
+  const vehicle = renderIntelligentEntry('vehicle');
+  assert.match(person, /data-smart-example="person"/);
+  assert.match(vehicle, /data-smart-kind="vehicle"[^>]*>🚗 Veículo/);
+  assert.match(vehicle, /Placa ABC1D23/);
+});
