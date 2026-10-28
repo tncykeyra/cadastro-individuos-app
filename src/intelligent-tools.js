@@ -7,7 +7,9 @@ export function parseIntelligentText(kind, rawText) {
   if (kind === 'person') {
     const nameMatch = text.match(/(?:nome(?: completo)?\s*[:\-]\s*)([^\n,;]+)/i);
     const rgMatch = text.match(/\b(?:RG|identidade)\s*[:\-]?\s*([\w.\/-]{4,20})/i);
-    const addressMatch = text.match(/(?:endereço(?:\s+residencial)?|residência|residente\s+em|mora\s+em)\s*[:\-]?\s*([^\n;]+)/i);
+    const addressLabels = '(?:endere[cç]o(?:\\s+residencial)?|resid[eê]ncia|residente\\s+(?:em|na|no)|mora\\s+(?:em|na|no))';
+    const nextPersonLabel = '(?:nome(?:\\s+completo)?|cpf|rg|identidade|nascimento|data\\s+de\\s+nascimento|anota[cç][oõ]es|crimes?|ocorr[eê]ncia|envolvimento)';
+    const addressMatch = text.match(new RegExp(addressLabels + '\\s*[:\\-]?\\s*([\\s\\S]*?)(?=(?:[,;\\n]\\s*' + nextPersonLabel + '\\s*[:\\-]?)|$)', 'i'));]+)/i);
     const firstPart = text.split(/[\n,;]/)[0].trim();
     const name = nameMatch?.[1]?.trim() || firstPart.replace(/\bCPF\b.*$/i, '').trim();
     let remainder = text;
@@ -17,7 +19,7 @@ export function parseIntelligentText(kind, rawText) {
     remainder = remainder.replace(/^[\s,;|]+|[\s,;|]+$/g, '').trim();
     const notesMatch = text.match(/(?:anotações?|crimes?|ocorrência|envolvimento)\s*[:\-]\s*([\s\S]+)$/i);
     const notes = notesMatch?.[1]?.trim() || remainder;
-    return { full_name: name, cpf_digits: cpfMatch ? digits(cpfMatch[1]) : '', rg: rgMatch?.[1] || '', birthday: dateMatch?.[1] || '', address_primary: addressMatch?.[1]?.trim().replace(/[.,;]+$/, '') || '', notes };
+    return { full_name: name, cpf_digits: cpfMatch ? digits(cpfMatch[1]) : '', rg: rgMatch?.[1] || '', birthday: dateMatch?.[1] || '', address_primary: addressMatch?.[1]?.trim().replace(/^[,;\s]+|[,;\s]+$/g, '').replace(/\s+/g, ' ') || '', notes };
   }
 
   const plateMatch = text.match(/\b([A-Z]{3}\s*\d[A-Z0-9]\s*\d{2}|[A-Z]{3}\s*\d{4})\b/i);
