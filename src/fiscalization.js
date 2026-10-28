@@ -160,7 +160,7 @@ export function wireFiscalizationActions(client, canAdmin, refresh, notify) {
     if (copyButton) {
       const guide = activeGuideRecords.get(String(copyButton.dataset.guideCopy));
       if (!guide) return;
-      const copyText = [guide.title, guide.summary, guide.content, guide.source_note ? 'Observações: ' + guide.source_note : '', guide.reference_url ? 'Referência: ' + guide.reference_url : ''].filter(Boolean).join('\\n\\n');
+      const copyText = [guide.title, guide.summary, guide.content, guide.source_note ? 'Observações: ' + guide.source_note : '', guide.reference_url ? 'Referência: ' + guide.reference_url : ''].filter(Boolean).join('\n\n');
       try {
         if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(copyText);
         else {
