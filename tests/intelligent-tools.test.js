@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseIntelligentText, inspectRecords } from '../src/intelligent-tools.js';
+import { parseIntelligentText, inspectRecords, getSmartPersonSearchTerms } from '../src/intelligent-tools.js';
 
 test('interprets explicit individual fields and leaves filiation and other unlabelled text untouched', () => {
   const result = parseIntelligentText('person', 'Nome: JOÃO CARLOS DA SILVA\nCPF: 123.456.789-09\nRG: 45.678.901\nNascido em: 15/03/1990\nCrimes: furto');
@@ -52,4 +52,9 @@ test('reads address labels without accents or with natural residence phrasing an
   const natural = parseIntelligentText('person', 'Ana Souza, mora na Rua das Acácias, 45, Jardim América, Lençóis Paulista; anotações: abordagem no local');
   assert.match(natural.address_primary, /Rua das Acácias, 45, Jardim América, Lençóis Paulista/i);
   assert.equal(natural.notes, 'abordagem no local');
+});
+
+test('uses only the individual name for possible duplicate search, never the address', () => {
+  assert.deepEqual(getSmartPersonSearchTerms({ full_name: 'Maria de Souza', address_primary: 'Rua das Flores, 123' }), ['Maria de Souza']);
+  assert.deepEqual(getSmartPersonSearchTerms({ full_name: 'Al', address_primary: 'Rua das Flores, 123' }), []);
 });
