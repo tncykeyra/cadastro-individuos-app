@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseIntelligentText, inspectRecords, getSmartPersonSearchTerms } from '../src/intelligent-tools.js';
+import { parseIntelligentText, inspectRecords, getSmartPersonSearchTerms, duplicateReviewPairKey } from '../src/intelligent-tools.js';
 
 test('interprets explicit individual fields and leaves filiation and other unlabelled text untouched', () => {
   const result = parseIntelligentText('person', 'Nome: JOÃO CARLOS DA SILVA\nCPF: 123.456.789-09\nRG: 45.678.901\nNascido em: 15/03/1990\nCrimes: furto');
@@ -23,8 +23,10 @@ test('review flags exact normalized duplicate CPF and plate without modifying re
   const people = [{ id: 'p1', full_name: 'Pessoa Um', cpf_digits: '123.456.789-09' }, { id: 'p2', full_name: 'Pessoa Dois', cpf_digits: '12345678909' }];
   const vehicles = [{ id: 'v1', plate: 'abc-1234' }, { id: 'v2', plate: 'ABC1234' }];
   const findings = inspectRecords(people, vehicles);
-  assert.equal(findings.filter(item => item.label === 'Possível CPF duplicado').length, 1);
-  assert.equal(findings.filter(item => item.label === 'Possível placa duplicada').length, 1);
+  const cpfPairs=findings.filter(item => item.label === 'Possível CPF duplicado');
+  const platePairs=findings.filter(item => item.label === 'Possível placa duplicada');
+  assert.equal(cpfPairs.length, 1); assert.equal(cpfPairs[0].duplicateId, 'p2');
+  assert.equal(platePairs.length, 1); assert.equal(platePairs[0].duplicateId, 'v2');
   assert.equal(people[0].full_name, 'Pessoa Um');
   assert.equal(vehicles[0].plate, 'abc-1234');
 });
@@ -57,4 +59,9 @@ test('reads address labels without accents or with natural residence phrasing an
 test('uses only the individual name for possible duplicate search, never the address', () => {
   assert.deepEqual(getSmartPersonSearchTerms({ full_name: 'Maria de Souza', address_primary: 'Rua das Flores, 123' }), ['Maria de Souza']);
   assert.deepEqual(getSmartPersonSearchTerms({ full_name: 'Al', address_primary: 'Rua das Flores, 123' }), []);
+});
+
+
+test('duplicate review pair key is stable regardless of record order', () => {
+  assert.equal(duplicateReviewPairKey('people','b','a'), duplicateReviewPairKey('people','a','b'));
 });
