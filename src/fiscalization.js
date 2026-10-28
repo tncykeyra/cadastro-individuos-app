@@ -18,14 +18,12 @@ function imageMarkup(paths, urls, title) {
   }).join('') + '</div>';
 }
 
-function guideCard(guide, urls, admin) {
-  return '<article class="fiscalization-card" data-guide-category="' + esc(guide.category || 'Geral') + '"><div class="fiscalization-card-heading"><div><span class="fiscalization-category">' + esc(guide.category) + '</span><h2>' + esc(guide.title) + '</h2></div>' +
+function guideCard(guide, admin) {
+  return '<article class="fiscalization-card" data-guide-category="' + esc(guide.category || 'Geral') + '"><div class="fiscalization-card-heading"><div><span class="fiscalization-category">' + esc(guide.category || 'Geral') + '</span></div>' +
     (admin ? '<button type="button" class="button secondary small" data-fiscalization-edit="' + esc(guide.id) + '">Editar</button>' : '') +
-    '</div>' + (guide.summary ? '<p class="fiscalization-summary">' + esc(guide.summary) + '</p>' : '') +
-    '<details class="fiscalization-details"><summary>Ver orientação e detalhes</summary><div class="fiscalization-content">' + esc(guide.content).replace(/\n/g, '<br>') + '</div>' +
-    (guide.source_note ? '<p class="fiscalization-source"><strong>Fonte/observação:</strong> ' + esc(guide.source_note) + '</p>' : '') +
-    (guide.reference_url ? '<a class="fiscalization-reference" href="' + esc(guide.reference_url) + '" target="_blank" rel="noopener noreferrer">Consultar referência oficial ↗</a>' : '') +
-    imageMarkup(guide.image_paths || [], urls, guide.title) + '</details></article>';
+    '</div><button type="button" class="fiscalization-guide-open" data-guide-open="' + esc(guide.id) + '"><span class="fiscalization-guide-copy"><strong>' + esc(guide.title) + '</strong>' +
+    (guide.summary ? '<span class="fiscalization-summary">' + esc(guide.summary) + '</span>' : '') +
+    '</span><span class="fiscalization-guide-arrow" aria-hidden="true">›</span></button></article>';
 }
 
 function editorDialog(guide, admin) {
@@ -45,6 +43,9 @@ function editorDialog(guide, admin) {
     '<label class="field full fiscalization-disclaimer"><span><strong>Material de apoio interno.</strong> Confira as normas vigentes e os procedimentos oficiais antes de aplicar.</span></label></div>' +
     '<div class="dialog-actions"><button class="button secondary" type="button" data-fiscalization-close>Cancelar</button><button class="button" type="submit">Salvar material</button></div></form></dialog>';
 }
+
+let activeGuideRecords = new Map();
+let activeGuideUrls = new Map();
 
 const ETILOMETER_VIDEOS = [
   { id: 'ENsEuMQh1zg', title: 'Como fazer o teste — modo 1', description: 'Demonstração do procedimento de teste no etilômetro.' },
@@ -66,8 +67,10 @@ export async function renderFiscalizationPage(client, isAdmin) {
     .order('sort_order', { ascending: true }).order('category', { ascending: true }).order('title', { ascending: true });
   if (error) throw error;
   const guides = data || [];
+  activeGuideRecords = new Map(guides.map(guide => [String(guide.id), guide]));
   const paths = [...new Set(guides.flatMap(item => item.image_paths || []))];
   const urls = await signedImages(client, paths);
+  activeGuideUrls = urls;
   const groups = new Map();
   for (const guide of guides) {
     const key = guide.category || 'Geral';
@@ -76,7 +79,7 @@ export async function renderFiscalizationPage(client, isAdmin) {
   }
   const content = groups.size ? [...groups].map(([category, items]) =>
     '<section class="fiscalization-group" data-guide-group="' + esc(category) + '"><h2>' + esc(category) + '</h2><div class="fiscalization-list">' +
-    items.map(guide => guideCard(guide, urls, isAdmin)).join('') + '</div></section>').join('') :
+    items.map(guide => guideCard(guide, isAdmin)).join('') + '</div></section>').join('') :
     '<div class="empty" data-guides-empty>Nenhum material cadastrado.</div>';
   const categoryFilters = ['Todos', ...groups.keys()].map((category, index) =>
     '<button type="button" class="fiscalization-filter' + (index === 0 ? ' active' : '') + '" data-category-filter="' + (index === 0 ? 'all' : esc(category)) + '" aria-pressed="' + (index === 0 ? 'true' : 'false') + '">' + esc(category) + '</button>'
@@ -90,7 +93,8 @@ export async function renderFiscalizationPage(client, isAdmin) {
     '<aside class="notice fiscalization-notice"><strong>Material de apoio interno:</strong> confira as normas vigentes e os procedimentos oficiais antes de aplicar. As orientações e imagens não substituem a fonte oficial.</aside>' +
     '<div class="fiscalization-toolbar"><label for="fiscalizationSearch">Pesquisar orientações</label><div class="search-control"><input id="fiscalizationSearch" class="search" type="search" placeholder="Assunto, artigo ou palavra-chave" autocomplete="off"><span class="fiscalization-search-count" data-guides-count>' + guides.length + ' materiais</span></div></div>' +
     '<div class="fiscalization-filters" aria-label="Filtrar por categoria">' + categoryFilters + '</div>' +
-    '<div id="fiscalizationGuides">' + content + '</div><div class="empty" data-guides-empty hidden>Nenhum material corresponde à pesquisa.</div></section>' +
+    '<div id="fiscalizationGuideList"><div id="fiscalizationGuides">' + content + '</div><div class="empty" data-guides-empty hidden>Nenhum material corresponde à pesquisa.</div></div>' +
+    '<section id="fiscalizationGuideDetail" class="fiscalization-guide-detail" hidden aria-live="polite"></section></section>' +
     '<section id="fiscalizationVideosPanel" class="fiscalization-panel" role="tabpanel" aria-labelledby="fiscalizationTabVideos" data-fiscalization-panel="videos" hidden>' +
     '<div class="fiscalization-video-intro"><div><span class="fiscalization-kicker">VÍDEOS DE APOIO</span><h2>Procedimentos do etilômetro</h2><p>Escolha um vídeo para carregar e assistir. O conteúdo é reproduzido no próprio aplicativo.</p></div><span class="fiscalization-video-count">4 vídeos</span></div>' +
     '<div class="fiscalization-video-grid">' + ETILOMETER_VIDEOS.map(videoCard).join('') + '</div>' +
@@ -101,6 +105,25 @@ export async function renderFiscalizationPage(client, isAdmin) {
 
 export function wireFiscalizationActions(client, canAdmin, refresh, notify) {
   const root = document;
+  const openGuide = id => {
+    const guide = activeGuideRecords.get(String(id));
+    const list = document.querySelector('#fiscalizationGuideList');
+    const detail = document.querySelector('#fiscalizationGuideDetail');
+    if (!guide || !list || !detail) return;
+    const urls = activeGuideUrls;
+    detail.innerHTML = '<button type="button" class="button secondary fiscalization-back" data-guide-back>← Voltar para Fiscalização</button>' +
+      '<article class="fiscalization-detail-card"><span class="fiscalization-category">' + esc(guide.category || 'Geral') + '</span><h2>' + esc(guide.title) + '</h2>' +
+      (guide.summary ? '<p class="fiscalization-detail-summary">' + esc(guide.summary) + '</p>' : '') +
+      imageMarkup(guide.image_paths || [], urls, guide.title) +
+      '<section class="fiscalization-detail-section"><h3>Orientação</h3><div class="fiscalization-content">' + esc(guide.content || '').replace(/\n/g, '<br>') + '</div></section>' +
+      (guide.source_note ? '<section class="fiscalization-detail-section"><h3>Observações</h3><p class="fiscalization-source">' + esc(guide.source_note).replace(/\n/g, '<br>') + '</p></section>' : '') +
+      (guide.reference_url ? '<a class="fiscalization-reference" href="' + esc(guide.reference_url) + '" target="_blank" rel="noopener noreferrer">Consultar referência oficial ↗</a>' : '') +
+      '<div class="fiscalization-detail-actions"><button type="button" class="button" data-guide-copy="' + esc(guide.id) + '">▤ Copiar texto</button>' +
+      (canAdmin() ? '<button type="button" class="button secondary" data-fiscalization-edit="' + esc(guide.id) + '">Editar material</button>' : '') + '</div></article>';
+    list.hidden = true;
+    detail.hidden = false;
+    detail.scrollIntoView({behavior:'smooth',block:'start'});
+  };
   const applyGuideFilters = () => {
     const query = (document.querySelector('#fiscalizationSearch')?.value || '').trim().toLocaleLowerCase('pt-BR');
     const activeFilter = document.querySelector('[data-category-filter].active')?.dataset.categoryFilter || 'all';
@@ -124,6 +147,30 @@ export function wireFiscalizationActions(client, canAdmin, refresh, notify) {
   });
   root.addEventListener('click', async event => {
     const target = event.target;
+    const openButton = target.closest?.('[data-guide-open]');
+    if (openButton) { openGuide(openButton.dataset.guideOpen); return; }
+    if (target.closest?.('[data-guide-back]')) {
+      document.querySelector('#fiscalizationGuideDetail').hidden = true;
+      document.querySelector('#fiscalizationGuideList').hidden = false;
+      document.querySelector('#fiscalizationSearch')?.focus({preventScroll:true});
+      window.scrollTo({top:0,behavior:'smooth'});
+      return;
+    }
+    const copyButton = target.closest?.('[data-guide-copy]');
+    if (copyButton) {
+      const guide = activeGuideRecords.get(String(copyButton.dataset.guideCopy));
+      if (!guide) return;
+      const copyText = [guide.title, guide.summary, guide.content, guide.source_note ? 'Observações: ' + guide.source_note : '', guide.reference_url ? 'Referência: ' + guide.reference_url : ''].filter(Boolean).join('\\n\\n');
+      try {
+        if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(copyText);
+        else {
+          const textarea = document.createElement('textarea'); textarea.value = copyText; textarea.style.position = 'fixed'; textarea.style.opacity = '0'; document.body.append(textarea); textarea.select();
+          const copied = document.execCommand('copy'); textarea.remove(); if (!copied) throw new Error('Cópia indisponível');
+        }
+        notify('Texto copiado.');
+      } catch { notify('Não foi possível copiar o texto neste aparelho.'); }
+      return;
+    }
     const tab = target.closest?.('[data-fiscalization-tab]');
     if (tab) {
       const selected = tab.dataset.fiscalizationTab;
