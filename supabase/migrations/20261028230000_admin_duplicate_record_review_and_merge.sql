@@ -35,7 +35,7 @@ begin
   if auth.uid() is null or not public.is_admin() then
     raise exception 'Acesso exclusivo para administradores' using errcode = '42501';
   end if;
-  if p_entity not in ('people','vehicles') or p_decision not in ('separate','merge')
+  if p_entity is null or p_decision is null or p_entity not in ('people','vehicles') or p_decision not in ('separate','merge')
      or p_primary_id is null or p_duplicate_id is null or p_primary_id = p_duplicate_id then
     raise exception 'Parâmetros de revisão inválidos' using errcode = '22023';
   end if;
@@ -52,8 +52,8 @@ begin
 
   if p_entity = 'people' then
     perform 1 from public.people where id in (p_primary_id,p_duplicate_id) order by id for update;
-    select regexp_replace(coalesce(cpf_digits,''),'\D','','g') into v_primary_cpf from public.people where id=p_primary_id and archived_at is null;
-    select regexp_replace(coalesce(cpf_digits,''),'\D','','g') into v_source_cpf from public.people where id=p_duplicate_id and archived_at is null;
+    select regexp_replace(coalesce(cpf_digits,''),'[^0-9]','','g') into v_primary_cpf from public.people where id=p_primary_id and archived_at is null;
+    select regexp_replace(coalesce(cpf_digits,''),'[^0-9]','','g') into v_source_cpf from public.people where id=p_duplicate_id and archived_at is null;
     if v_primary_cpf is null or length(v_primary_cpf)<>11 or v_primary_cpf<>v_source_cpf then
       raise exception 'A junção de indivíduos exige CPF idêntico com 11 dígitos nos dois cadastros' using errcode='22023';
     end if;
