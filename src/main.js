@@ -187,17 +187,27 @@ function warrantDuplicateSubmissionMarkup(submission,original){
     concurrent_insert:'Inclusão simultânea'
   }[submission.duplicate_reason]||'Possível duplicidade';
   const exactPdf=submission.duplicate_reason==='pdf_exact_hash';
+  const processDuplicate=submission.duplicate_reason==='process_number';
   const pdf=submission.storage_path
     ?'<button class="button secondary small" type="button" data-warrant-doc data-warrant-path="'+esc(submission.storage_path)+'">Ver PDF recebido</button>'
     :(exactPdf?'<p class="warrant-caution">O PDF idêntico já está armazenado; uma segunda cópia não foi criada.</p>':'');
-  const distinctAction=exactPdf?'':'<button class="button secondary" type="button" data-warrant-duplicate-review="'+esc(submission.id)+'" data-warrant-duplicate-decision="register_distinct">É distinto — registrar</button>';
-  return '<article class="warrant-duplicate-review"><div class="warrant-review-heading"><div><span class="warrant-review-tag">Possível duplicidade</span><h3>'+esc(formatPersonName(p.full_name||'Mandado recebido'))+'</h3><p>'+esc(reason)+'</p></div></div><div class="warrant-duplicate-facts"><span>Mandado: <strong>'+esc(p.warrant_number||'—')+'</strong></span><span>Órgão: <strong>'+esc(p.source_agency||'BNMP')+'</strong></span><span>CPF: <strong>'+esc(p.cpf_digits?formatCpf(p.cpf_digits):'Não informado')+'</strong></span><span>Processo: <strong>'+esc(p.source_reference||'Não informado')+'</strong></span></div><p class="warrant-caution">'+(original?'Possível original: <strong>'+esc(formatPersonName(original.full_name))+'</strong> · Mandado '+esc(original.warrant_number)+'. Confira antes de decidir.':'O mandado associado não está disponível; os dados recebidos permanecem preservados.')+'</p>'+pdf+'<div class="warrant-actions"><button class="button" type="button" data-warrant-duplicate-review="'+esc(submission.id)+'" data-warrant-duplicate-decision="approve">Confirmar duplicidade</button>'+distinctAction+'<button class="button secondary" type="button" data-warrant-duplicate-review="'+esc(submission.id)+'" data-warrant-duplicate-decision="reject">Rejeitar</button></div></article>';
+  const distinctAction=exactPdf||processDuplicate?'':'<button class="button secondary" type="button" data-warrant-duplicate-review="'+esc(submission.id)+'" data-warrant-duplicate-decision="register_distinct">É distinto — registrar</button>';
+  const distinctNotice=processDuplicate?'<p class="warrant-caution">O número do processo já está cadastrado. Para evitar duplicidade, este mandado não pode ser registrado novamente. Confirme a duplicidade para anexar o PDF ao registro existente ou rejeite a submissão.</p>':'';
+  return '<article class="warrant-duplicate-review"><div class="warrant-review-heading"><div><span class="warrant-review-tag">Possível duplicidade</span><h3>'+esc(formatPersonName(p.full_name||'Mandado recebido'))+'</h3><p>'+esc(reason)+'</p></div></div><div class="warrant-duplicate-facts"><span>Mandado: <strong>'+esc(p.warrant_number||'—')+'</strong></span><span>Órgão: <strong>'+esc(p.source_agency||'BNMP')+'</strong></span><span>CPF: <strong>'+esc(p.cpf_digits?formatCpf(p.cpf_digits):'Não informado')+'</strong></span><span>Processo: <strong>'+esc(p.source_reference||'Não informado')+'</strong></span></div><p class="warrant-caution">'+(original?'Possível original: <strong>'+esc(formatPersonName(original.full_name))+'</strong> · Mandado '+esc(original.warrant_number)+'. Confira antes de decidir.':'O mandado associado não está disponível; os dados recebidos permanecem preservados.')+'</p>'+distinctNotice+pdf+'<div class="warrant-actions"><button class="button" type="button" data-warrant-duplicate-review="'+esc(submission.id)+'" data-warrant-duplicate-decision="approve">Confirmar duplicidade</button>'+distinctAction+'<button class="button secondary" type="button" data-warrant-duplicate-review="'+esc(submission.id)+'" data-warrant-duplicate-decision="reject">Rejeitar</button></div></article>';
 }
 async function reviewWarrantDuplicate(submissionId,decision){
   if(!isAdmin())throw new Error('Apenas administradores podem revisar possíveis duplicidades.');
   const labels={approve:'confirmar a duplicidade',register_distinct:'registrar como mandado distinto',reject:'rejeitar a submissão'};
   if(!labels[decision])throw new Error('Decisão inválida.');
   if(!confirm('Deseja '+labels[decision]+'? Esta decisão será registrada.'))return;
+  if(decision==='register_distinct'){
+    const {data:submission,error:readError}=await state.client.from('arrest_warrant_duplicate_submissions').select('duplicate_reason,payload').eq('id',submissionId).single();
+    if(readError)throw readError;
+    const processDigits=String(submission?.payload?.source_reference||'').replace(/\\D/g,'');
+    if(submission?.duplicate_reason==='process_number'||processDigits&&submission?.duplicate_reason==='process_number'){
+      throw new Error('Esse processo já tem mandado cadastrado. Confirme a duplicidade ou rejeite a submissão; não é possível registrar outro com o mesmo processo.');
+    }
+  }
   const {data,error}=await state.client.rpc('admin_review_arrest_warrant_duplicate',{p_submission_id:submissionId,p_decision:decision,p_notes:''});
   if(error)throw error;
   if(decision==='register_distinct'&&data?.warrant_id){
