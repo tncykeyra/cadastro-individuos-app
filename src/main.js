@@ -520,7 +520,6 @@ async function saveWarrantRecord(values,file=null){
   const sourceAgency=String(values.source_agency||'BNMP').trim().toLocaleUpperCase('pt-BR')||'BNMP';
   if(!number)throw new Error('Informe o número do mandado.');
   if(!name)throw new Error('Informe o nome completo do indivíduo.');
-  if(file&&!normalizeWarrantProcessNumber(sourceReference))throw new Error('Confira ou preencha o número completo do processo antes de salvar o PDF. Esse dado é necessário para impedir duplicidades.');
   if(cpf&&(!/^\d{11}$/.test(cpf)||!isValidCpf(cpf)))throw new Error('Confira o CPF informado.');
   if(file&&(file.type!=='application/pdf'&&!/\.pdf$/i.test(file.name)))throw new Error('Selecione um arquivo PDF válido.');
   if(file&&file.size>20*1024*1024)throw new Error('Cada PDF deve ter até 20 MB.');
