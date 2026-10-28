@@ -14,7 +14,7 @@
   "description": "Cadastro Criminal de indivíduos e veículos",
   "icons": [
     {
-      "src": "/cadastro-individuos-app/icon.svg?v=9",
+      "src": "/cadastro-individuos-app/icon.svg?v=10",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
