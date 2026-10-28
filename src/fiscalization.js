@@ -101,18 +101,62 @@ export async function renderFiscalizationPage(client, isAdmin) {
 
 export function wireFiscalizationActions(client, canAdmin, refresh, notify) {
   const root = document;
-  root.addEventListener('input', event => {
-    if (event.target?.id !== 'fiscalizationSearch') return;
-    const query = event.target.value.trim().toLocaleLowerCase('pt-BR');
+  const applyGuideFilters = () => {
+    const query = (document.querySelector('#fiscalizationSearch')?.value || '').trim().toLocaleLowerCase('pt-BR');
+    const activeFilter = document.querySelector('[data-category-filter].active')?.dataset.categoryFilter || 'all';
+    let visible = 0;
     document.querySelectorAll('#fiscalizationGuides .fiscalization-card').forEach(card => {
-      card.hidden = !!query && !card.textContent.toLocaleLowerCase('pt-BR').includes(query);
+      const textMatch = !query || card.textContent.toLocaleLowerCase('pt-BR').includes(query);
+      const categoryMatch = activeFilter === 'all' || card.dataset.guideCategory === activeFilter;
+      card.hidden = !(textMatch && categoryMatch);
+      if (!card.hidden) visible++;
     });
     document.querySelectorAll('#fiscalizationGuides .fiscalization-group').forEach(group => {
       group.hidden = ![...group.querySelectorAll('.fiscalization-card')].some(card => !card.hidden);
     });
+    const count = document.querySelector('[data-guides-count]');
+    if (count) count.textContent = visible + (visible === 1 ? ' material' : ' materiais');
+    const empty = document.querySelector('[data-guides-empty]');
+    if (empty) empty.hidden = visible > 0;
+  };
+  root.addEventListener('input', event => {
+    if (event.target?.id === 'fiscalizationSearch') applyGuideFilters();
   });
   root.addEventListener('click', async event => {
     const target = event.target;
+    const tab = target.closest?.('[data-fiscalization-tab]');
+    if (tab) {
+      const selected = tab.dataset.fiscalizationTab;
+      document.querySelectorAll('[data-fiscalization-tab]').forEach(button => {
+        const active = button.dataset.fiscalizationTab === selected;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-selected', String(active));
+      });
+      document.querySelectorAll('[data-fiscalization-panel]').forEach(panel => {
+        panel.hidden = panel.dataset.fiscalizationPanel !== selected;
+      });
+      return;
+    }
+    const categoryFilter = target.closest?.('[data-category-filter]');
+    if (categoryFilter) {
+      document.querySelectorAll('[data-category-filter]').forEach(button => {
+        const active = button === categoryFilter;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+      applyGuideFilters();
+      return;
+    }
+    const playVideo = target.closest?.('[data-play-video]');
+    if (playVideo) {
+      const player = document.querySelector('[data-video-player="' + CSS.escape(playVideo.dataset.playVideo) + '"]');
+      if (player && !player.querySelector('iframe')) {
+        const id = playVideo.dataset.playVideo;
+        const title = playVideo.dataset.videoTitle || 'Vídeo de etilômetro';
+        player.innerHTML = '<iframe src="https://www.youtube-nocookie.com/embed/' + esc(id) + '?autoplay=1&controls=1&playsinline=1&rel=0" title="' + esc(title) + '" loading="eager" referrerpolicy="no-referrer-when-downgrade" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>';
+      }
+      return;
+    }
     const newButton = target.closest?.('[data-fiscalization-new]');
     const editButton = target.closest?.('[data-fiscalization-edit]');
     const closeButton = target.closest?.('[data-fiscalization-close]');
