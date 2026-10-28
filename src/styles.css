@@ -628,3 +628,41 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
  .identity-proposal-comparison>div[aria-hidden]{justify-self:center;transform:rotate(90deg)}
  .revision-body>.revision-person-card{width:min(100%,250px)!important;max-width:250px!important}
 }
+
+
+/* Navegação em ficha para os materiais de Fiscalização. */
+.fiscalization-guide-open{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;padding:12px 0;border:0;background:transparent;color:var(--ink);text-align:left;font:inherit;cursor:pointer}
+.fiscalization-guide-open:hover .fiscalization-guide-copy strong{text-decoration:underline;text-underline-offset:3px}
+.fiscalization-guide-copy{display:grid;gap:6px;min-width:0}
+.fiscalization-guide-copy>strong{font-size:1.12rem;line-height:1.3}
+.fiscalization-guide-copy .fiscalization-summary{margin:0}
+.fiscalization-guide-arrow{display:grid;place-items:center;width:38px;height:38px;flex:none;border-radius:50%;background:var(--soft);color:var(--brand);font-size:1.7rem}
+.fiscalization-guide-detail{max-width:900px;margin:0 auto}
+.fiscalization-back{margin-bottom:16px}
+.fiscalization-detail-card{padding:clamp(16px,3vw,28px);border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:var(--shadow)}
+.fiscalization-detail-card>h2{margin:8px 0 10px;font-size:clamp(1.55rem,4vw,2.25rem);line-height:1.2}
+.fiscalization-detail-summary{margin:0 0 18px;color:var(--muted);font-size:1.05rem;line-height:1.55}
+.fiscalization-detail-section{margin:24px 0}
+.fiscalization-detail-section h3{margin:0 0 9px;font-size:1.05rem}
+.fiscalization-detail-section .fiscalization-content,.fiscalization-detail-section .fiscalization-source{font-size:1rem;line-height:1.7;overflow-wrap:anywhere}
+.fiscalization-detail-card .fiscalization-images{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;margin:18px 0}
+.fiscalization-detail-card .fiscalization-image-button img{height:auto;max-height:64vh;min-height:180px;object-fit:contain;background:var(--soft)}
+.fiscalization-detail-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+@media(max-width:620px){.fiscalization-detail-card{padding:15px;border-radius:16px}.fiscalization-detail-card .fiscalization-images{grid-template-columns:minmax(0,1fr)}.fiscalization-detail-card .fiscalization-image-button img{max-height:52vh}.fiscalization-detail-actions .button{flex:1 1 180px;white-space:normal}}
+/* Alternância de aparência clara/escura, salva no dispositivo. */
+:root[data-theme="dark"]{color-scheme:dark;--ink:#edf1f2;--muted:#b2bbbf;--brand:#50595e;--brand-dark:#30383d;--line:#394247;--soft:#30383d;--surface:#222a2e;--page:#171d20;--shadow:0 14px 42px #0006}
+:root[data-theme="dark"] body{background:var(--page);color:var(--ink)}
+:root[data-theme="dark"] .drawer,:root[data-theme="dark"] .stat,:root[data-theme="dark"] .person-card,:root[data-theme="dark"] .list,:root[data-theme="dark"] .list-row,:root[data-theme="dark"] .info-box,:root[data-theme="dark"] .empty,:root[data-theme="dark"] .site-card,:root[data-theme="dark"] .dashboard-card,:root[data-theme="dark"] .fiscalization-card,:root[data-theme="dark"] .fiscalization-video-card,:root[data-theme="dark"] .fiscalization-detail-card,:root[data-theme="dark"] .warrant-card,:root[data-theme="dark"] .revision-card,:root[data-theme="dark"] .team-card,:root[data-theme="dark"] .record-dialog,:root[data-theme="dark"] .dialog-head,:root[data-theme="dark"] .dialog-actions,:root[data-theme="dark"] .bottom-nav,:root[data-theme="dark"] .search-results,:root[data-theme="dark"] .photo-dialog{background-color:var(--surface);color:var(--ink);border-color:var(--line)}
+:root[data-theme="dark"] .nav-item,:root[data-theme="dark"] .button.secondary,:root[data-theme="dark"] .team-page-tab,:root[data-theme="dark"] .warrant-tab,:root[data-theme="dark"] .fiscalization-filter,:root[data-theme="dark"] .fiscalization-back{background-color:#263034;color:var(--ink);border-color:var(--line)}
+:root[data-theme="dark"] .nav-item.active,:root[data-theme="dark"] .team-page-tab.active,:root[data-theme="dark"] .warrant-tab.active{background-color:#3b464b;color:#fff}
+:root[data-theme="dark"] .field input,:root[data-theme="dark"] .field textarea,:root[data-theme="dark"] .field select,:root[data-theme="dark"] .search,:root[data-theme="dark"] input.search{background:#293236;color:var(--ink);border-color:var(--line)}
+:root[data-theme="dark"] .dialog-inner,:root[data-theme="dark"] .dialog-head,:root[data-theme="dark"] .dialog-actions{background:var(--surface)}
+:root[data-theme="dark"] .topbar{background:#262e32}
+:root[data-theme="dark"] .dashboard-substat,:root[data-theme="dark"] .dashboard-card .dashboard-substat{background:#293236;color:var(--ink)}
+:root[data-theme="dark"] .fiscalization-category,:root[data-theme="dark"] .fiscalization-guide-arrow{background:#303a3f;color:#dce3e5}
+:root[data-theme="dark"] .notice{background:#383324;border-color:#605638;color:#eee0b8}
+:root[data-theme="dark"] .identity-suggestion-sent,:root[data-theme="dark"] .dashboard-proposal-alert{background:#3a2527;border-color:#713b40;color:#f5d8d9}
+:root[data-theme="dark"] .auth-card,:root[data-theme="dark"] .login-card{background:var(--surface);color:var(--ink)}
+.theme-toggle{position:absolute;right:18px;display:grid;place-items:center;width:40px;height:40px;border:1px solid #ffffff65;border-radius:50%;background:#ffffff14;color:#fff;font-size:1.35rem;line-height:1;cursor:pointer}
+.theme-toggle:hover{background:#ffffff28}
+@media(max-width:620px){.theme-toggle{right:14px;width:38px;height:38px}.install-button{right:58px}}
