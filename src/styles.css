@@ -674,3 +674,10 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
 .topbar .top-title{max-width:calc(100% - 112px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .topbar .install-button{right:70px}
 @media(max-width:620px){.topbar .theme-toggle{right:12px;width:42px;height:42px;min-width:42px}.topbar .install-button{right:62px;max-width:calc(100% - 120px);overflow:hidden;text-overflow:ellipsis}}
+
+/* Ícones permanentes: o modo troca a visibilidade sem recriar o botão. */
+.topbar .theme-toggle{display:grid!important;visibility:visible!important;opacity:1!important;position:absolute!important;top:50%!important;right:14px!important;z-index:20!important;width:44px!important;height:44px!important;min-width:44px!important;transform:translateY(-50%)!important;pointer-events:auto!important}
+.topbar .theme-toggle .theme-icon{display:block;width:23px;height:23px}
+:root:not([data-theme="dark"]) .topbar .theme-icon-sun{display:none}
+:root[data-theme="dark"] .topbar .theme-icon-moon{display:none}
+@media(max-width:620px){.topbar .theme-toggle{right:10px!important;width:44px!important;height:44px!important;min-width:44px!important}}
