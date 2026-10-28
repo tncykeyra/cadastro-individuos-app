@@ -76,11 +76,11 @@ begin
     from public.people d where p.id=p_primary_id and d.id=p_duplicate_id;
 
     update public.person_photos d set person_id=p_primary_id
-      where d.person_id=p_duplicate_id and not exists(select 1 from public.person_photos p where p.person_id=p_primary_id and p.photo_path=d.photo_path);
+      where d.person_id=p_duplicate_id and not exists(select 1 from public.person_photos p where p.photo_path=d.photo_path and p.id<>d.id);
     update public.record_photos set is_cover=false where entity='people' and entity_id=p_duplicate_id;
     update public.record_photos d set entity_id=p_primary_id,is_cover=false
       where d.entity='people' and d.entity_id=p_duplicate_id
-        and not exists(select 1 from public.record_photos p where p.entity='people' and p.entity_id=p_primary_id and p.photo_path=d.photo_path);
+        and not exists(select 1 from public.record_photos p where p.photo_path=d.photo_path and p.id<>d.id);
 
     update public.person_vehicle_links d set active=false
       from public.person_vehicle_links p
@@ -116,11 +116,11 @@ begin
     from public.vehicles d where p.id=p_primary_id and d.id=p_duplicate_id;
 
     update public.vehicle_photos d set vehicle_id=p_primary_id
-      where d.vehicle_id=p_duplicate_id and not exists(select 1 from public.vehicle_photos p where p.vehicle_id=p_primary_id and p.photo_path=d.photo_path);
+      where d.vehicle_id=p_duplicate_id and not exists(select 1 from public.vehicle_photos p where p.photo_path=d.photo_path and p.id<>d.id);
     update public.record_photos set is_cover=false where entity='vehicles' and entity_id=p_duplicate_id;
     update public.record_photos d set entity_id=p_primary_id,is_cover=false
       where d.entity='vehicles' and d.entity_id=p_duplicate_id
-        and not exists(select 1 from public.record_photos p where p.entity='vehicles' and p.entity_id=p_primary_id and p.photo_path=d.photo_path);
+        and not exists(select 1 from public.record_photos p where p.photo_path=d.photo_path and p.id<>d.id);
     update public.person_vehicle_links d set active=false
       from public.person_vehicle_links p
       where d.vehicle_id=p_duplicate_id and p.vehicle_id=p_primary_id and d.person_id=p.person_id and d.relation=p.relation and d.active and p.active;
