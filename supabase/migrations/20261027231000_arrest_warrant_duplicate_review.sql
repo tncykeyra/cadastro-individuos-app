@@ -236,6 +236,8 @@ as $function$
 declare
   v_submission public.arrest_warrant_duplicate_submissions%rowtype;
   v_warrant public.arrest_warrants%rowtype;
+  v_has_warrant boolean := false;
+  v_new_warrant_id uuid;
 begin
   if auth.uid() is null or public.is_admin() is not true then
     raise exception 'Apenas administradores podem revisar mandados duplicados.';
@@ -255,9 +257,34 @@ begin
     from public.arrest_warrants
    where id = v_submission.matched_warrant_id
    for update;
+  v_has_warrant := found;
 
-  if p_decision = 'approve' then
-    if not found then raise exception 'O mandado original não existe mais; não foi criado nenhum registro.'; end if;
+  if p_decision = 'register_distinct' then
+    if not v_has_warrant then raise exception 'O mandado relacionado não existe mais; não foi criado nenhum registro.'; end if;
+    insert into public.arrest_warrants
+      (import_batch_id, warrant_number, full_name, cpf_digits, birth_date, source_agency,
+       source_kind, source_reference, status, created_by, updated_by)
+    values
+      (v_submission.import_batch_id,
+       upper(btrim(coalesce(v_submission.payload->>'warrant_number',''))),
+       btrim(coalesce(v_submission.payload->>'full_name','')),
+       nullif(regexp_replace(coalesce(v_submission.payload->>'cpf_digits',''), '\\D', '', 'g'), ''),
+       nullif(v_submission.payload->>'birth_date','')::date,
+       upper(btrim(coalesce(v_submission.payload->>'source_agency','BNMP'))),
+       coalesce(nullif(v_submission.payload->>'source_kind',''),'manual'),
+       btrim(coalesce(v_submission.payload->>'source_reference','')), 'pending', auth.uid(), auth.uid())
+    returning id into v_new_warrant_id;
+    if v_submission.storage_path is not null and not exists (
+      select 1 from public.arrest_warrant_documents d where d.content_sha256=v_submission.content_sha256
+    ) then
+      insert into public.arrest_warrant_documents
+        (warrant_id, storage_path, file_name, content_type, file_size_bytes, content_sha256, created_by)
+      values (v_new_warrant_id, v_submission.storage_path, v_submission.document_name,
+              'application/pdf', v_submission.file_size_bytes, v_submission.content_sha256, auth.uid())
+      on conflict do nothing;
+    end if;
+  elsif p_decision = 'approve' then
+    if not v_has_warrant then raise exception 'O mandado original não existe mais; não foi criado nenhum registro.'; end if;
     update public.arrest_warrants
        set cpf_digits = coalesce(nullif(cpf_digits,''), nullif(v_submission.payload->>'cpf_digits','')),
            birth_date = coalesce(birth_date, nullif(v_submission.payload->>'birth_date','')::date),
