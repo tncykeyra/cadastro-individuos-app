@@ -24,7 +24,7 @@ export function parseIntelligentText(kind, rawText) {
 
   const plateMatch = text.match(/\b([A-Z]{3}\s*\d[A-Z0-9]\s*\d{2}|[A-Z]{3}\s*\d{4})\b/i);
   const readField = labels => {
-    const re = new RegExp('(?:' + labels + ')\\s*[:\\-]?\\s*([^\\n,;]+)', 'i');
+    const re = new RegExp('\\b(?:' + labels + ')\\b\\s*[:\\-]?\\s*([^\\n,;]+)', 'i');
     return text.match(re)?.[1]?.trim() || '';
   };
   const notesMatch = text.match(/(?:anotações?|observações?)\s*[:\-]\s*([\s\S]+)$/i);
@@ -106,8 +106,8 @@ export function parseIntelligentBundle(rawText) {
     : '';
   const name = (labeledName?.[1] || relatedName?.[1] || prefixName || '').trim().replace(/\s+/g, ' ');
   person.full_name = name || '';
-  const inferredMake = text.match(/\b(Volkswagen|Chevrolet|Fiat|Ford|Honda|Toyota|Hyundai|Renault|Nissan|Yamaha|Suzuki|Jeep|Peugeot|Citro[eë]n|Mitsubishi|BMW|Mercedes[- ]Benz|Kawasaki|Dafra)\s+([A-Z0-9][A-Z0-9.-]*)/i);
-  if (!vehicle.make && inferredMake) vehicle.make = inferredMake[1];
+  const inferredMake = text.match(/\b(Volkswagen|VW|Chevrolet|GM|Fiat|Ford|Honda|Toyota|Hyundai|Renault|Nissan|Yamaha|Suzuki|Jeep|Peugeot|Citro[eë]n|Mitsubishi|BMW|Mercedes[- ]Benz|Kawasaki|Dafra)\s+([A-Z0-9][A-Z0-9.-]*)/i);
+  if (!vehicle.make && inferredMake) vehicle.make = /^VW$/i.test(inferredMake[1]) ? 'Volkswagen' : /^GM$/i.test(inferredMake[1]) ? 'Chevrolet' : inferredMake[1];
   if (!vehicle.model && inferredMake) vehicle.model = inferredMake[2];
   const knownModel=text.match(/\b(Corolla|Hilux|Yaris|Gol|Polo|Virtus|T-Cross|Uno|Palio|Argo|Mobi|Onix|Prisma|Celta|Civic|City|Fit|CG(?:\\s*160)?|Biz|Pop|XRE|Fazer|Factor|HB20|Creta|Duster|Sandero|Kwid|Compass|Renegade)\b/i);
   if(!vehicle.model&&knownModel)vehicle.model=knownModel[1];
