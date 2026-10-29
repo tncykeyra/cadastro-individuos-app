@@ -784,3 +784,5 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
     flex-basis:40px!important;width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;min-height:40px!important;max-height:40px!important
   }
 }
+
+.smart-ai-optin{display:flex;align-items:flex-start;gap:12px;margin:16px 0 8px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);cursor:pointer}.smart-ai-optin input{width:20px;height:20px;flex:0 0 auto;margin:2px 0 0;accent-color:var(--brand)}.smart-ai-optin span{display:grid;gap:4px}.smart-ai-optin strong{font-size:.96rem}.smart-ai-optin small{color:var(--muted);font-size:.82rem;line-height:1.45}.smart-ai-status{min-height:1.25em;margin:4px 2px 12px;color:var(--muted);font-size:.86rem}@media(max-width:480px){.smart-ai-optin{padding:12px}.smart-ai-optin small{font-size:.78rem}}
