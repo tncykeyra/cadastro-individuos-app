@@ -29,12 +29,14 @@ export function parseIntelligentText(kind, rawText) {
  const cpfSource = text.match(/\bCPF\s*[:\-]?\s*\d[\d.\s-]{9,18}/i)?.[0] || digits(text.match(/\b\d{3}(?:[.\s]?\d{3}){2}[-\s]?\d{2}\b|\b\d{11}\b/)?.[0] || '');
  const dateMatch = text.match(/\b(?:(?:nascid[oa]\s+em|nascimento|data de nascimento)\s*[:\-]?\s*)?(\d{2}[\/.-]\d{2}[\/.-]\d{4})\b/i);
  if (kind === 'person') {
-   const nameMatch = text.match(/(?:nome(?: completo)?\s*[:\-]\s*)([^\n,;]+)/i);
+   const nameMatch = text.match(/(?:nome(?: completo)?\s*[:\-]\s*)([\s\S]*?)(?=\s*(?:[,;\n]|\s+(?:CPF|RG|identidade|nascimento|data\s+de\s+nascimento|endere[cç]o|anota[cç][oõ]es|crimes?)\b\s*[:\-]?|$))/i);
    const rgMatch = text.match(/\b(?:RG|identidade)\s*[:\-]?\s*([\w.\/-]{4,20})/i);
    const address = extractAddress(text);
    const firstPart = text.split(/[\n,;]/)[0].trim();
    let name = nameMatch?.[1] || (address.start >= 0 && address.start < firstPart.length ? text.slice(0, address.start) : firstPart);
-   name = name.replace(/^\s*(?:cadastrar|ind[ií]viduo|pessoa)\s*/i, '').replace(/\s+(?:residente|mora|reside)\s+(?:em|na|no)?\s*$/i, '').replace(/\bCPF\b.*$/i, '').trim();
+   name = name.replace(/^\s*(?:cadastrar|ind[ií]viduo|pessoa)\s*/i, '').replace(/\s+(?:residente|mora|reside)\s+(?:em|na|no)?\s*$/i, '');
+   if (cpfSource) name = name.replace(cpfSource, ' ');
+   name = name.replace(/\bCPF\b.*$/i, '').replace(/\s+/g, ' ').trim();
    let remainder = text;
    for (const field of [nameMatch?.[0], address.full, cpfSource, cpfDigits, rgMatch?.[0], dateMatch?.[0], name]) {
      if (field) remainder = remainder.replace(field, ' ');

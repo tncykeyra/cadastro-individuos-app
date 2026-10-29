@@ -815,7 +815,7 @@ async function analyzeSmartBundleEntry(raw){
  await Promise.all([galleryPhotosForRecords('people',people),galleryPhotosForRecords('vehicles',vehicles)]);
  state.smartBundle={person:parsed.person,vehicle:parsed.vehicle,people,vehicles};
  const target=$('#smartResult');if(!target)return true;
- target.innerHTML='<section class="smart-analysis"><h2>Confira pessoa e veículo</h2><p class="muted">A pesquisa verificou os dois registros. Escolha um cadastro existente ou “Criar novo” para cada um; a associação só será feita depois da confirmação e do salvamento.</p>'+smartBundleChoiceMarkup('person',people,parsed.person)+smartBundleChoiceMarkup('vehicle',vehicles,parsed.vehicle)+'<label class="field smart-bundle-relation"><span>Relação sugerida</span><select id="smartBundleRelation"><option value="associated">Associado</option><option value="driver">Condutor</option><option value="owner">Proprietário</option></select></label><button class="button" type="button" id="smartBundleConfirm">Confirmar e continuar</button></section>';
+ target.innerHTML='<section class="smart-analysis"><h2>Confira pessoa e veículo</h2><p class="muted">A pesquisa verificou os dois registros. Escolha um cadastro existente ou “Criar novo” para cada um; a associação só será feita depois da confirmação e do salvamento.</p>'+smartBundleChoiceMarkup('person',people,parsed.person)+smartBundleChoiceMarkup('vehicle',vehicles,parsed.vehicle)+'<label class="field smart-bundle-relation"><span>Relação sugerida</span><select id="smartBundleRelation"><option value="associated">Associado</option><option value="driver">Condutor</option><option value="owner">Proprietário</option></select></label><button class="button" type="button" id="smartBundleConfirm">Confirmar e continuar</button></section>';requestAnimationFrame(()=>target.scrollIntoView({behavior:'smooth',block:'start'}));
  return true
 }
 async function ensureSmartAssociation(personId,vehicleId,relation='associated'){
@@ -892,7 +892,8 @@ async function analyzeSmartEntry(){
    :kind==='vehicle'&&Boolean(values.plate)&&candidates.some(row=>normalizePlate(row.plate)===normalizePlate(values.plate));
  state.smartMatchesCount=candidates.length;
  await galleryPhotosForRecords(table,candidates);
- const result=$('#smartResult');if(result)result.innerHTML=renderSmartCandidates(kind,values,candidates);
+ if(!candidates.length){toast('Nenhuma duplicidade encontrada. Continue o cadastro.');await showForm(kind==='person'?'person':'vehicle',null,{initialValues:values,focusPhotos:true,smartEntry:true});return}
+ const result=$('#smartResult');if(result){result.innerHTML=renderSmartCandidates(kind,values,candidates);requestAnimationFrame(()=>result.scrollIntoView({behavior:'smooth',block:'start'}))}
 }
 
 async function continueSmartEntry(kind){
