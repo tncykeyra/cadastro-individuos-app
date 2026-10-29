@@ -99,10 +99,10 @@ export function parseIntelligentBundle(rawText) {
   const relatedName = text.match(/(?:pertencente\s+a|relacionad[oa]\s+a|associad[oa]\s+a)\s*([A-ZÀ-Ý][A-ZÀ-Ýa-zà-ÿ'’-]*(?:\s+[A-ZÀ-Ý][A-ZÀ-Ýa-zà-ÿ'’-]*){1,7})(?=\s*(?:[,;]|\bCPF\b|\bRG\b|$))/i);
   const cpfIndex = text.search(/\bCPF\b/i);
   const beforeCpf = cpfIndex >= 0 ? text.slice(0, cpfIndex) : '';
-  const namePrefix = beforeCpf || text.slice(0, (text.search(/[,;]\\s*(?:propriet[aá]rio|condutor|ve[ií]culo|carro|moto|placa|marca|modelo|cor)\\b/i) + 1) || text.length);
-  const vehicleBefore = /\\b(?:placa|marca|modelo|cor)\\b/i.test(namePrefix);
+  const namePrefix = beforeCpf || text.slice(0, (text.search(/[,;]\s*(?:propriet[aá]rio|condutor|ve[ií]culo|carro|moto|placa|marca|modelo|cor)\b/i) + 1) || text.length);
+  const vehicleBefore = /\b(?:placa|marca|modelo|cor)\b/i.test(namePrefix);
   const prefixName = !vehicleBefore
-    ? namePrefix.replace(/^\\s*(?:cadastrar|ind[ií]viduo|pessoa)\\s*/i, '').replace(/[,:;\\s]+$/g, '').trim()
+    ? namePrefix.replace(/^\s*(?:cadastrar|ind[ií]viduo|pessoa)\s*/i, '').replace(/[,:;\s]+$/g, '').trim()
     : '';
   const name = (labeledName?.[1] || relatedName?.[1] || prefixName || '').trim().replace(/\s+/g, ' ');
   person.full_name = name || '';
@@ -111,7 +111,9 @@ export function parseIntelligentBundle(rawText) {
   if (!vehicle.model && inferredMake) vehicle.model = inferredMake[2];
   const inferredColor = text.match(/\b(preta?|branca?|azul|vermelha?|prata|cinza|verde|amarela?|marrom|bege|dourada?)\b/i);
   if (!vehicle.color && inferredColor) vehicle.color = inferredColor[1];
-  const hasPerson = Boolean(person.full_name && (person.cpf_digits || /\b(?:nome|pessoa|ind[ií]viduo|condutor|pertencente a|relacionad[oa] a)\b/i.test(text)));
+  const modelMention=text.match(/\b(?:um|uma|modelo|carro|ve[ií]culo|moto|motocicleta)\s+(?:modelo\s+)?([A-Z0-9][A-Z0-9.-]{1,20})\b/i);
+  if(!vehicle.model&&modelMention&&vehicle.plate)vehicle.model=modelMention[1];
+  const hasPerson = Boolean(person.full_name && (person.cpf_digits || /\b(?:nome|pessoa|ind[ií]viduo|condutor|pertencente a|relacionad[oa] a|propriet[aá]rio)\b/i.test(text)));
   const hasVehicle = Boolean(vehicle.plate);
   return { person, vehicle, hasPerson, hasVehicle };
 }
