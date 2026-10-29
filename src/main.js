@@ -801,7 +801,7 @@ function smartBundleChoiceMarkup(kind,records,values){
   const options=records.map(row=>{
     const photo=row.photos?.find(item=>item.is_cover&&item.url)||row.photos?.find(item=>item.url);
     const title=kind==='person'?row.full_name:[row.make,row.model,row.plate].filter(Boolean).join(' ');
-    const sub=kind==='person'?'CPF '+(String(row.cpf_digits||'').replace(/\D/g,'').length===11?'***.***.***-'+String(row.cpf_digits).slice(-2):'—')+' · '+(row.birthday||''):['Placa '+row.plate,row.color].filter(Boolean).join(' · ');
+    const sub=kind==='person'?'CPF '+(String(row.cpf_digits||'').replace(/\D/g,'').length===11?formatCpf(row.cpf_digits):'—')+' · '+(row.birthday||''):['Placa '+row.plate,row.color].filter(Boolean).join(' · ');
     return '<label class="smart-bundle-record"><input type="radio" name="smart-bundle-'+kind+'" value="'+esc(row.id)+'" '+(exact?.id===row.id?'checked':'')+'><span class="smart-bundle-thumb">'+(photo?'<img src="'+esc(photo.url)+'" alt="" loading="lazy">':(kind==='person'?'♙':'🚗'))+'</span><span><strong>'+esc(title||'Cadastro')+'</strong><small>'+esc(sub)+'</small></span></label>'
   }).join('');
   const newChecked=exact?'':'checked';
