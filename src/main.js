@@ -838,6 +838,35 @@ async function continueSmartBundle(){
   if(existingVehicle){await showForm('person',null,{initialValues:personValues,focusPhotos:true,smartEntry:true,onSaved:async(_kind,personId)=>{await ensureSmartAssociation(personId,existingVehicle.id,relation);toast('Indivíduo salvo e associação confirmada.');await openPerson(personId)}});return}
   await showForm('person',null,{initialValues:personValues,focusPhotos:true,smartEntry:true,onSaved:async(_kind,personId)=>{await showForm('vehicle',null,{initialValues:vehicleValues,initialPlate:vehicleValues.plate,initialPersonId:personId,initialRelation:relation,focusPhotos:true,smartEntry:true})}})
 }
+function renderSmartCandidates(kind,values,candidates){
+  const person=kind==='person';
+  const fields=person
+    ?[['full_name','Nome'],['cpf_digits','CPF'],['rg','RG'],['birthday','Nascimento'],['address_primary','Endereço'],['notes','Anotações']]
+    :[['plate','Placa'],['make','Marca'],['model','Modelo'],['color','Cor'],['notes','Anotações']];
+  const fieldsMarkup=fields.map(([key,label])=>{
+    const value=values?.[key]??'';
+    if(!value)return '';
+    return '<label class="field"><span>'+esc(label)+'</span><input data-smart-value="'+esc(key)+'" value="'+esc(value)+'" autocomplete="off"></label>'
+  }).join('');
+  const exactMatch=Boolean(state.smartExactMatch);
+  const cards=(candidates||[]).map(row=>{
+    const photo=(row.photos||[]).find(item=>item.is_cover&&item.url)||(row.photos||[]).find(item=>item.url);
+    const name=person?(row.full_name||'Indivíduo sem nome'):[row.make,row.model].filter(Boolean).join(' ')||'Veículo';
+    const detail=person
+      ?'CPF: '+(row.cpf_digits?formatCpf(row.cpf_digits):'—')+(row.rg?' · RG: '+row.rg:'')
+      :'Placa: '+(row.plate||'—')+(row.color?' · '+row.color:'');
+    return '<button class="smart-mini-card" type="button" data-smart-existing="'+esc(row.id)+'" data-smart-kind="'+(person?'person':'vehicle')+'"><span class="smart-candidate-photo">'+(photo?'<img src="'+esc(photo.url)+'" alt="" loading="lazy">':(person?'♙':'🚗'))+'</span><span class="smart-candidate-copy"><strong>'+esc(name)+'</strong><small>'+esc(detail)+'</small></span><span class="smart-candidate-chevron" aria-hidden="true">›</span></button>'
+  }).join('');
+  const duplicateNotice=exactMatch
+    ?'<div class="notice warning">Já existe cadastro com este '+(person?'CPF':'placa')+'. Abra o registro encontrado para editar e evitar duplicidade.</div>'
+    :candidates?.length
+      ?'<div class="notice">Encontramos registros possivelmente relacionados. Confira antes de continuar.</div>'
+      :'<div class="notice">Nenhuma correspondência encontrada. Confira os dados e avance para as fotos.</div>';
+  return '<section class="smart-analysis"><h2>Confira os dados identificados</h2>'+duplicateNotice+
+    (cards?'<div class="smart-candidate-list"><h3>Cadastros encontrados</h3>'+cards+'</div>':'')+
+    '<div class="smart-fields">'+(fieldsMarkup||'<p class="muted">Não foi possível identificar campos. Você poderá preencher no formulário.</p>')+'</div>'+
+    '<div class="smart-actions">'+(exactMatch?'':'<button class="button" type="button" data-smart-continue="'+(person?'person':'vehicle')+'">'+(candidates?.length?'Criar novo mesmo assim':'Continuar para fotos e cadastro')+'</button>')+'</div></section>'
+}
 async function analyzeSmartEntry(){
  const kind=document.querySelector('[data-smart-kind].active')?.dataset.smartKind||'person',raw=document.querySelector('#smartText')?.value||'';
  if(!raw.trim()){toast('Digite as informações antes de analisar.');return}
