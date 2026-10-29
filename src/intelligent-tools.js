@@ -54,6 +54,7 @@ export function renderIntelligentEntry(initialKind = 'person') {
     '<section class="smart-entry-panel"><div class="smart-kind-switch" role="group" aria-label="Tipo de cadastro"><button class="button smart-kind '+(kind==='person'?'active':'secondary')+'" type="button" data-smart-kind="person">👤 Indivíduo</button><button class="button smart-kind '+(kind==='vehicle'?'active':'secondary')+'" type="button" data-smart-kind="vehicle">🚗 Veículo</button></div>' +
     '<label class="smart-text-label" for="smartText">Informações para o cadastro</label><textarea id="smartText" class="search smart-text" placeholder="'+placeholder+'"></textarea>' +
     '<div class="smart-examples"><strong>Exemplos para preencher</strong><button type="button" class="button secondary small" data-smart-example="person">Usar exemplo de indivíduo</button><button type="button" class="button secondary small" data-smart-example="vehicle">Usar exemplo de veículo</button></div>' +
+    '<label class="smart-ai-optin"><input id="smartUseLocalAi" type="checkbox"><span><strong>✨ IA generativa local (opcional)</strong><small>Usa o aparelho, sem enviar o texto a um serviço de IA. Requer WebGPU; o primeiro carregamento baixa um modelo grande. Sem compatibilidade, a análise leve continua disponível.</small></span></label><p class="smart-ai-status" id="smartAiStatus" role="status" aria-live="polite"></p>' +
     '<button class="button" type="button" id="smartAnalyze">🔎 Conferir duplicidade e organizar dados</button><div id="smartResult" aria-live="polite"></div></section>';
 }
 
