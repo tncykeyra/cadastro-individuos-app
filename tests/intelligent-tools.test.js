@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { parseIntelligentText, parseIntelligentBundle, inspectRecords, getSmartPersonSearchTerms, duplicateReviewPairKey, mergeSmartChatDraft } from '../src/intelligent-tools.js';
 
 test('interprets explicit individual fields and leaves filiation and other unlabelled text untouched', () => {
-  const result = parseIntelligentText('person', 'Nome: JOÃO CARLOS DA SILVA\\nCPF: 123.456.789-09\\nRG: 45.678.901\\nNascido em: 15/03/1990\\nCrimes: furto');
+  const result = parseIntelligentText('person', 'Nome: JOÃO CARLOS DA SILVA\nCPF: 123.456.789-09\nRG: 45.678.901\nNascido em: 15/03/1990\nCrimes: furto');
   assert.equal(result.full_name, 'JOÃO CARLOS DA SILVA');
   assert.equal(result.cpf_digits, '12345678909');
   assert.equal(result.rg, '45.678.901');
@@ -12,7 +12,7 @@ test('interprets explicit individual fields and leaves filiation and other unlab
 });
 
 test('interprets labeled vehicle fields and Brazilian plate formats', () => {
-  const result = parseIntelligentText('vehicle', 'Placa: ABC1D23\\nMarca: Fiat\\nModelo: Uno\\nCor: Azul');
+  const result = parseIntelligentText('vehicle', 'Placa: ABC1D23\nMarca: Fiat\nModelo: Uno\nCor: Azul');
   assert.equal(result.plate, 'ABC1D23');
   assert.equal(result.make, 'Fiat');
   assert.equal(result.model, 'Uno');
