@@ -36,8 +36,11 @@ begin
 
   v_cpf_primary:=regexp_replace(coalesce(v_primary.cpf_digits,''),'[^0-9]','','g');
   v_cpf_source:=regexp_replace(coalesce(v_source.cpf_digits,''),'[^0-9]','','g');
-  if length(v_cpf_primary)<>11 or v_cpf_primary<>v_cpf_source then
-    raise exception 'A união de indivíduos exige CPF idêntico com 11 dígitos nos dois cadastros' using errcode='22023';
+  if (v_cpf_primary<>'' and length(v_cpf_primary)<>11) or (v_cpf_source<>'' and length(v_cpf_source)<>11) then
+    raise exception 'Corrija os CPFs inválidos antes de unir os cadastros' using errcode='22023';
+  end if;
+  if v_cpf_primary<>'' and v_cpf_source<>'' and v_cpf_primary<>v_cpf_source then
+    raise exception 'Não é possível unir cadastros com CPFs diferentes' using errcode='22023';
   end if;
 
   insert into public.record_revisions(actor_id,action,entity,entity_id,before_data,after_data,occurred_at)
@@ -46,7 +49,7 @@ begin
   v_choice:=coalesce(p_field_choices->>'full_name','primary');
   update public.people p set
     full_name=case when v_choice='duplicate' then v_source.full_name else v_primary.full_name end,
-    cpf_digits=v_primary.cpf_digits,
+    cpf_digits=coalesce(nullif(v_primary.cpf_digits,''),nullif(v_source.cpf_digits,''),''),
     rg=case when coalesce(p_field_choices->>'rg','primary')='duplicate' and nullif(v_source.rg,'') is not null then v_source.rg else coalesce(nullif(v_primary.rg,''),nullif(v_source.rg,''),'') end,
     registration=case when coalesce(p_field_choices->>'registration','primary')='duplicate' and nullif(v_source.registration,'') is not null then v_source.registration else coalesce(nullif(v_primary.registration,''),nullif(v_source.registration,''),'') end,
     alias=case when coalesce(p_field_choices->>'alias','primary')='duplicate' and nullif(v_source.alias,'') is not null then v_source.alias else coalesce(nullif(v_primary.alias,''),nullif(v_source.alias,''),'') end,
