@@ -49,35 +49,14 @@ export function getSmartPersonSearchTerms(values) {
 export function renderIntelligentEntry(initialKind = 'person') {
   const kind = initialKind === 'vehicle' ? 'vehicle' : 'person';
   const placeholder = kind === 'vehicle'
-    ? 'Ex.: Veículo Gol branco, placa ABC1D23, ligado a uma pessoa...'
-    : 'Ex.: João da Silva, CPF..., mora na Rua das Flores...';
-  return '<section class="page-intro"><div><h1>Cadastro Inteligente</h1><p>Converse com o assistente para organizar os dados, conferir duplicidades e preparar o cadastro.</p></div></section>' +
+    ? 'Ex.: Placa ABC1D23; marca Honda; modelo CG 160 Fan; cor vermelha; observações sobre o veículo.'
+    : 'Ex.: Nome, CPF, RG, nascimento, endereço completo e anotações do indivíduo.';
+  return '<section class="page-intro"><div><h1>Cadastro Inteligente</h1><p>Digite os dados uma vez. O sistema confere nome, CPF, endereço ou placa antes de abrir o formulário e a área de fotos.</p></div></section>' +
     '<section class="smart-entry-panel"><div class="smart-kind-switch" role="group" aria-label="Tipo de cadastro"><button class="button smart-kind '+(kind==='person'?'active':'secondary')+'" type="button" data-smart-kind="person">👤 Indivíduo</button><button class="button smart-kind '+(kind==='vehicle'?'active':'secondary')+'" type="button" data-smart-kind="vehicle">🚗 Veículo</button></div>' +
-    '<label class="smart-ai-optin"><input id="smartUseLocalAi" type="checkbox"><span><strong>✨ IA generativa local (opcional)</strong><small>Só processa o texto no aparelho ao enviar mensagem com a opção marcada. Requer WebGPU e baixa um modelo na primeira utilização. Sem suporte, o modo leve continua disponível.</small></span></label><p class="smart-ai-status" id="smartAiStatus" role="status" aria-live="polite"></p>' +
-    '<section class="smart-chat" aria-label="Conversa do Cadastro Inteligente"><div class="smart-chat-heading"><div><h2>Assistente de cadastro</h2><p>Envie os dados aos poucos. Você pode corrigir informações sem reiniciar.</p></div><button class="button secondary small" type="button" id="smartChatReset">Nova conversa</button></div>' +
-    '<div class="smart-chat-log" id="smartChatMessages" role="log" aria-live="polite"><div class="smart-chat-bubble assistant">Olá! Descreva a pessoa ou o veículo. Você pode informar nome, CPF, endereço, placa e outros detalhes em mensagens separadas.</div></div>' +
-    '<div class="smart-chat-draft" id="smartChatDraft"><strong>Ficha em preparação</strong><span>Os campos reconhecidos aparecerão aqui para conferência.</span></div>' +
-    '<label class="smart-chat-label" for="smartChatInput">Sua mensagem</label><textarea id="smartChatInput" class="search smart-chat-input" placeholder="'+placeholder+'" rows="3"></textarea>' +
-    '<div class="smart-chat-actions"><button class="button" type="button" id="smartChatSend">Enviar mensagem</button><button class="button secondary" type="button" id="smartChatFinalize" disabled>Conferir duplicidade e continuar</button></div></section>' +
-    '<details class="smart-direct-entry"><summary>Preencher tudo de uma vez</summary><label class="smart-text-label" for="smartText">Informações para o cadastro</label><textarea id="smartText" class="search smart-text" placeholder="'+placeholder+'"></textarea>' +
-    '<div class="smart-examples"><strong>Exemplos</strong><button type="button" class="button secondary small" data-smart-example="person">Exemplo de indivíduo</button><button type="button" class="button secondary small" data-smart-example="vehicle">Exemplo de veículo</button></div>' +
-    '<button class="button secondary" type="button" id="smartAnalyze">Analisar texto único</button></details><div id="smartResult" aria-live="polite"></div></section>';
-}
-
-export function mergeSmartChatDraft(kind, current = {}, deterministic = {}, generated = {}) {
-  const allowed = kind === 'person'
-    ? ['full_name', 'cpf_digits', 'rg', 'birthday', 'address_primary', 'notes']
-    : ['plate', 'make', 'model', 'color', 'notes'];
-  const identifier = kind === 'person' ? 'cpf_digits' : 'plate';
-  const result = {};
-  for (const key of allowed) {
-    if (key === identifier) {
-      result[key] = String(deterministic[key] || current[key] || '').trim();
-      continue;
-    }
-    result[key] = String(generated[key] || deterministic[key] || current[key] || '').trim();
-  }
-  return result;
+    '<label class="smart-text-label" for="smartText">Informações para o cadastro</label><textarea id="smartText" class="search smart-text" placeholder="'+placeholder+'"></textarea>' +
+    '<div class="smart-examples"><strong>Exemplos para preencher</strong><button type="button" class="button secondary small" data-smart-example="person">Usar exemplo de indivíduo</button><button type="button" class="button secondary small" data-smart-example="vehicle">Usar exemplo de veículo</button></div>' +
+    '<label class="smart-ai-optin"><input id="smartUseLocalAi" type="checkbox"><span><strong>✨ IA generativa local (opcional)</strong><small>Usa o aparelho, sem enviar o texto a um serviço de IA. Requer WebGPU; o primeiro carregamento baixa um modelo grande. Sem compatibilidade, a análise leve continua disponível.</small></span></label><p class="smart-ai-status" id="smartAiStatus" role="status" aria-live="polite"></p>' +
+    '<button class="button" type="button" id="smartAnalyze">🔎 Conferir duplicidade e organizar dados</button><div id="smartResult" aria-live="polite"></div></section>';
 }
 
 export function inspectRecords(people, vehicles) {
