@@ -837,7 +837,8 @@ async function continueSmartBundle(){
   if(existingVehicle){await showForm('person',null,{initialValues:personValues,focusPhotos:true,smartEntry:true,onSaved:async(_kind,personId)=>{await ensureSmartAssociation(personId,existingVehicle.id,relation);toast('Indivíduo salvo e associação confirmada.');await openPerson(personId)}});return}
   await showForm('person',null,{initialValues:personValues,focusPhotos:true,smartEntry:true,onSaved:async(_kind,personId)=>{await showForm('vehicle',null,{initialValues:vehicleValues,initialPlate:vehicleValues.plate,initialPersonId:personId,initialRelation:relation,focusPhotos:true,smartEntry:true})}})
 }
-async function analyzeSmartEntry(){\n  const bundleText=document.querySelector('#smartText')?.value||'';if(await analyzeSmartBundleEntry(bundleText))return;
+async function analyzeSmartEntry(){
+  const bundleText=document.querySelector('#smartText')?.value||'';if(await analyzeSmartBundleEntry(bundleText))return;
   const kind=document.querySelector('[data-smart-kind].active')?.dataset.smartKind||'person',raw=document.querySelector('#smartText')?.value||'';
   if(!raw.trim()){toast('Digite as informações antes de analisar.');return}
   const values=parseIntelligentText(kind,raw),table=kind==='person'?'people':'vehicles',key=kind==='person'?'cpf_digits':'plate';
