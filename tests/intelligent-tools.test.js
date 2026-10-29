@@ -98,3 +98,13 @@ test('recognizes VW and GM abbreviations and does not confuse Corolla with the C
   assert.equal(gm.vehicle.model, 'Corsa');
   assert.equal(gm.vehicle.color, 'prata');
 });
+
+
+test('recognizes unlabelled Brazilian street prefixes as person address', () => {
+  for (const prefix of ['Rua', 'Avenida', 'Av.', 'Alameda', 'Travessa']) {
+    const result = parseIntelligentText('person', `Maria Souza, ${prefix} das Flores, 123, Centro, CPF: 123.456.789-09; Anotações: abordada à noite`);
+    assert.match(result.address_primary, new RegExp('^' + prefix.replace('.', '\\.') + ' das Flores, 123, Centro$', 'i'));
+    assert.equal(result.cpf_digits, '12345678909');
+    assert.match(result.notes, /abordada à noite/i);
+  }
+});
