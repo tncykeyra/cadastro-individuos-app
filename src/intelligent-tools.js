@@ -56,6 +56,18 @@ export function getSmartPersonSearchTerms(values) {
  return name.length >= 3 ? [name] : [];
 }
 
+export function renderIntelligentEntry(initialKind = 'person') {
+  const kind = initialKind === 'vehicle' ? 'vehicle' : 'person';
+  const placeholder = kind === 'vehicle'
+    ? 'Ex.: Placa ABC1D23; marca Honda; modelo CG 160 Fan; cor vermelha; observações sobre o veículo.'
+    : 'Ex.: Nome, CPF, RG, nascimento, endereço completo e anotações do indivíduo.';
+  return '<section class="page-intro"><div><h1>Cadastro Inteligente</h1><p>Digite os dados uma vez. O sistema confere nome, CPF, endereço ou placa antes de abrir o formulário e a área de fotos.</p></div></section>' +
+    '<section class="smart-entry-panel"><div class="smart-kind-switch" role="group" aria-label="Tipo de cadastro"><button class="button smart-kind '+(kind==='person'?'active':'secondary')+'" type="button" data-smart-kind="person">👤 Indivíduo</button><button class="button smart-kind '+(kind==='vehicle'?'active':'secondary')+'" type="button" data-smart-kind="vehicle">🚗 Veículo</button></div>' +
+    '<label class="smart-text-label" for="smartText">Informações para o cadastro</label><textarea id="smartText" class="search smart-text" placeholder="'+placeholder+'"></textarea>' +
+    '<div class="smart-examples"><strong>Exemplos para preencher</strong><button type="button" class="button secondary small" data-smart-example="person">Usar exemplo de indivíduo</button><button type="button" class="button secondary small" data-smart-example="vehicle">Usar exemplo de veículo</button></div>' +
+    '<button class="button" type="button" id="smartAnalyze">🔎 Conferir duplicidade e organizar dados</button><div id="smartResult" aria-live="polite"></div></section>';
+}
+
 export function inspectRecords(people, vehicles) {
   const findings = [];
   const cpfGroups = new Map();
