@@ -108,3 +108,24 @@ test('recognizes unlabelled Brazilian street prefixes as person address', () => 
     assert.match(result.notes, /abordada à noite/i);
   }
 });
+
+
+test('recognizes CPF with 11 digits without label or punctuation', () => {
+  const result = parseIntelligentText('person', 'Maria Souza, 12345678909');
+  assert.equal(result.cpf_digits, '12345678909');
+});
+
+test('recognizes street addresses without address label and preserves additional information as notes', () => {
+  for (const prefix of ['Rua', 'Avenida', 'Av.', 'Alameda', 'Travessa']) {
+    const result = parseIntelligentText('person', `Maria Souza, ${prefix} das Flores, 123, Centro, Lençóis Paulista; abordada durante patrulhamento`);
+    assert.match(result.address_primary, /das Flores, 123, Centro, Lençóis Paulista/i);
+    assert.match(result.notes, /abordada durante patrulhamento/i);
+  }
+});
+
+test('recognizes address without the word endereço and CPF with punctuation', () => {
+  const result = parseIntelligentText('person', 'Nome: Carlos Souza; Av Brasil, 101, Centro; CPF: 123.456.789-09; trabalha como mecânico');
+  assert.equal(result.cpf_digits, '12345678909');
+  assert.equal(result.address_primary, 'Av Brasil, 101, Centro');
+  assert.match(result.notes, /trabalha como mecânico/i);
+});
