@@ -92,20 +92,26 @@ export function duplicateReviewPairKey(entity, leftId, rightId) {
 }
 
 export function parseIntelligentBundle(rawText) {
-  const text = String(rawText ?? '').replace(/\\r/g, '').trim();
+  const text = String(rawText ?? '').replace(/\r/g, '').trim();
   const person = parseIntelligentText('person', text);
   const vehicle = parseIntelligentText('vehicle', text);
-  const labeledName = text.match(/(?:nome(?:\\s+completo)?|pessoa|ind[ií]viduo|condutor)\\s*[:\\-]\\s*([^\\n,;]+)/i);
-  const relatedName = text.match(/(?:pertencente\\s+a|relacionad[oa]\\s+a|associad[oa]\\s+a)\\s*([A-ZÀ-Ý][A-ZÀ-Ýa-zà-ÿ'’-]*(?:\\s+[A-ZÀ-Ý][A-ZÀ-Ýa-zà-ÿ'’-]*){1,7})(?=\\s*(?:[,;]|\\bCPF\\b|\\bRG\\b|$))/i);
-  const cpfIndex = text.search(/\\bCPF\\b/i);
+  const labeledName = text.match(/(?:nome(?:\s+completo)?|pessoa|ind[ií]viduo|condutor)\s*[:\-]\s*([^\n,;]+)/i);
+  const relatedName = text.match(/(?:pertencente\s+a|relacionad[oa]\s+a|associad[oa]\s+a)\s*([A-ZÀ-Ý][A-ZÀ-Ýa-zà-ÿ'’-]*(?:\s+[A-ZÀ-Ý][A-ZÀ-Ýa-zà-ÿ'’-]*){1,7})(?=\s*(?:[,;]|\bCPF\b|\bRG\b|$))/i);
+  const cpfIndex = text.search(/\bCPF\b/i);
   const beforeCpf = cpfIndex >= 0 ? text.slice(0, cpfIndex) : '';
-  const vehicleBefore = /\\b(?:placa|marca|modelo|cor)\\b/i.test(beforeCpf);
-  const prefixName = !vehicleBefore && beforeCpf
-    ? beforeCpf.replace(/^\\s*(?:cadastrar|ind[ií]viduo|pessoa)\\s*/i, '').replace(/[,:;\\s]+$/g, '').trim()
+  const namePrefix = beforeCpf || text.slice(0, (text.search(/[,;]\\s*(?:propriet[aá]rio|condutor|ve[ií]culo|carro|moto|placa|marca|modelo|cor)\\b/i) + 1) || text.length);
+  const vehicleBefore = /\\b(?:placa|marca|modelo|cor)\\b/i.test(namePrefix);
+  const prefixName = !vehicleBefore
+    ? namePrefix.replace(/^\\s*(?:cadastrar|ind[ií]viduo|pessoa)\\s*/i, '').replace(/[,:;\\s]+$/g, '').trim()
     : '';
-  const name = (labeledName?.[1] || relatedName?.[1] || prefixName || '').trim().replace(/\\s+/g, ' ');
+  const name = (labeledName?.[1] || relatedName?.[1] || prefixName || '').trim().replace(/\s+/g, ' ');
   person.full_name = name || '';
-  const hasPerson = Boolean(person.full_name && (person.cpf_digits || /\\b(?:nome|pessoa|ind[ií]viduo|condutor|pertencente a|relacionad[oa] a)\\b/i.test(text)));
+  const inferredMake = text.match(/\b(Volkswagen|Chevrolet|Fiat|Ford|Honda|Toyota|Hyundai|Renault|Nissan|Yamaha|Suzuki|Jeep|Peugeot|Citro[eë]n|Mitsubishi|BMW|Mercedes[- ]Benz|Kawasaki|Dafra)\s+([A-Z0-9][A-Z0-9.-]*)/i);
+  if (!vehicle.make && inferredMake) vehicle.make = inferredMake[1];
+  if (!vehicle.model && inferredMake) vehicle.model = inferredMake[2];
+  const inferredColor = text.match(/\b(preta?|branca?|azul|vermelha?|prata|cinza|verde|amarela?|marrom|bege|dourada?)\b/i);
+  if (!vehicle.color && inferredColor) vehicle.color = inferredColor[1];
+  const hasPerson = Boolean(person.full_name && (person.cpf_digits || /\b(?:nome|pessoa|ind[ií]viduo|condutor|pertencente a|relacionad[oa] a)\b/i.test(text)));
   const hasVehicle = Boolean(vehicle.plate);
   return { person, vehicle, hasPerson, hasVehicle };
 }
