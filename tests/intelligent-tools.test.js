@@ -129,3 +129,12 @@ test('recognizes address without the word endereço and CPF with punctuation', (
   assert.equal(result.address_primary, 'Av Brasil, 101, Centro');
   assert.match(result.notes, /trabalha como mecânico/i);
 });
+
+
+test('separates name and CPF when the operator types both in the same unlabelled phrase', () => {
+  const result = parseIntelligentText('person', 'Nome: Carlos Eduardo da Silva CPF 12345678909');
+  assert.equal(result.full_name, 'Carlos Eduardo da Silva');
+  assert.equal(result.cpf_digits, '12345678909');
+  const unlabelled = parseIntelligentText('person', 'Maria Souza 12345678909');
+  assert.equal(unlabelled.full_name, 'Maria Souza');
+});
