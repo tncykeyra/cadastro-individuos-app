@@ -726,3 +726,61 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
 .smart-bundle-section .smart-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:8px;margin-top:10px}
 .smart-bundle-relation{max-width:340px}
 @media(max-width:480px){.merge-field-choice{grid-template-columns:1fr;gap:4px}.smart-bundle-section{padding:9px}.smart-bundle-record{grid-template-columns:18px 40px minmax(0,1fr)}.smart-bundle-thumb{width:40px;height:40px}}
+
+
+/* Revisão inteligente: miniaturas de foto sempre compactas em qualquer tela. */
+.duplicate-review-pair .duplicate-record.duplicate-mini-card{
+  display:flex!important;
+  align-items:center!important;
+  gap:9px!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:62px!important;
+  padding:7px 9px!important;
+  overflow:hidden!important;
+}
+.duplicate-review-pair .duplicate-record.duplicate-mini-card .duplicate-record-photo{
+  display:grid!important;
+  place-items:center!important;
+  flex:0 0 44px!important;
+  width:44px!important;
+  min-width:44px!important;
+  max-width:44px!important;
+  height:44px!important;
+  min-height:44px!important;
+  max-height:44px!important;
+  aspect-ratio:1/1!important;
+  overflow:hidden!important;
+  border-radius:8px!important;
+}
+.duplicate-review-pair .duplicate-record.duplicate-mini-card .duplicate-record-photo img{
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  object-fit:cover!important;
+}
+.duplicate-review-pair .duplicate-record.duplicate-mini-card .duplicate-record-info{
+  display:grid!important;
+  gap:2px!important;
+  flex:1 1 auto!important;
+  min-width:0!important;
+  overflow:hidden!important;
+}
+.duplicate-review-pair .duplicate-record.duplicate-mini-card .duplicate-record-info strong,
+.duplicate-review-pair .duplicate-record.duplicate-mini-card .duplicate-record-info small{
+  display:block!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+@media(max-width:620px){
+  .duplicate-review-pair{padding:12px!important}
+  .duplicate-review-pair .duplicate-records{grid-template-columns:minmax(0,1fr)!important;gap:5px!important}
+  .duplicate-review-pair .duplicate-record.duplicate-mini-card{min-height:58px!important;padding:6px 8px!important}
+  .duplicate-review-pair .duplicate-record.duplicate-mini-card .duplicate-record-photo{
+    flex-basis:40px!important;width:40px!important;min-width:40px!important;max-width:40px!important;height:40px!important;min-height:40px!important;max-height:40px!important
+  }
+}
