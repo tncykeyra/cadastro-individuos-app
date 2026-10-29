@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseIntelligentText, inspectRecords, getSmartPersonSearchTerms, duplicateReviewPairKey } from '../src/intelligent-tools.js';
+import { parseIntelligentText, parseIntelligentBundle, inspectRecords, getSmartPersonSearchTerms, duplicateReviewPairKey } from '../src/intelligent-tools.js';
 
 test('interprets explicit individual fields and leaves filiation and other unlabelled text untouched', () => {
   const result = parseIntelligentText('person', 'Nome: JOÃO CARLOS DA SILVA\nCPF: 123.456.789-09\nRG: 45.678.901\nNascido em: 15/03/1990\nCrimes: furto');
@@ -64,4 +64,37 @@ test('uses only the individual name for possible duplicate search, never the add
 
 test('duplicate review pair key is stable regardless of record order', () => {
   assert.equal(duplicateReviewPairKey('people','b','a'), duplicateReviewPairKey('people','a','b'));
+});
+
+test('extracts person and vehicle together from person-first text', () => {
+  const result = parseIntelligentBundle('João Carlos da Silva, CPF 123.456.789-09, proprietário de um Gol branco, placa ABC1D23; marca Volkswagen; modelo Gol');
+  assert.equal(result.hasPerson, true);
+  assert.equal(result.hasVehicle, true);
+  assert.match(result.person.full_name, /João Carlos da Silva/);
+  assert.equal(result.person.cpf_digits, '12345678909');
+  assert.equal(result.vehicle.plate, 'ABC1D23');
+  assert.equal(result.vehicle.make, 'Volkswagen');
+  assert.equal(result.vehicle.model, 'Gol');
+  assert.equal(result.vehicle.color, 'branco');
+});
+
+test('extracts person and vehicle together from vehicle-first text', () => {
+  const result = parseIntelligentBundle('Corolla prata, placa FGH2J45, pertencente a Carlos Eduardo, CPF 987.654.321-00');
+  assert.equal(result.hasPerson, true);
+  assert.equal(result.hasVehicle, true);
+  assert.equal(result.person.full_name, 'Carlos Eduardo');
+  assert.equal(result.vehicle.plate, 'FGH2J45');
+  assert.equal(result.vehicle.model, 'Corolla');
+  assert.equal(result.vehicle.color, 'prata');
+});
+
+test('recognizes VW and GM abbreviations and does not confuse Corolla with the Cor field', () => {
+  const vw = parseIntelligentBundle('Gol branco, placa ABC1D23, marca VW');
+  const gm = parseIntelligentBundle('Corsa prata, placa FGH2J45, marca GM');
+  assert.equal(vw.vehicle.make, 'Volkswagen');
+  assert.equal(vw.vehicle.model, 'Gol');
+  assert.equal(vw.vehicle.color, 'branco');
+  assert.equal(gm.vehicle.make, 'Chevrolet');
+  assert.equal(gm.vehicle.model, 'Corsa');
+  assert.equal(gm.vehicle.color, 'prata');
 });

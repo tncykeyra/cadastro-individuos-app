@@ -24,7 +24,7 @@ export function parseIntelligentText(kind, rawText) {
 
   const plateMatch = text.match(/\b([A-Z]{3}\s*\d[A-Z0-9]\s*\d{2}|[A-Z]{3}\s*\d{4})\b/i);
   const readField = labels => {
-    const re = new RegExp('(?:' + labels + ')\\s*[:\\-]\\s*([^\\n,;]+)', 'i');
+    const re = new RegExp('\\b(?:' + labels + ')\\b\\s*[:\\-]?\\s*([^\\n,;]+)', 'i');
     return text.match(re)?.[1]?.trim() || '';
   };
   const notesMatch = text.match(/(?:anotações?|observações?)\s*[:\-]\s*([\s\S]+)$/i);
@@ -89,4 +89,35 @@ export function inspectRecords(people, vehicles) {
 export function duplicateReviewPairKey(entity, leftId, rightId) {
   const [first, second] = [String(leftId), String(rightId)].sort();
   return [entity, first, second].join(':');
+}
+
+export function parseIntelligentBundle(rawText) {
+  const text = String(rawText ?? '').replace(/\r/g, '').trim();
+  const person = parseIntelligentText('person', text);
+  const vehicle = parseIntelligentText('vehicle', text);
+  const labeledName = text.match(/(?:nome(?:\s+completo)?|pessoa|ind[ií]viduo|condutor)\s*[:\-]\s*([^\n,;]+)/i);
+  const relatedName = text.match(/(?:pertencente\s+a|relacionad[oa]\s+a|associad[oa]\s+a)\s*([A-ZÀ-Ý][A-ZÀ-Ýa-zà-ÿ'’-]*(?:\s+[A-ZÀ-Ý][A-ZÀ-Ýa-zà-ÿ'’-]*){1,7})(?=\s*(?:[,;]|\bCPF\b|\bRG\b|$))/i);
+  const cpfIndex = text.search(/\bCPF\b/i);
+  const beforeCpf = cpfIndex >= 0 ? text.slice(0, cpfIndex) : '';
+  const namePrefix = beforeCpf || text.slice(0, (text.search(/[,;]\s*(?:propriet[aá]rio|condutor|ve[ií]culo|carro|moto|placa|marca|modelo|cor)\b/i) + 1) || text.length);
+  const vehicleBefore = /\b(?:placa|marca|modelo|cor)\b/i.test(namePrefix);
+  const prefixName = !vehicleBefore
+    ? namePrefix.replace(/^\s*(?:cadastrar|ind[ií]viduo|pessoa)\s*/i, '').replace(/[,:;\s]+$/g, '').trim()
+    : '';
+  const name = (labeledName?.[1] || relatedName?.[1] || prefixName || '').trim().replace(/\s+/g, ' ');
+  person.full_name = name || '';
+  const inferredMake = text.match(/\b(Volkswagen|VW|Chevrolet|GM|Fiat|Ford|Honda|Toyota|Hyundai|Renault|Nissan|Yamaha|Suzuki|Jeep|Peugeot|Citro[eë]n|Mitsubishi|BMW|Mercedes[- ]Benz|Kawasaki|Dafra)\s+([A-Z0-9][A-Z0-9.-]*)/i);
+  if (!vehicle.make && inferredMake) vehicle.make = /^VW$/i.test(inferredMake[1]) ? 'Volkswagen' : /^GM$/i.test(inferredMake[1]) ? 'Chevrolet' : inferredMake[1];
+  if (/^VW$/i.test(vehicle.make)) vehicle.make = 'Volkswagen';
+  else if (/^GM$/i.test(vehicle.make)) vehicle.make = 'Chevrolet';
+  if (!vehicle.model && inferredMake) vehicle.model = inferredMake[2];
+  const knownModel=text.match(/\b(Corolla|Hilux|Yaris|Gol|Polo|Virtus|T-Cross|Uno|Palio|Argo|Mobi|Onix|Prisma|Celta|Corsa|Civic|City|Fit|CG(?:\\s*160)?|Biz|Pop|XRE|Fazer|Factor|HB20|Creta|Duster|Sandero|Kwid|Compass|Renegade)\b/i);
+  if(!vehicle.model&&knownModel)vehicle.model=knownModel[1];
+  const inferredColor = text.match(/\b(preta?|branc[oa]|azul|vermelha?|prata|cinza|verde|amarela?|marrom|bege|dourada?)\b/i);
+  if (!vehicle.color && inferredColor) vehicle.color = inferredColor[1];
+  const modelMention=text.match(/\b(?:um|uma|modelo|carro|ve[ií]culo|moto|motocicleta)\s+(?:modelo\s+)?([A-Z0-9][A-Z0-9.-]{1,20})\b/i);
+  if(!vehicle.model&&modelMention&&vehicle.plate)vehicle.model=modelMention[1];
+  const hasPerson = Boolean(person.full_name && (person.cpf_digits || /\b(?:nome|pessoa|ind[ií]viduo|condutor|pertencente a|relacionad[oa] a|propriet[aá]rio)\b/i.test(text)));
+  const hasVehicle = Boolean(vehicle.plate);
+  return { person, vehicle, hasPerson, hasVehicle };
 }
