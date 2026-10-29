@@ -14,6 +14,7 @@ export function parseIntelligentText(kind, rawText) {
     const labeledAddress = text.match(new RegExp(addressLabels + '\\s*[:\\-]?\\s*([\\s\\S]*?)' + addressEnd, 'i'));
     const streetAddress = text.match(new RegExp('(?:^|[,;\\n])\\s*(' + streetPrefix + '\\s+[^,;\\n]+(?:,[^;\\n]*)?)' + addressEnd, 'i'));
     const addressMatch = labeledAddress || streetAddress;
+    const addressValue = addressMatch?.[1]?.replace(/[,;]\s*(?:CPF|RG|identidade|nascimento|data\s+de\s+nascimento|anota[cç][oõ]es|crimes?|ocorr[eê]ncia|envolvimento|telefone|celular)\s*[:\-]?[\s\S]*$/i, '').trim() || '';
     const firstPart = text.split(/[\n,;]/)[0].trim();
     const name = nameMatch?.[1]?.trim() || firstPart.replace(/\bCPF\b.*$/i, '').trim();
     let remainder = text;
@@ -23,7 +24,7 @@ export function parseIntelligentText(kind, rawText) {
     remainder = remainder.replace(/^[\s,;|]+|[\s,;|]+$/g, '').trim();
     const notesMatch = text.match(/(?:anotações?|crimes?|ocorrência|envolvimento)\s*[:\-]\s*([\s\S]+)$/i);
     const notes = notesMatch?.[1]?.trim() || remainder;
-    return { full_name: name, cpf_digits: cpfMatch ? digits(cpfMatch[1]) : '', rg: rgMatch?.[1] || '', birthday: dateMatch?.[1] || '', address_primary: addressMatch?.[1]?.trim().replace(/^[,;\s]+|[,;\s]+$/g, '').replace(/\s+/g, ' ') || '', notes };
+    return { full_name: name, cpf_digits: cpfMatch ? digits(cpfMatch[1]) : '', rg: rgMatch?.[1] || '', birthday: dateMatch?.[1] || '', address_primary: addressValue.replace(/^[,;\s]+|[,;\s]+$/g, '').replace(/\s+/g, ' '), notes };
   }
 
   const plateMatch = text.match(/\b([A-Z]{3}\s*\d[A-Z0-9]\s*\d{2}|[A-Z]{3}\s*\d{4})\b/i);
