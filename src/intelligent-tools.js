@@ -108,6 +108,8 @@ export function parseIntelligentBundle(rawText) {
   person.full_name = name || '';
   const inferredMake = text.match(/\b(Volkswagen|VW|Chevrolet|GM|Fiat|Ford|Honda|Toyota|Hyundai|Renault|Nissan|Yamaha|Suzuki|Jeep|Peugeot|Citro[eë]n|Mitsubishi|BMW|Mercedes[- ]Benz|Kawasaki|Dafra)\s+([A-Z0-9][A-Z0-9.-]*)/i);
   if (!vehicle.make && inferredMake) vehicle.make = /^VW$/i.test(inferredMake[1]) ? 'Volkswagen' : /^GM$/i.test(inferredMake[1]) ? 'Chevrolet' : inferredMake[1];
+  if (/^VW$/i.test(vehicle.make)) vehicle.make = 'Volkswagen';
+  else if (/^GM$/i.test(vehicle.make)) vehicle.make = 'Chevrolet';
   if (!vehicle.model && inferredMake) vehicle.model = inferredMake[2];
   const knownModel=text.match(/\b(Corolla|Hilux|Yaris|Gol|Polo|Virtus|T-Cross|Uno|Palio|Argo|Mobi|Onix|Prisma|Celta|Civic|City|Fit|CG(?:\\s*160)?|Biz|Pop|XRE|Fazer|Factor|HB20|Creta|Duster|Sandero|Kwid|Compass|Renegade)\b/i);
   if(!vehicle.model&&knownModel)vehicle.model=knownModel[1];
