@@ -87,3 +87,14 @@ test('extracts person and vehicle together from vehicle-first text', () => {
   assert.equal(result.vehicle.model, 'Corolla');
   assert.equal(result.vehicle.color, 'prata');
 });
+
+test('recognizes VW and GM abbreviations and does not confuse Corolla with the Cor field', () => {
+  const vw = parseIntelligentBundle('Gol branco, placa ABC1D23, marca VW');
+  const gm = parseIntelligentBundle('Corsa prata, placa FGH2J45, marca GM');
+  assert.equal(vw.vehicle.make, 'Volkswagen');
+  assert.equal(vw.vehicle.model, 'Gol');
+  assert.equal(vw.vehicle.color, 'branco');
+  assert.equal(gm.vehicle.make, 'Chevrolet');
+  assert.equal(gm.vehicle.model, 'Corsa');
+  assert.equal(gm.vehicle.color, 'prata');
+});
