@@ -6,7 +6,6 @@ import { parseWarrantCsv, normalizeWarrantProcessNumber, extractWarrantSuggestio
 import { processOcrFiles } from './ocr-engine.js';
 import { renderFiscalizationPage, wireFiscalizationActions } from './fiscalization.js';
 import { renderIntelligentEntry, parseIntelligentText, parseIntelligentBundle, inspectRecords, getSmartPersonSearchTerms, duplicateReviewPairKey } from './intelligent-tools.js';
-import { extractSmartTextLocally } from './local-ai.js';
 
 const config={url:import.meta.env.VITE_SUPABASE_URL,key:import.meta.env.VITE_SUPABASE_ANON_KEY};
 const appIconUrl=import.meta.env.BASE_URL+'icon.svg?v=10';
@@ -808,42 +807,16 @@ function smartBundleChoiceMarkup(kind,records,values){
   const newChecked=exact?'':'checked';
   return '<section class="smart-bundle-section"><h3>'+(kind==='person'?'👤 Indivíduo':'🚗 Veículo')+'</h3>'+options+'<label class="smart-bundle-record smart-bundle-new"><input type="radio" name="smart-bundle-'+kind+'" value="new" '+newChecked+'><span class="smart-bundle-thumb">'+(kind==='person'?'＋':'＋')+'</span><span><strong>Criar novo '+(kind==='person'?'indivíduo':'veículo')+'</strong><small>Os dados serão conferidos antes de salvar.</small></span></label><div class="smart-fields">'+Object.entries(values).filter(([,v])=>v!==undefined).map(([key,value])=>'<label class="field"><span>'+esc(({full_name:'Nome',cpf_digits:'CPF',rg:'RG',birthday:'Nascimento',address_primary:'Endereço',notes:'Anotações',plate:'Placa',make:'Marca',model:'Modelo',color:'Cor'})[key]||key)+'</span><input data-bundle-value="'+kind+'" data-bundle-key="'+key+'" value="'+esc(value||'')+'"></label>').join('')+'</div></section>'
 }
-function mergeSmartAiValues(kind, deterministic, aiValues) {
-  const ai = aiValues?.[kind] || {};
-  if(kind === 'person') return {
-    ...deterministic,
-    full_name: String(ai.full_name || deterministic.full_name || '').trim(),
-    cpf_digits: deterministic.cpf_digits || '',
-    rg: deterministic.rg || String(ai.rg || '').trim(),
-    birthday: deterministic.birthday || String(ai.birthday || '').trim(),
-    address_primary: deterministic.address_primary || String(ai.address_primary || '').trim(),
-    notes: deterministic.notes || String(ai.notes || '').trim()
-  };
-  return {
-    ...deterministic,
-    plate: deterministic.plate || '',
-    make: deterministic.make || String(ai.make || '').trim(),
-    model: deterministic.model || String(ai.model || '').trim(),
-    color: deterministic.color || String(ai.color || '').trim(),
-    notes: deterministic.notes || String(ai.notes || '').trim()
-  };
-}
-async function analyzeSmartBundleEntry(raw, aiValues=null){
-  const parsed=parseIntelligentBundle(raw);
-  if(aiValues){
-    parsed.person=mergeSmartAiValues('person',parsed.person,aiValues);
-    parsed.vehicle=mergeSmartAiValues('vehicle',parsed.vehicle,aiValues);
-    parsed.hasPerson=Boolean(parsed.person.full_name&&(parsed.person.cpf_digits||parsed.person.rg||parsed.person.address_primary||parsed.person.birthday||/\b(?:nome|pessoa|ind[ií]viduo|condutor|pertencente a|relacionad[oa] a|propriet[aá]rio)\b/i.test(raw)));
-    parsed.hasVehicle=Boolean(parsed.vehicle.plate);
-  }
-  if(!parsed.hasPerson||!parsed.hasVehicle)return false;
-  const result=$('#smartResult');if(result)result.innerHTML='<div class="notice">Verificando indivíduos e veículos…</div>';
-  const [people,vehicles]=await Promise.all([findSmartBundleCandidates('person',parsed.person),findSmartBundleCandidates('vehicle',parsed.vehicle)]);
-  await Promise.all([galleryPhotosForRecords('people',people),galleryPhotosForRecords('vehicles',vehicles)]);
-  state.smartBundle={person:parsed.person,vehicle:parsed.vehicle,people,vehicles};
-  const target=$('#smartResult');if(!target)return true;
-  target.innerHTML='<section class="smart-analysis"><h2>Confira pessoa e veículo</h2><p class="muted">A pesquisa verificou os dois registros. Escolha um cadastro existente ou “Criar novo” para cada um; a associação só será feita depois da confirmação e do salvamento.</p>'+smartBundleChoiceMarkup('person',people,parsed.person)+smartBundleChoiceMarkup('vehicle',vehicles,parsed.vehicle)+'<label class="field smart-bundle-relation"><span>Relação sugerida</span><select id="smartBundleRelation"><option value="associated">Associado</option><option value="driver">Condutor</option><option value="owner">Proprietário</option></select></label><button class="button" type="button" id="smartBundleConfirm">Confirmar e continuar</button></section>';
-  return true
+async function analyzeSmartBundleEntry(raw){
+ const parsed=parseIntelligentBundle(raw);
+ if(!parsed.hasPerson||!parsed.hasVehicle)return false;
+ const result=$('#smartResult');if(result)result.innerHTML='<div class="notice">Verificando indivíduos e veículos…</div>';
+ const [people,vehicles]=await Promise.all([findSmartBundleCandidates('person',parsed.person),findSmartBundleCandidates('vehicle',parsed.vehicle)]);
+ await Promise.all([galleryPhotosForRecords('people',people),galleryPhotosForRecords('vehicles',vehicles)]);
+ state.smartBundle={person:parsed.person,vehicle:parsed.vehicle,people,vehicles};
+ const target=$('#smartResult');if(!target)return true;
+ target.innerHTML='<section class="smart-analysis"><h2>Confira pessoa e veículo</h2><p class="muted">A pesquisa verificou os dois registros. Escolha um cadastro existente ou “Criar novo” para cada um; a associação só será feita depois da confirmação e do salvamento.</p>'+smartBundleChoiceMarkup('person',people,parsed.person)+smartBundleChoiceMarkup('vehicle',vehicles,parsed.vehicle)+'<label class="field smart-bundle-relation"><span>Relação sugerida</span><select id="smartBundleRelation"><option value="associated">Associado</option><option value="driver">Condutor</option><option value="owner">Proprietário</option></select></label><button class="button" type="button" id="smartBundleConfirm">Confirmar e continuar</button></section>';
+ return true
 }
 async function ensureSmartAssociation(personId,vehicleId,relation='associated'){
   const found=await state.client.from('person_vehicle_links').select('id').eq('person_id',personId).eq('vehicle_id',vehicleId).eq('relation',relation).eq('active',true).maybeSingle();
@@ -866,48 +839,33 @@ async function continueSmartBundle(){
   await showForm('person',null,{initialValues:personValues,focusPhotos:true,smartEntry:true,onSaved:async(_kind,personId)=>{await showForm('vehicle',null,{initialValues:vehicleValues,initialPlate:vehicleValues.plate,initialPersonId:personId,initialRelation:relation,focusPhotos:true,smartEntry:true})}})
 }
 async function analyzeSmartEntry(){
-  const kind=document.querySelector('[data-smart-kind].active')?.dataset.smartKind||'person',raw=document.querySelector('#smartText')?.value||'';
-  if(!raw.trim()){toast('Digite as informações antes de analisar.');return}
-  const useLocalAi=Boolean(document.querySelector('#smartUseLocalAi')?.checked),status=$('#smartAiStatus');
-  let aiValues=null;
-  if(useLocalAi){
-    if(status)status.textContent='Preparando IA generativa local…';
-    try{aiValues=await extractSmartTextLocally(raw,message=>{if(status)status.textContent=message})}
-    catch(error){if(status)status.textContent='IA generativa indisponível; usando análise leve. '+msg(error);toast('A IA local não ficou disponível. A análise leve continua funcionando.')}
-  }
-  if(await analyzeSmartBundleEntry(raw,aiValues)){if(status&&aiValues)status.textContent='Análise generativa local concluída. Confira os dados antes de salvar.';return}
-  const parsed=parseIntelligentText(kind,raw),values=mergeSmartAiValues(kind,parsed,aiValues),table=kind==='person'?'people':'vehicles',key=kind==='person'?'cpf_digits':'plate';
-  let candidates=[];
-  if(kind==='person'&&values.cpf_digits.length===11){
-    const result=await state.client.from(table).select('*').eq(key,values.cpf_digits).is('archived_at',null).limit(8);
-    if(result.error)throw result.error;candidates=result.data||[];
-  }else if(kind==='person'){
-    const terms=getSmartPersonSearchTerms(values);
-    const results=await Promise.all(terms.map(search_term=>state.client.rpc('search_people',{search_term,result_limit:12})));
-    const unique=new Map();
-    for(const result of results){if(result.error)throw result.error;for(const row of result.data||[])unique.set(row.id,row)}
-    candidates=[...unique.values()].slice(0,12);
-  }else if(values.plate){
-    const result=await state.client.from(table).select('*').ilike('plate',values.plate).is('archived_at',null).limit(8);
-    if(result.error)throw result.error;candidates=result.data||[];
-  }
-  state.smartParsed=values;
-  state.smartExactMatch=kind==='person'&&values.cpf_digits.length===11
-    ? candidates.some(row=>String(row.cpf_digits||'').replace(/\D/g,'')===values.cpf_digits)
-    : kind==='vehicle'&&values.plate
-      ? candidates.some(row=>String(row.plate||'').replace(/[^a-z0-9]/gi,'').toUpperCase()===String(values.plate).replace(/[^a-z0-9]/gi,'').toUpperCase())
-      : false;
-  state.smartMatchesCount=candidates.length;
-  if(aiValues&&status)status.textContent='Análise generativa local concluída. Revise todos os campos antes de salvar.';
-  if(!candidates.length){await showForm(kind==='person'?'person':'vehicle',null,{initialValues:values,focusPhotos:true,smartEntry:true,allowSimilarNameDuplicate:false});return}
-  await galleryPhotosForRecords(kind==='person'?'people':'vehicles',candidates);
-  const fields=kind==='person'?[['Nome','full_name'],['CPF','cpf_digits'],['RG','rg'],['Nascimento','birthday'],['Endereço','address_primary'],['Anotações','notes']]:[['Placa','plate'],['Marca','make'],['Modelo','model'],['Cor','color'],['Anotações','notes']];
-  const form=fields.map(([label,key])=>'<label class="field '+(['notes','address_primary'].includes(key)?'full':'')+'"><span>'+label+'</span>'+(key==='notes'||key==='address_primary'?'<textarea data-smart-value="'+key+'">'+esc(values[key]||'')+'</textarea>':'<input data-smart-value="'+key+'" value="'+esc(values[key]||'')+'">')+'</label>').join('');
-  const matchMarkup='<div class="notice"><strong>Possíveis cadastros encontrados por '+(kind==='person'?(values.cpf_digits.length===11?'CPF':'nome'):'placa')+'.</strong><p>Toque em um minicard para conferir o registro. Sem CPF, o nome indica apenas uma possível correspondência.</p></div>'+candidates.map(row=>{const photo=row.photos?.find(item=>item.is_cover&&item.url)||row.photos?.find(item=>item.url);const title=kind==='person'?row.full_name:[row.make,row.model,row.plate].filter(Boolean).join(' ')||row.plate;const detail=kind==='person'?['CPF '+(row.cpf_digits?formatCpf(row.cpf_digits):'—'),row.birthday||'',row.address_primary||row.address_secondary||''].filter(Boolean).join(' · '):['Placa '+(row.plate||'—'),row.color||'',row.make||'',row.model||''].filter(Boolean).join(' · ');return '<button class="smart-candidate smart-mini-card" type="button" data-smart-existing="'+esc(row.id)+'" data-smart-kind="'+kind+'"><span class="smart-candidate-photo">'+(photo?'<img src="'+esc(photo.url)+'" alt="" loading="lazy">':'<span aria-hidden="true">'+(kind==='person'?'♙':'🚗')+'</span>')+'</span><span class="smart-candidate-copy"><strong>'+esc(title||'Cadastro')+'</strong><small>'+esc(detail)+'</small></span><span class="smart-candidate-chevron" aria-hidden="true">›</span></button>'}).join('');
-  const continueMarkup=state.smartExactMatch?'':'<button class="button" type="button" data-smart-continue="'+kind+'">'+(candidates.length?'É outro cadastro — continuar para fotos':'Continuar para fotos e finalizar cadastro')+'</button>';
-  const result=$('#smartResult');if(!result)return;
-  result.innerHTML='<section class="smart-analysis"><h2>Confira os dados identificados</h2><div class="smart-fields">'+form+'</div>'+matchMarkup+continueMarkup+'</section>';
+ const kind=document.querySelector('[data-smart-kind].active')?.dataset.smartKind||'person',raw=document.querySelector('#smartText')?.value||'';
+ if(!raw.trim()){toast('Digite as informações antes de analisar.');return}
+ if(await analyzeSmartBundleEntry(raw))return;
+ const values=parseIntelligentText(kind,raw),table=kind==='person'?'people':'vehicles',key=kind==='person'?'cpf_digits':'plate';
+ let candidates=[];
+ if(kind==='person'&&values.cpf_digits.length===11){
+   const result=await state.client.from(table).select('*').eq(key,values.cpf_digits).is('archived_at',null).limit(8);
+   if(result.error)throw result.error;candidates=result.data||[];
+ }else if(kind==='person'){
+   const terms=getSmartPersonSearchTerms(values);
+   const results=await Promise.all(terms.map(search_term=>state.client.rpc('search_people',{search_term,result_limit:12})));
+   const unique=new Map();
+   for(const result of results){if(result.error)throw result.error;for(const row of result.data||[])unique.set(row.id,row)}
+   candidates=[...unique.values()].slice(0,12);
+ }else if(values.plate){
+   const result=await state.client.from(table).select('*').ilike('plate',values.plate).is('archived_at',null).limit(8);
+   if(result.error)throw result.error;candidates=result.data||[];
+ }
+ state.smartParsed=values;
+ state.smartExactMatch=kind==='person'&&values.cpf_digits.length===11
+   ?candidates.some(row=>String(row.cpf_digits||'').replace(/\D/g,'')===values.cpf_digits)
+   :kind==='vehicle'&&Boolean(values.plate)&&candidates.some(row=>normalizePlate(row.plate)===normalizePlate(values.plate));
+ state.smartMatchesCount=candidates.length;
+ await galleryPhotosForRecords(table,candidates);
+ const result=$('#smartResult');if(result)result.innerHTML=renderSmartCandidates(kind,values,candidates);
 }
+
 async function continueSmartEntry(kind){
   const values=Object.fromEntries([...document.querySelectorAll('[data-smart-value]')].map(input=>[input.dataset.smartValue,input.value.trim()]));
   if(kind==='person'&&!values.full_name){toast('Informe o nome do indivíduo antes de continuar.');return}
