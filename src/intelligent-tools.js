@@ -113,7 +113,7 @@ export function parseIntelligentBundle(rawText) {
   if (!vehicle.model && inferredMake) vehicle.model = inferredMake[2];
   const knownModel=text.match(/\b(Corolla|Hilux|Yaris|Gol|Polo|Virtus|T-Cross|Uno|Palio|Argo|Mobi|Onix|Prisma|Celta|Civic|City|Fit|CG(?:\\s*160)?|Biz|Pop|XRE|Fazer|Factor|HB20|Creta|Duster|Sandero|Kwid|Compass|Renegade)\b/i);
   if(!vehicle.model&&knownModel)vehicle.model=knownModel[1];
-  const inferredColor = text.match(/\b(preta?|branca?|azul|vermelha?|prata|cinza|verde|amarela?|marrom|bege|dourada?)\b/i);
+  const inferredColor = text.match(/\b(preta?|branc[oa]|azul|vermelha?|prata|cinza|verde|amarela?|marrom|bege|dourada?)\b/i);
   if (!vehicle.color && inferredColor) vehicle.color = inferredColor[1];
   const modelMention=text.match(/\b(?:um|uma|modelo|carro|ve[ií]culo|moto|motocicleta)\s+(?:modelo\s+)?([A-Z0-9][A-Z0-9.-]{1,20})\b/i);
   if(!vehicle.model&&modelMention&&vehicle.plate)vehicle.model=modelMention[1];
