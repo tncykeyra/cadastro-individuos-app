@@ -892,32 +892,40 @@ async function sendSmartChatMessage(){
   const kind=document.querySelector('[data-smart-kind].active')?.dataset.smartKind||'person';
   let chat=state.smartChat;
   if(!chat||chat.kind!==kind)chat=state.smartChat={kind,messages:[],values:{person:{},vehicle:{}},busy:false};
+  if(chat.busy)return;
   chat.messages.push({role:'user',content:message.slice(0,1200)});
   if(input)input.value='';
   const send=$('#smartChatSend');if(send)send.disabled=true;
   chat.busy=true;renderSmartChat();
-  const transcript=smartChatTranscript(chat),bundle=parseIntelligentBundle(transcript);
-  let generated={person:{},vehicle:{}},reply='';
-  if($('#smartUseLocalAi')?.checked){
-    try{
-      const result=await replyToSmartConversation({messages:chat.messages,kind,draft:chat.values},text=>{const status=$('#smartAiStatus');if(status)status.textContent=text});
-      generated=result;reply=result.reply;
-      const status=$('#smartAiStatus');if(status)status.textContent='Resposta gerada no aparelho. Confira a ficha provisória; nada foi salvo.';
-    }catch(error){
-      const status=$('#smartAiStatus');if(status)status.textContent='IA generativa indisponível; o modo leve continua disponível. '+msg(error);
-      reply='Não consegui carregar a IA generativa neste aparelho. Mantive o que foi possível reconhecer; confira ou corrija os campos antes de continuar.';
+  let reply='Não consegui analisar esta mensagem. Ela foi mantida na conversa; tente novamente ou confira os campos manualmente.';
+  try{
+    const transcript=smartChatTranscript(chat),bundle=parseIntelligentBundle(transcript);
+    let generated={person:{},vehicle:{}};
+    if($('#smartUseLocalAi')?.checked){
+      try{
+        const result=await replyToSmartConversation({messages:chat.messages,kind,draft:chat.values},text=>{const status=$('#smartAiStatus');if(status)status.textContent=text});
+        generated=result;reply=result.reply;
+        const status=$('#smartAiStatus');if(status)status.textContent='Resposta gerada no aparelho. Confira a ficha provisória; nada foi salvo.';
+      }catch(error){
+        const status=$('#smartAiStatus');if(status)status.textContent='IA generativa indisponível; o modo leve continua disponível. '+msg(error);
+        reply='Não consegui carregar a IA generativa neste aparelho. Mantive o que foi possível reconhecer; confira ou corrija os campos antes de continuar.';
+      }
+    }else{
+      const status=$('#smartAiStatus');if(status)status.textContent='Modo leve: análise por regras locais. Marque IA generativa para conversar com o modelo no aparelho.';
+      reply='Atualizei a ficha com os dados que reconheci. Você pode complementar ou corrigir; confira tudo antes de prosseguir.';
     }
-  }else{
-    const status=$('#smartAiStatus');if(status)status.textContent='Modo leve: análise por regras locais. Marque IA generativa para conversar com o modelo no aparelho.';
-    reply='Atualizei a ficha com os dados que reconheci. Você pode complementar ou corrigir; confira tudo antes de prosseguir.';
+    chat.values={
+      person:mergeSmartChatDraft('person',chat.values.person,bundle.person,generated.person),
+      vehicle:mergeSmartChatDraft('vehicle',chat.values.vehicle,bundle.vehicle,generated.vehicle)
+    };
+  }catch(error){
+    const status=$('#smartAiStatus');if(status)status.textContent='A mensagem permaneceu salva nesta conversa. '+msg(error);
+  }finally{
+    chat.busy=false;
+    if(reply)chat.messages.push({role:'assistant',content:reply});
+    if(send)send.disabled=false;
+    renderSmartChat();
   }
-  chat.values={
-    person:mergeSmartChatDraft('person',chat.values.person,bundle.person,generated.person),
-    vehicle:mergeSmartChatDraft('vehicle',chat.values.vehicle,bundle.vehicle,generated.vehicle)
-  };
-  chat.messages.push({role:'assistant',content:reply});
-  chat.busy=false;if(send)send.disabled=false;
-  renderSmartChat();
 }
 async function finalizeSmartChat(){
   const chat=state.smartChat,transcript=smartChatTranscript(chat);
