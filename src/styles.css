@@ -786,3 +786,31 @@ h1,h2,h3,p,.card-meta,.info-value{overflow-wrap:anywhere}
 }
 
 .smart-ai-optin{display:flex;align-items:flex-start;gap:12px;margin:16px 0 8px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);cursor:pointer}.smart-ai-optin input{width:20px;height:20px;flex:0 0 auto;margin:2px 0 0;accent-color:var(--brand)}.smart-ai-optin span{display:grid;gap:4px}.smart-ai-optin strong{font-size:.96rem}.smart-ai-optin small{color:var(--muted);font-size:.82rem;line-height:1.45}.smart-ai-status{min-height:1.25em;margin:4px 2px 12px;color:var(--muted);font-size:.86rem}@media(max-width:480px){.smart-ai-optin{padding:12px}.smart-ai-optin small{font-size:.78rem}}
+
+
+/* Conversa do Cadastro Inteligente */
+.smart-chat{display:grid;gap:14px;margin:18px 0;padding:clamp(14px,3vw,22px);border:1px solid var(--line);border-radius:20px;background:var(--surface);min-width:0}
+.smart-chat-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.smart-chat-heading h2{margin:0 0 4px;font-size:1.2rem}
+.smart-chat-heading p{margin:0;color:var(--muted);font-size:.92rem;line-height:1.45}
+.smart-chat-log{display:flex;flex-direction:column;gap:9px;max-height:min(42vh,360px);min-height:100px;overflow:auto;padding:12px;border-radius:14px;background:var(--background,#f3f5f5);overscroll-behavior:contain}
+.smart-chat-bubble{max-width:min(92%,640px);padding:10px 13px;border-radius:15px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
+.smart-chat-bubble.assistant{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:5px}
+.smart-chat-bubble.user{align-self:flex-end;background:var(--brand);color:#fff;border-bottom-right-radius:5px}
+.smart-chat-draft{display:grid;gap:8px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.smart-chat-draft>span{color:var(--muted);font-size:.9rem}
+.smart-chat-draft-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.smart-chat-draft-grid>span{display:grid;gap:2px;min-width:0;padding:8px 10px;border-radius:10px;background:var(--background,#f3f5f5)}
+.smart-chat-draft-grid small{color:var(--muted);font-size:.74rem}
+.smart-chat-draft-grid strong{font-size:.9rem;overflow-wrap:anywhere}
+.smart-chat-label{font-weight:650}
+.smart-chat-input{display:block;width:100%;min-height:84px;resize:vertical;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text,var(--ink));font:inherit}
+.smart-chat-actions{display:flex;flex-wrap:wrap;gap:10px}
+.smart-chat-actions .button{flex:1 1 190px}
+.smart-chat-actions .button:disabled{opacity:.55;cursor:not-allowed}
+.smart-direct-entry{margin:14px 0;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.smart-direct-entry>summary{font-weight:650;cursor:pointer}
+.smart-direct-entry[open]>summary{margin-bottom:14px}
+@media(max-width:540px){.smart-chat{padding:12px;border-radius:16px}.smart-chat-heading{align-items:center}.smart-chat-heading h2{font-size:1.06rem}.smart-chat-log{max-height:36vh;min-height:90px;padding:9px}.smart-chat-draft-grid{grid-template-columns:1fr}.smart-chat-actions{display:grid;grid-template-columns:1fr}.smart-chat-actions .button{width:100%;min-height:48px}.smart-chat-heading .button{min-height:42px;padding:8px 10px}}
+
+.smart-chat-entity-label{grid-column:1/-1;color:var(--muted);font-size:.72rem;font-weight:750;letter-spacing:.06em}
