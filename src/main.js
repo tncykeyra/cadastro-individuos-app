@@ -866,7 +866,6 @@ async function analyzeSmartEntry(){
  const result=$('#smartResult');if(result)result.innerHTML=renderSmartCandidates(kind,values,candidates);
 }
 
-}
 async function continueSmartEntry(kind){
   const values=Object.fromEntries([...document.querySelectorAll('[data-smart-value]')].map(input=>[input.dataset.smartValue,input.value.trim()]));
   if(kind==='person'&&!values.full_name){toast('Informe o nome do indivíduo antes de continuar.');return}
