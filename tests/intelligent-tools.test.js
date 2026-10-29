@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseIntelligentText, parseIntelligentBundle, inspectRecords, getSmartPersonSearchTerms, duplicateReviewPairKey } from '../src/intelligent-tools.js';
+import { parseIntelligentText, parseIntelligentBundle, inspectRecords, getSmartPersonSearchTerms, duplicateReviewPairKey, mergeSmartChatDraft } from '../src/intelligent-tools.js';
 
 test('interprets explicit individual fields and leaves filiation and other unlabelled text untouched', () => {
   const result = parseIntelligentText('person', 'Nome: JOÃO CARLOS DA SILVA\nCPF: 123.456.789-09\nRG: 45.678.901\nNascido em: 15/03/1990\nCrimes: furto');
@@ -44,7 +44,7 @@ test('smart entry renders examples for both entity types and preserves selected 
   const vehicle = renderIntelligentEntry('vehicle');
   assert.match(person, /data-smart-example="person"/);
   assert.match(vehicle, /data-smart-kind="vehicle"[^>]*>🚗 Veículo/);
-  assert.match(vehicle, /Placa ABC1D23/);
+  assert.match(vehicle, /placa ABC1D23/i);
 });
 
 test('reads address labels without accents or with natural residence phrasing and keeps notes separate', () => {
@@ -103,8 +103,21 @@ test('recognizes VW and GM abbreviations and does not confuse Corolla with the C
 test('recognizes unlabelled Brazilian street prefixes as person address', () => {
   for (const prefix of ['Rua', 'Avenida', 'Av.', 'Alameda', 'Travessa']) {
     const result = parseIntelligentText('person', `Maria Souza, ${prefix} das Flores, 123, Centro, CPF: 123.456.789-09; Anotações: abordada à noite`);
-    assert.match(result.address_primary, new RegExp('^' + prefix.replace('.', '\\.') + ' das Flores, 123, Centro$', 'i'));
+    assert.equal(result.address_primary, `${prefix} das Flores, 123, Centro`);
     assert.equal(result.cpf_digits, '12345678909');
     assert.match(result.notes, /abordada à noite/i);
   }
+});
+
+
+test('keeps validated identifiers deterministic while chat corrections update other fields', () => {
+  const draft = mergeSmartChatDraft('vehicle',
+    { plate: 'ABC1D23', color: 'branca', make: 'Volkswagen', notes: 'Adesivo no vidro.' },
+    { plate: 'ABC1D23', color: '', make: '' },
+    { plate: 'ZZZ9Z99', color: 'prata', make: 'VW', notes: 'Na verdade, prata.' }
+  );
+  assert.equal(draft.plate, 'ABC1D23');
+  assert.equal(draft.color, 'prata');
+  assert.equal(draft.make, 'VW');
+  assert.equal(draft.notes, 'Na verdade, prata.');
 });
