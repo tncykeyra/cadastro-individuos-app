@@ -111,7 +111,7 @@ export function parseIntelligentBundle(rawText) {
   if (/^VW$/i.test(vehicle.make)) vehicle.make = 'Volkswagen';
   else if (/^GM$/i.test(vehicle.make)) vehicle.make = 'Chevrolet';
   if (!vehicle.model && inferredMake) vehicle.model = inferredMake[2];
-  const knownModel=text.match(/\b(Corolla|Hilux|Yaris|Gol|Polo|Virtus|T-Cross|Uno|Palio|Argo|Mobi|Onix|Prisma|Celta|Civic|City|Fit|CG(?:\\s*160)?|Biz|Pop|XRE|Fazer|Factor|HB20|Creta|Duster|Sandero|Kwid|Compass|Renegade)\b/i);
+  const knownModel=text.match(/\b(Corolla|Hilux|Yaris|Gol|Polo|Virtus|T-Cross|Uno|Palio|Argo|Mobi|Onix|Prisma|Celta|Corsa|Civic|City|Fit|CG(?:\\s*160)?|Biz|Pop|XRE|Fazer|Factor|HB20|Creta|Duster|Sandero|Kwid|Compass|Renegade)\b/i);
   if(!vehicle.model&&knownModel)vehicle.model=knownModel[1];
   const inferredColor = text.match(/\b(preta?|branc[oa]|azul|vermelha?|prata|cinza|verde|amarela?|marrom|bege|dourada?)\b/i);
   if (!vehicle.color && inferredColor) vehicle.color = inferredColor[1];
