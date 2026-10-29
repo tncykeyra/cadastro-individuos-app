@@ -24,7 +24,7 @@ export function parseIntelligentText(kind, rawText) {
 
   const plateMatch = text.match(/\b([A-Z]{3}\s*\d[A-Z0-9]\s*\d{2}|[A-Z]{3}\s*\d{4})\b/i);
   const readField = labels => {
-    const re = new RegExp('(?:' + labels + ')\\s*[:\\-]\\s*([^\\n,;]+)', 'i');
+    const re = new RegExp('(?:' + labels + ')\\s*[:\\-]?\\s*([^\\n,;]+)', 'i');
     return text.match(re)?.[1]?.trim() || '';
   };
   const notesMatch = text.match(/(?:anotações?|observações?)\s*[:\-]\s*([\s\S]+)$/i);
