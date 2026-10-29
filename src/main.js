@@ -797,11 +797,11 @@ async function findSmartBundleCandidates(kind,values){
   const plate=normalizePlate(values.plate);return (data||[]).filter(row=>normalizePlate(row.plate)===plate&&row.archived_at==null)
 }
 function smartBundleChoiceMarkup(kind,records,values){
-  const exact=records.find(row=>kind==='person'?String(row.cpf_digits||'').replace(/\\D/g,'')===values.cpf_digits&&values.cpf_digits.length===11:normalizePlate(row.plate)===normalizePlate(values.plate));
+  const exact=records.find(row=>kind==='person'?String(row.cpf_digits||'').replace(/\D/g,'')===values.cpf_digits&&values.cpf_digits.length===11:normalizePlate(row.plate)===normalizePlate(values.plate));
   const options=records.map(row=>{
     const photo=row.photos?.find(item=>item.is_cover&&item.url)||row.photos?.find(item=>item.url);
     const title=kind==='person'?row.full_name:[row.make,row.model,row.plate].filter(Boolean).join(' ');
-    const sub=kind==='person'?'CPF '+(String(row.cpf_digits||'').replace(/\\D/g,'').length===11?'***.***.***-'+String(row.cpf_digits).slice(-2):'—')+' · '+(row.birthday||''):['Placa '+row.plate,row.color].filter(Boolean).join(' · ');
+    const sub=kind==='person'?'CPF '+(String(row.cpf_digits||'').replace(/\D/g,'').length===11?'***.***.***-'+String(row.cpf_digits).slice(-2):'—')+' · '+(row.birthday||''):['Placa '+row.plate,row.color].filter(Boolean).join(' · ');
     return '<label class="smart-bundle-record"><input type="radio" name="smart-bundle-'+kind+'" value="'+esc(row.id)+'" '+(exact?.id===row.id?'checked':'')+'><span class="smart-bundle-thumb">'+(photo?'<img src="'+esc(photo.url)+'" alt="" loading="lazy">':(kind==='person'?'♙':'🚗'))+'</span><span><strong>'+esc(title||'Cadastro')+'</strong><small>'+esc(sub)+'</small></span></label>'
   }).join('');
   const newChecked=exact?'':'checked';
@@ -828,7 +828,7 @@ async function continueSmartBundle(){
   const read=(kind)=>{const values={};for(const input of document.querySelectorAll('[data-bundle-value="'+kind+'"]'))values[input.dataset.bundleKey]=input.value.trim();return values};
   const personValues=read('person'),vehicleValues=read('vehicle'),personChoice=document.querySelector('[name="smart-bundle-person"]:checked')?.value||'new',vehicleChoice=document.querySelector('[name="smart-bundle-vehicle"]:checked')?.value||'new',relation=$('#smartBundleRelation')?.value||'associated';
   if(!personValues.full_name||!vehicleValues.plate)throw new Error('Confira o nome da pessoa e a placa do veículo.');
-  if(personChoice==='new'&&bundle.people.some(row=>String(row.cpf_digits||'').replace(/\\D/g,'')===String(personValues.cpf_digits||'').replace(/\\D/g,'')&&String(personValues.cpf_digits||'').replace(/\\D/g,'').length===11))throw new Error('Esse CPF já existe. Selecione o cadastro encontrado para não criar duplicidade.');
+  if(personChoice==='new'&&bundle.people.some(row=>String(row.cpf_digits||'').replace(/\D/g,'')===String(personValues.cpf_digits||'').replace(/\D/g,'')&&String(personValues.cpf_digits||'').replace(/\D/g,'').length===11))throw new Error('Esse CPF já existe. Selecione o cadastro encontrado para não criar duplicidade.');
   if(vehicleChoice==='new'&&bundle.vehicles.some(row=>normalizePlate(row.plate)===normalizePlate(vehicleValues.plate)))throw new Error('Essa placa já existe. Selecione o veículo encontrado para não criar duplicidade.');
   const existingPerson=personChoice==='new'?null:bundle.people.find(row=>String(row.id)===personChoice);
   const existingVehicle=vehicleChoice==='new'?null:bundle.vehicles.find(row=>String(row.id)===vehicleChoice);
