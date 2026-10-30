@@ -8,7 +8,7 @@ create or replace function public.stamp_record_metadata()
 returns trigger
 language plpgsql
 set search_path = ''
-as $
+as $$
 begin
   if new.archived_at is distinct from old.archived_at and not public.is_admin() then
     raise exception 'Apenas administrador pode arquivar ou restaurar registros';
@@ -28,7 +28,7 @@ begin
   new.updated_at := now();
   return new;
 end;
-$;
+$$;
 
 create or replace function public.prevent_operator_vehicle_plate_changes()
 returns trigger
