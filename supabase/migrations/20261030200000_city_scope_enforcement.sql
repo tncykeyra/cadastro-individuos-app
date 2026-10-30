@@ -138,7 +138,7 @@ begin
   end if;
   if tg_op='DELETE' then return old; else return new; end if;
 end;
-$;
+$$;
 
 do $$
 declare t text;
