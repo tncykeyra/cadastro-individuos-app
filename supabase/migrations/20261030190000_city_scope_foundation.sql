@@ -198,8 +198,8 @@ begin
   ] loop
     execute format('update public.%I set city_id=$1 where city_id is null',t)
       using '10000000-0000-4000-8000-000000000001'::uuid;
-    execute format('alter table public.%I alter column city_id set default $1',t)
-      using '10000000-0000-4000-8000-000000000001'::uuid;
+    execute format('alter table public.%I alter column city_id set default %L::uuid',t,
+      '10000000-0000-4000-8000-000000000001');
     execute format('alter table public.%I alter column city_id set not null',t);
     execute format('alter table public.%I add constraint %I foreign key (city_id) references public.cities(id) on delete restrict',
       t,t||'_city_id_fkey');
