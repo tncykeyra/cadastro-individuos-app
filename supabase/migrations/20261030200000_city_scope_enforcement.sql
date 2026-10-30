@@ -136,8 +136,8 @@ begin
       select 1 from public.vehicles v where v.id=new.vehicle_id and v.city_id=new.city_id
     ) then raise exception 'A sugestão deve pertencer a um veículo da mesma cidade.' using errcode='23514'; end if;
   end if;
-  return case when tg_op='DELETE' then old else new end;
-end $$;
+  if tg_op='DELETE' then return old; else return new; end if;
+end $;
 
 do $$
 declare t text;
