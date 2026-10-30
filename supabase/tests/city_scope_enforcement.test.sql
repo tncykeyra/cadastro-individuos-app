@@ -1,5 +1,5 @@
 begin;
-select plan(14);
+select plan(17);
 
 select has_policy('public','people','city_scope_guard','individuals are restricted to the active city');
 select has_policy('public','vehicles','city_scope_guard','vehicles are restricted to the active city');
@@ -30,6 +30,21 @@ select ok(
    where n.nspname='public' and c.relname='people'
      and d.adnum=(select attnum from pg_attribute where attrelid=c.oid and attname='city_id')),
   'new individual records default to the authenticated active city'
+);
+
+select ok(
+  not has_table_privilege('authenticated','public.city_memberships','INSERT'),
+  'operators cannot create city assignments directly'
+);
+select ok(
+  pg_get_functiondef('public.guard_profile_city_update()'::regprocedure)
+    like '%Somente o administrador master pode trocar a cidade ativa%',
+  'only the master can change a profile active city'
+);
+select ok(
+  pg_get_functiondef('public.master_assign_city_user(uuid,uuid,text)'::regprocedure)
+    like '%já está vinculado a outra cidade%',
+  'city assignment rejects a second city for an ordinary account'
 );
 
 select * from finish();
