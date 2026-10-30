@@ -2,6 +2,39 @@
 -- Additive only: current records are assigned to Lençóis Paulista; nothing is deleted.
 begin;
 
+-- This gallery table exists in production but was historically created outside
+-- the checked-in migrations. Keep local/test databases aligned without changing
+-- the existing production table.
+create table if not exists public.person_photos (
+  id uuid primary key default gen_random_uuid(),
+  person_id uuid not null references public.people(id),
+  photo_path text not null unique,
+  sort_order integer not null default 0,
+  created_by uuid not null references auth.users(id),
+  created_at timestamptz not null default now()
+);
+alter table public.person_photos enable row level security;
+grant select,insert,update,delete on public.person_photos to authenticated;
+do $
+begin
+  if not exists(select 1 from pg_policies where schemaname='public' and tablename='person_photos' and policyname='person_photos_read_staff') then
+    create policy person_photos_read_staff on public.person_photos for select to authenticated using (public.can_use_app());
+  end if;
+  if not exists(select 1 from pg_policies where schemaname='public' and tablename='person_photos' and policyname='person_photos_staff_insert') then
+    create policy person_photos_staff_insert on public.person_photos for insert to authenticated with check (public.can_use_app());
+  end if;
+  if not exists(select 1 from pg_policies where schemaname='public' and tablename='person_photos' and policyname='person_photos_update_staff') then
+    create policy person_photos_update_staff on public.person_photos for update to authenticated using (public.can_use_app()) with check (public.can_use_app());
+  end if;
+  if not exists(select 1 from pg_policies where schemaname='public' and tablename='person_photos' and policyname='person_photos_admin_delete_guard') then
+    create policy person_photos_admin_delete_guard on public.person_photos as restrictive for delete to authenticated using (public.is_admin());
+  end if;
+  if not exists(select 1 from pg_policies where schemaname='public' and tablename='person_photos' and policyname='person_photos_admin_update_guard') then
+    create policy person_photos_admin_update_guard on public.person_photos as restrictive for update to authenticated using (public.is_admin()) with check (public.is_admin());
+  end if;
+end;
+$;
+
 create table if not exists public.cities (
   id uuid primary key default gen_random_uuid(),
   name text not null,
