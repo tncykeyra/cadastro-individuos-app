@@ -21,3 +21,5 @@
 
 @media(max-width:620px){.install-button{max-width:86px;padding:8px 8px;font-size:.72rem}}
 @media(max-width:350px){.install-button{right:142px}}
+
+@media(min-width:621px){.install-button{right:190px!important}}
