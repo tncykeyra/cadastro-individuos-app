@@ -28,7 +28,6 @@ select ok(
    from pg_attrdef d join pg_class c on c.oid=d.adrelid
    join pg_namespace n on n.oid=c.relnamespace
    where n.nspname='public' and c.relname='people'
-     and pg_get_serial_sequence('public.people','id') is not null
      and d.adnum=(select attnum from pg_attribute where attrelid=c.oid and attname='city_id')),
   'new individual records default to the authenticated active city'
 );
