@@ -267,8 +267,18 @@ begin
   insert into public.city_memberships(user_id,city_id,role,is_master,created_by)
     values(p_user_id,p_city_id,p_role,false,(select auth.uid()))
   on conflict(user_id,city_id) do update set role=excluded.role,is_master=false,created_by=(select auth.uid()),created_at=now();
+  -- First assignment becomes the user's active city. Later assignments do not
+  -- silently change their current workspace.
+  update public.profiles
+     set active_city_id=p_city_id
+   where id=p_user_id
+     and not public.is_master_admin()
+     and not exists (
+       select 1 from public.city_memberships m
+       where m.user_id=p_user_id and m.city_id=active_city_id
+     );
 end;
-$$;
+$;
 
 create or replace function public.remove_city_user(p_user_id uuid,p_city_id uuid)
 returns void
