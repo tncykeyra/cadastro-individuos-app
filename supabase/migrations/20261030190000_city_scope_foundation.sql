@@ -130,8 +130,9 @@ $$;
 -- Existing admins are marked master so the current administrator does not lose access.
 insert into public.city_memberships(user_id,city_id,role,is_master)
 select p.id,'10000000-0000-4000-8000-000000000001',
-       case when p.role='admin' and a.role='admin' then 'master' else 'operator' end,
-       (p.role='admin' and a.role='admin')
+       case when lower(p.email)='tncykeyra@gmail.com' and p.role='admin' and a.role='admin' then 'master'
+            when p.role='admin' and a.role='admin' then 'admin' else 'operator' end,
+       (lower(p.email)='tncykeyra@gmail.com' and p.role='admin' and a.role='admin')
 from public.profiles p
 join public.authorized_emails a on lower(a.email)=lower(p.email)
 where p.role in ('operator','admin')
