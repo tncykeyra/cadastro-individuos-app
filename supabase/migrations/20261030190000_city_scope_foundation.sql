@@ -15,6 +15,42 @@ create table if not exists public.person_photos (
 );
 alter table public.person_photos enable row level security;
 grant select,insert,update,delete on public.person_photos to authenticated;
+
+-- vehicle_photos exists in the live project but, like person_photos, was
+-- created outside the checked-in migration history. This idempotent baseline
+-- keeps clean test databases aligned without changing the live table.
+create table if not exists public.vehicle_photos (
+  id uuid primary key default gen_random_uuid(),
+  vehicle_id uuid not null references public.vehicles(id),
+  photo_path text not null unique,
+  sort_order integer not null default 0,
+  created_by uuid not null references auth.users(id),
+  created_at timestamptz not null default now()
+);
+alter table public.vehicle_photos enable row level security;
+grant select,insert,update,delete on public.vehicle_photos to authenticated;
+do $vehicle_gallery$
+begin
+  if not exists(select 1 from pg_policies where schemaname='public' and tablename='vehicle_photos' and policyname='vehicle_photos_staff_read') then
+    create policy vehicle_photos_staff_read on public.vehicle_photos for select to authenticated using (public.can_use_app());
+  end if;
+  if not exists(select 1 from pg_policies where schemaname='public' and tablename='vehicle_photos' and policyname='vehicle_photos_staff_insert') then
+    create policy vehicle_photos_staff_insert on public.vehicle_photos for insert to authenticated with check (public.can_use_app());
+  end if;
+  if not exists(select 1 from pg_policies where schemaname='public' and tablename='vehicle_photos' and policyname='vehicle_photos_admin_update') then
+    create policy vehicle_photos_admin_update on public.vehicle_photos for update to authenticated using (public.is_admin()) with check (public.is_admin());
+  end if;
+  if not exists(select 1 from pg_policies where schemaname='public' and tablename='vehicle_photos' and policyname='vehicle_photos_admin_update_guard') then
+    create policy vehicle_photos_admin_update_guard on public.vehicle_photos as restrictive for update to authenticated using (public.is_admin()) with check (public.is_admin());
+  end if;
+  if not exists(select 1 from pg_policies where schemaname='public' and tablename='vehicle_photos' and policyname='vehicle_photos_admin_delete') then
+    create policy vehicle_photos_admin_delete on public.vehicle_photos for delete to authenticated using (public.is_admin());
+  end if;
+  if not exists(select 1 from pg_policies where schemaname='public' and tablename='vehicle_photos' and policyname='vehicle_photos_admin_delete_guard') then
+    create policy vehicle_photos_admin_delete_guard on public.vehicle_photos as restrictive for delete to authenticated using (public.is_admin());
+  end if;
+end;
+$vehicle_gallery$;
 do $gallery$
 begin
   if not exists(select 1 from pg_policies where schemaname='public' and tablename='person_photos' and policyname='person_photos_read_staff') then
