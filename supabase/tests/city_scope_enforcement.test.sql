@@ -47,7 +47,7 @@ select ok(
 );
 
 select ok(
-  (select not permissive from pg_policies
+  (select permissive='RESTRICTIVE' from pg_policies
    where schemaname='public' and tablename='people' and policyname='city_scope_guard'),
   'city boundary policy is restrictive and cannot be bypassed by another permissive policy'
 );
