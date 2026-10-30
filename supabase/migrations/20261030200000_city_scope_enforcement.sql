@@ -244,7 +244,7 @@ begin
     from pg_proc p join pg_namespace n on n.oid=p.pronamespace
     where n.nspname='public' and p.prosecdef
       and p.prorettype<>'trigger'::regtype and p.prorettype<>'event_trigger'::regtype
-      and p.proname not in ('admin_manage_authorized_email','admin_set_user_role','is_email_authorized')
+      and p.proname not in ('admin_manage_authorized_email','master_create_city','master_assign_city_user','remove_city_user','is_email_authorized')
   loop
     execute format('alter function public.%I(%s) owner to authenticated',r.proname,r.args);
   end loop;
