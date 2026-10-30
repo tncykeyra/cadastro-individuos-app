@@ -9,6 +9,7 @@ returns trigger
 language plpgsql
 set search_path = ''
 as $
+
 begin
   if new.archived_at is distinct from old.archived_at and not public.is_admin() then
     raise exception 'Apenas administrador pode arquivar ou restaurar registros';
