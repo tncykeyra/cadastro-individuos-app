@@ -15,7 +15,7 @@ create table if not exists public.person_photos (
 );
 alter table public.person_photos enable row level security;
 grant select,insert,update,delete on public.person_photos to authenticated;
-do $
+do $gallery$
 begin
   if not exists(select 1 from pg_policies where schemaname='public' and tablename='person_photos' and policyname='person_photos_read_staff') then
     create policy person_photos_read_staff on public.person_photos for select to authenticated using (public.can_use_app());
@@ -33,7 +33,7 @@ begin
     create policy person_photos_admin_update_guard on public.person_photos as restrictive for update to authenticated using (public.is_admin()) with check (public.is_admin());
   end if;
 end;
-$;
+$gallery$;
 
 create table if not exists public.cities (
   id uuid primary key default gen_random_uuid(),
