@@ -216,7 +216,7 @@ as $$
 begin
   if (select auth.uid()) is null or not (
     public.is_master_admin()
-    or exists(select 1 from public.city_memberships m where m.user_id=(select auth.uid()) and m.city_id=p_city_id)
+    or (p_city_id=public.current_city_id() and exists(select 1 from public.city_memberships m where m.user_id=(select auth.uid()) and m.city_id=p_city_id))
   ) then
     raise exception 'Você não tem acesso a esta cidade.' using errcode='42501';
   end if;
@@ -263,6 +263,12 @@ begin
   end if;
   if not exists(select 1 from public.cities c where c.id=p_city_id and c.active) then
     raise exception 'Cidade não encontrada ou desativada.' using errcode='22023';
+  end if;
+  if exists(select 1 from public.city_memberships m where m.user_id=p_user_id and m.is_master) then
+    raise exception 'O administrador master não pode ser atribuído como usuário de cidade.' using errcode='42501';
+  end if;
+  if exists(select 1 from public.city_memberships m where m.user_id=p_user_id and m.city_id<>p_city_id) then
+    raise exception 'Este usuário já está vinculado a outra cidade. Remova o vínculo anterior antes de atribuir uma nova cidade.' using errcode='23505';
   end if;
   insert into public.city_memberships(user_id,city_id,role,is_master,created_by)
     values(p_user_id,p_city_id,p_role,false,(select auth.uid()))
