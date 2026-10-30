@@ -1,17 +1,50 @@
 begin;
 select plan(19);
 
-select has_policy('public','people','city_scope_guard','individuals are restricted to the active city');
-select has_policy('public','vehicles','city_scope_guard','vehicles are restricted to the active city');
-select has_policy('public','person_vehicle_links','city_scope_guard','associations are restricted to the active city');
-select has_policy('public','person_photos','city_scope_guard','individual photos are restricted to the active city');
-select has_policy('public','vehicle_photos','city_scope_guard','vehicle photos are restricted to the active city');
-select has_policy('public','record_photos','city_scope_guard','record photos are restricted to the active city');
-select has_policy('public','arrest_warrants','city_scope_guard','warrants are restricted to the active city');
-select has_policy('public','arrest_warrant_documents','city_scope_guard','warrant PDFs are restricted to the active city');
-select has_policy('public','arrest_warrant_matches','city_scope_guard','warrant matches are restricted to the active city');
-select has_policy('public','record_revisions','city_scope_guard','revision history is restricted to the active city');
-select has_policy('public','audit_events','city_scope_guard','audit events are restricted to the active city');
+select ok(
+  exists(select 1 from pg_policies where schemaname='public' and tablename='people' and policyname='city_scope_guard'),
+  'individuals are restricted to the active city'
+);
+select ok(
+  exists(select 1 from pg_policies where schemaname='public' and tablename='vehicles' and policyname='city_scope_guard'),
+  'vehicles are restricted to the active city'
+);
+select ok(
+  exists(select 1 from pg_policies where schemaname='public' and tablename='person_vehicle_links' and policyname='city_scope_guard'),
+  'associations are restricted to the active city'
+);
+select ok(
+  exists(select 1 from pg_policies where schemaname='public' and tablename='person_photos' and policyname='city_scope_guard'),
+  'individual photos are restricted to the active city'
+);
+select ok(
+  exists(select 1 from pg_policies where schemaname='public' and tablename='vehicle_photos' and policyname='city_scope_guard'),
+  'vehicle photos are restricted to the active city'
+);
+select ok(
+  exists(select 1 from pg_policies where schemaname='public' and tablename='record_photos' and policyname='city_scope_guard'),
+  'record photos are restricted to the active city'
+);
+select ok(
+  exists(select 1 from pg_policies where schemaname='public' and tablename='arrest_warrants' and policyname='city_scope_guard'),
+  'warrants are restricted to the active city'
+);
+select ok(
+  exists(select 1 from pg_policies where schemaname='public' and tablename='arrest_warrant_documents' and policyname='city_scope_guard'),
+  'warrant PDFs are restricted to the active city'
+);
+select ok(
+  exists(select 1 from pg_policies where schemaname='public' and tablename='arrest_warrant_matches' and policyname='city_scope_guard'),
+  'warrant matches are restricted to the active city'
+);
+select ok(
+  exists(select 1 from pg_policies where schemaname='public' and tablename='record_revisions' and policyname='city_scope_guard'),
+  'revision history is restricted to the active city'
+);
+select ok(
+  exists(select 1 from pg_policies where schemaname='public' and tablename='audit_events' and policyname='city_scope_guard'),
+  'audit events are restricted to the active city'
+);
 
 select ok(
   (select not permissive from pg_policies
