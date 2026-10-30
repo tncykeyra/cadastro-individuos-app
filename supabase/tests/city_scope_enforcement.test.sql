@@ -1,5 +1,5 @@
 begin;
-select plan(17);
+select plan(19);
 
 select has_policy('public','people','city_scope_guard','individuals are restricted to the active city');
 select has_policy('public','vehicles','city_scope_guard','vehicles are restricted to the active city');
@@ -45,6 +45,16 @@ select ok(
   pg_get_functiondef('public.master_assign_city_user(uuid,uuid,text)'::regprocedure)
     like '%já está vinculado a outra cidade%',
   'city assignment rejects a second city for an ordinary account'
+);
+
+select ok(
+  exists(select 1 from pg_indexes where schemaname='public' and indexname='city_memberships_one_city_per_user'),
+  'database prevents ordinary accounts from receiving multiple city assignments'
+);
+select ok(
+  pg_get_functiondef('public.set_active_city(uuid)'::regprocedure)
+    like '%p_city_id=public.current_city_id()%',
+  'ordinary users cannot switch to a city other than their assigned active city'
 );
 
 select * from finish();
