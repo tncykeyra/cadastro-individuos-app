@@ -60,7 +60,7 @@ async function loadCityContext(){
   }
 }
 function nav(){
-  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 0.1.33';
+  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 0.1.34';
   const allowed=!!state.session&&['operator','admin'].includes(state.profile?.role)&&!(state.cityContextReady&&!state.cities.length);
   const admin=isAdmin(),master=isMasterAdmin();
   const sideItems=allowed?[['dashboard','Dashboard'],['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados'],['fiscalization','Fiscalização'],['smart','Cadastro Inteligente'],...(admin?[['review','Revisão Inteligente'],['maintenance','Manutenção Inteligente'],['history','Histórico']]:[]),...(master?[['team','Usuários'],['cities','Cidades e acessos']]:[])]:[];
@@ -83,7 +83,7 @@ async function changeActiveCity(cityId){
     if(error)throw error;
     await loadCityContext();
     if(state.cityAccessError||state.activeCityId!==cityId)throw new Error(state.cityAccessError||'Não foi possível confirmar a cidade selecionada.');
-    state.page='dashboard';state.selected=null;state.query='';state.searchInput='';state.listPage=0;state.letter='all';state.people=[];state.vehicles=[];
+    dashboardPhotoStatsCache=null;dashboardPhotoStatsAt=0;state.page='dashboard';state.selected=null;state.query='';state.searchInput='';state.listPage=0;state.letter='all';state.people=[];state.vehicles=[];
     saveLastView();nav();await loadPage();toast('Cidade alterada para '+cityName+'.');
   }catch(error){toast(msg(error));await loadCityContext();nav()}
 }
@@ -1056,11 +1056,11 @@ async function renderDashboard(){
   frame('<section class="dashboard-intro"><h1>Dashboard</h1><p>Resumo dos cadastros ativos.</p></section><div class="dashboard-cards"><section class="dashboard-card dashboard-person-card"><button type="button" class="dashboard-person-main" data-page="people"><span class="dashboard-icon">'+personIcon()+'</span><span class="dashboard-label">Indivíduos cadastrados</span><strong id="dashboardPeopleCount">…</strong><span class="dashboard-substats"><span class="dashboard-substat"><strong id="dashboardPhotoCount">'+photoCount+'</strong><small>Com foto</small></span><span class="dashboard-substat"><strong id="dashboardCpfCount">…</strong><small>Com CPF cadastrado</small></span></span><span class="dashboard-count-note" id="dashboardCountNote"'+(photoStats?.complete?' hidden':'')+'>'+(photoStats&&!photoStats.complete?'Contagem de fotos indisponível agora.':'Atualizando fotos em segundo plano…')+'</span><span class="dashboard-link">Abrir cadastros →</span></button>'+proposalAlertMarkup+vehiclePlateAlertMarkup+'</section><button class="dashboard-card" data-page="vehicles"><span class="dashboard-icon">'+carIcon()+'</span><span class="dashboard-label">Veículos cadastrados</span><strong id="dashboardVehicleCount">…</strong><span class="dashboard-link">Abrir veículos →</span></button><button class="dashboard-card" data-page="warrants"><span class="dashboard-icon" aria-hidden="true">⚖</span><span class="dashboard-label">Mandados de prisão ativos</span><strong id="dashboardWarrantCount">…</strong><span class="dashboard-link">Abrir mandados →</span></button></div>');
   if(stale)void refreshDashboardPhotoStats();
   const [peopleResult,cpfResult,vehicleResult,warrantResult,identityResult]=await Promise.all([
-    state.client.from('people').select('id',{count:'exact',head:true}).is('archived_at',null),
-    state.client.from('people').select('id',{count:'exact',head:true}).is('archived_at',null).not('cpf_digits','is',null).neq('cpf_digits',''),
-    state.client.from('vehicles').select('id',{count:'exact',head:true}).is('archived_at',null),
+    state.client.from('people').select('id',{count:'exact',head:true}).is('archived_at',null).eq('city_id',state.activeCityId),
+    state.client.from('people').select('id',{count:'exact',head:true}).is('archived_at',null).eq('city_id',state.activeCityId).not('cpf_digits','is',null).neq('cpf_digits',''),
+    state.client.from('vehicles').select('id',{count:'exact',head:true}).is('archived_at',null).eq('city_id',state.activeCityId),
     state.client.rpc('count_active_arrest_warrants'),
-    isAdmin()?state.client.from('person_identity_change_proposals').select('id',{count:'exact',head:true}).eq('status','pending'):Promise.resolve({count:0,error:null})
+    isAdmin()?state.client.from('person_identity_change_proposals').select('id',{count:'exact',head:true}).eq('city_id',state.activeCityId).eq('status','pending'):Promise.resolve({count:0,error:null})
   ]);
   if(token!==dashboardRenderToken||state.page!=='dashboard')return;
   if(isAdmin()){state.pendingIdentityCount=identityResult.error?null:Number(identityResult.count||0);nav();const alert=$('#dashboardIdentityAlert'),count=$('#dashboardIdentityCount');if(count)count.textContent=Number(identityResult.count||0).toLocaleString('pt-BR');if(alert)alert.hidden=Boolean(identityResult.error)||!identityResult.count}
