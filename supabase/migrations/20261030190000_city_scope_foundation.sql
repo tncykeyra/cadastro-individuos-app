@@ -107,6 +107,12 @@ create table if not exists public.city_memberships (
   constraint city_memberships_master_role_check check ((is_master and role='master') or (not is_master and role in ('operator','admin')))
 );
 
+-- Ordinary accounts (operators and city admins) may belong to exactly one city.
+-- The master is intentionally exempt and may administer several cities.
+create unique index if not exists city_memberships_one_city_per_user
+  on public.city_memberships(user_id)
+  where not is_master;
+
 alter table public.profiles
   add column if not exists active_city_id uuid references public.cities(id) on delete restrict;
 
