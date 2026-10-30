@@ -285,7 +285,7 @@ begin
        where m.user_id=p_user_id and m.city_id=active_city_id
      );
 end;
-$;
+$$;
 
 create or replace function public.remove_city_user(p_user_id uuid,p_city_id uuid)
 returns void
