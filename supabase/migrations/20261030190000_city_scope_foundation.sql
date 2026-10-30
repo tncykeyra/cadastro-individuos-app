@@ -29,6 +29,12 @@ begin
   if not exists(select 1 from pg_policies where schemaname='public' and tablename='person_photos' and policyname='person_photos_admin_delete_guard') then
     create policy person_photos_admin_delete_guard on public.person_photos as restrictive for delete to authenticated using (public.is_admin());
   end if;
+  if not exists(select 1 from pg_policies where schemaname='public' and tablename='person_photos' and policyname='person_photos_admin_delete') then
+    create policy person_photos_admin_delete on public.person_photos for delete to authenticated using (public.is_admin());
+  end if;
+  if not exists(select 1 from pg_policies where schemaname='public' and tablename='person_photos' and policyname='person_photos_admin_update') then
+    create policy person_photos_admin_update on public.person_photos for update to authenticated using (public.is_admin()) with check (public.is_admin());
+  end if;
   if not exists(select 1 from pg_policies where schemaname='public' and tablename='person_photos' and policyname='person_photos_admin_update_guard') then
     create policy person_photos_admin_update_guard on public.person_photos as restrictive for update to authenticated using (public.is_admin()) with check (public.is_admin());
   end if;
