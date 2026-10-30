@@ -854,3 +854,8 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
 .city-member-meta small{color:var(--muted);font-size:.84rem}
 .city-members-panel{margin-top:16px}
 @media(max-width:700px){.city-management-grid{grid-template-columns:minmax(0,1fr);gap:10px}.city-management-panel{padding:15px}.city-form-row{flex-direction:column}.city-member-row{padding:8px}.city-member-row .button{flex:0 0 auto}}
+
+.city-assigned-label{display:grid;gap:3px;margin:0 8px 12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-soft,var(--surface))}
+.city-assigned-label small{font-size:.72rem;color:var(--muted);line-height:1.2}
+.city-assigned-label strong{font-size:.9rem;color:var(--ink);line-height:1.25;overflow-wrap:anywhere}
+[data-theme="dark"] .city-assigned-label{background:#171b1e;border-color:#343a3e}
