@@ -313,11 +313,8 @@ begin
   if new.role is distinct from old.role or lower(new.email) is distinct from lower(old.email) then
     raise exception 'Somente o administrador master pode alterar perfil ou e-mail.' using errcode='42501';
   end if;
-  if new.active_city_id is distinct from old.active_city_id and not (
-    public.is_master_admin()
-    or exists(select 1 from public.city_memberships m where m.user_id=old.id and m.city_id=new.active_city_id)
-  ) then
-    raise exception 'Você não tem acesso à cidade selecionada.' using errcode='42501';
+  if new.active_city_id is distinct from old.active_city_id then
+    raise exception 'Somente o administrador master pode trocar a cidade ativa.' using errcode='42501';
   end if;
   return new;
 end;
