@@ -1,0 +1,34 @@
+name: Testar banco Supabase local
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "supabase/**"
+      - ".github/workflows/test-supabase-local.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  database:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Instalar Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Iniciar Supabase temporário
+        run: supabase start
+
+      - name: Aplicar migrações e testar banco
+        run: supabase test db
+
+      - name: Encerrar Supabase temporário
+        if: always()
+        run: supabase stop --no-backup
