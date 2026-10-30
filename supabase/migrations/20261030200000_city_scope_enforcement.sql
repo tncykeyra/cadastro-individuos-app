@@ -137,7 +137,8 @@ begin
     ) then raise exception 'A sugestão deve pertencer a um veículo da mesma cidade.' using errcode='23514'; end if;
   end if;
   if tg_op='DELETE' then return old; else return new; end if;
-end $;
+end;
+$;
 
 do $$
 declare t text;
