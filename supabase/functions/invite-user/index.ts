@@ -218,6 +218,56 @@ Deno.serve(async (request) => {
     return respond({ ok: true, email, role, city_roles: verified.city_roles, city_ids: verified.city_ids });
   }
 
+  if (payload.action === 'update-google-cities') {
+    const { data: master, error: masterError } = await caller.rpc('is_master_admin');
+    if (masterError || master !== true) return respond({ error: 'Somente o administrador master pode alterar os perfis por cidade.' }, 403);
+    const requestedCityRoles = Array.isArray(payload.city_roles) ? payload.city_roles.map(item => ({
+      city_id: String(item?.city_id ?? '').trim(),
+      role: String(item?.role ?? '').trim(),
+    })) : [];
+    if (!requestedCityRoles.length || requestedCityRoles.some(item => !item.city_id || !['operator', 'admin'].includes(item.role)) ||
+        new Set(requestedCityRoles.map(item => item.city_id)).size !== requestedCityRoles.length) {
+      return respond({ error: 'Selecione ao menos uma cidade e escolha um perfil válido em cada uma.' }, 400);
+    }
+    const cityIds = requestedCityRoles.map(item => item.city_id);
+    const { data: cities, error: cityError } = await admin.from('cities').select('id,active').in('id', cityIds);
+    if (cityError || (cities ?? []).length !== cityIds.length || (cities ?? []).some(city => !city.active)) {
+      return respond({ error: 'Uma ou mais cidades selecionadas estão indisponíveis.' }, 400);
+    }
+    const { data: authorizationRow, error: authorizationLookupError } = await admin
+      .from('authorized_emails').select('email, role, city_id, city_ids, city_roles').eq('email', email).maybeSingle();
+    if (authorizationLookupError) return respond({ error: 'Não foi possível consultar esta autorização.' }, 500);
+    if (!authorizationRow) return respond({ error: 'Este e-mail não está na lista de autorizados.' }, 404);
+    const { data: targetProfile, error: targetProfileError } = await admin
+      .from('profiles').select('id, role').eq('email', email).maybeSingle();
+    if (targetProfileError) return respond({ error: 'Não foi possível consultar o perfil deste e-mail.' }, 500);
+    if (targetProfile?.id === user.id || email === String(user.email ?? '').trim().toLowerCase()) {
+      return respond({ error: 'Você não pode alterar os próprios acessos.' }, 400);
+    }
+    if (targetProfile?.role === 'disabled') return respond({ error: 'Este usuário está desativado. Reative a conta antes de alterar as cidades.' }, 409);
+
+    const { error: updateError } = await admin.from('authorized_emails').update({
+      city_id: cityIds[0], city_ids: cityIds, city_roles: requestedCityRoles,
+    }).eq('email', email);
+    if (updateError) return respond({ error: 'Não foi possível salvar os perfis por cidade.' }, 500);
+
+    if (targetProfile && ['operator', 'admin'].includes(targetProfile.role)) {
+      const { error: membershipError } = await caller.rpc('master_replace_user_city_roles', {
+        p_user_id: targetProfile.id, p_city_roles: requestedCityRoles,
+      });
+      if (membershipError) {
+        const { error: rollbackError } = await admin.from('authorized_emails').update({
+          role: authorizationRow.role, city_id: authorizationRow.city_id,
+          city_ids: authorizationRow.city_ids, city_roles: authorizationRow.city_roles,
+        }).eq('email', email);
+        return respond({ error: rollbackError
+          ? 'Não foi possível atualizar os perfis por cidade nem restaurar a autorização anterior. Peça ao administrador master para conferir o acesso.'
+          : 'Não foi possível atualizar os vínculos por cidade. A autorização anterior foi mantida.' }, 400);
+      }
+    }
+    return respond({ ok: true, email, city_ids: cityIds, city_roles: requestedCityRoles });
+  }
+
   if (payload.action === 'revoke-google') {
     const { data: targetProfile, error: targetProfileError } = await admin
       .from('profiles')
