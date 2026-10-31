@@ -155,7 +155,7 @@ Deno.serve(async (request) => {
     return respond({ error: 'Apenas administradores podem cadastrar usuários.' }, 403);
   }
 
-  let payload: { action?: string; email?: string; temporaryPassword?: string; userId?: string; city_id?: string };
+  let payload: { action?: string; email?: string; temporaryPassword?: string; userId?: string; city_id?: string; city_ids?: string[] };
   try {
     payload = await request.json();
   } catch {
@@ -209,12 +209,14 @@ Deno.serve(async (request) => {
 
   if (payload.action === 'authorize-google') {
     try {
-    const cityId = String(payload.city_id ?? '').trim() || null;
-    if (cityId) {
+    const cityIds = [...new Set((Array.isArray(payload.city_ids) ? payload.city_ids : (payload.city_id ? [payload.city_id] : [])).map(value => String(value).trim()).filter(Boolean))];
+    if (cityIds.length) {
       const { data: master, error: masterError } = await caller.rpc('is_master_admin');
-      if (masterError || master !== true) return respond({ error: 'Somente o administrador master pode atribuir a cidade nesta autorização.' }, 403);
-      const { data: city, error: cityError } = await admin.from('cities').select('id,name,active').eq('id', cityId).maybeSingle();
-      if (cityError || !city?.active) return respond({ error: 'Selecione uma cidade ativa.' }, 400);
+      if (masterError || master !== true) return respond({ error: 'Somente o administrador master pode atribuir cidades nesta autorização.' }, 403);
+      const { data: cities, error: cityError } = await admin.from('cities').select('id,active').in('id', cityIds);
+      if (cityError || (cities ?? []).length !== cityIds.length || (cities ?? []).some(city => !city.active)) {
+        return respond({ error: 'Uma ou mais cidades selecionadas estão indisponíveis.' }, 400);
+      }
     }
     const { data: existing, error: lookupError } = await admin
       .from('authorized_emails').select('email, role, city_id').eq('email', email).maybeSingle();
@@ -228,15 +230,15 @@ Deno.serve(async (request) => {
     let role: string = existing?.role === 'admin' ? 'admin' : 'operator';
     const alreadyAuthorized = Boolean(existing);
     if (!existing) {
-      const { error } = await admin.from('authorized_emails').insert({ email, role: 'operator', city_id: cityId });
+      const { error } = await admin.from('authorized_emails').insert({ email, role: 'operator', city_id: cityIds[0] ?? null, city_ids: cityIds });
       if (error?.code !== '23505' && error) return respond({ error: 'Não foi possível autorizar o e-mail na base de dados.' }, 500);
     } else if (existing.role !== role) {
-      const { error } = await admin.from('authorized_emails').update({ role, ...(cityId ? { city_id: cityId } : {}) }).eq('email', email);
+      const { error } = await admin.from('authorized_emails').update({ role, ...(cityIds.length ? { city_id: cityIds[0], city_ids: cityIds } : {}) }).eq('email', email);
       if (error) return respond({ error: 'Não foi possível atualizar a autorização do e-mail.' }, 500);
     }
 
     const { data: authorized, error: authorizedError } = await admin
-      .from('authorized_emails').select('email, role, city_id').eq('email', email).single();
+      .from('authorized_emails').select('email, role, city_id, city_ids').eq('email', email).single();
     if (authorizedError || !authorized) return respond({ error: 'Não foi possível confirmar a autorização do e-mail.' }, 500);
     role = authorized.role;
 
@@ -253,15 +255,15 @@ Deno.serve(async (request) => {
       if (roleError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível atualizar um perfil pendente.' }, 500);
     }
 
-    if (cityId) {
+    if (cityIds.length) {
       const { data: profilesToAssign, error: assignmentLookupError } = await caller
         .from('profiles').select('id').eq('email', email).in('role', ['operator', 'admin']);
-      if (assignmentLookupError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível localizar o perfil para atribuir a cidade.' }, 500);
+      if (assignmentLookupError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível localizar o perfil para atribuir cidades.' }, 500);
       for (const existingProfile of profilesToAssign ?? []) {
         const { error: assignmentError } = await caller.rpc('master_assign_user_cities', {
-          p_user_id: existingProfile.id, p_city_ids: [cityId], p_role: role,
+          p_user_id: existingProfile.id, p_city_ids: cityIds, p_role: role,
         });
-        if (assignmentError) return respond({ error: 'O e-mail foi autorizado, mas a cidade não pôde ser atribuída ao perfil existente.' }, 500);
+        if (assignmentError) return respond({ error: 'O e-mail foi autorizado, mas as cidades não puderam ser atribuídas ao perfil existente.' }, 500);
       }
     }
     const { code, error: codeError } = await issueActivationCode(admin, email, user.id);
@@ -271,7 +273,7 @@ Deno.serve(async (request) => {
       console.error('[authorize-google] optional first-access code generation failed', codeError?.code ?? 'unknown');
       return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, firstAccessCode: null, codeUnavailable: true });
     }
-    return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, city_id: authorized.city_id, firstAccessCode: code, codeUnavailable: false });
+    return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, city_id: authorized.city_id, city_ids: authorized.city_ids, firstAccessCode: code, codeUnavailable: false });
     } catch (error) {
       // Return the persisted allowlist state if a later optional step unexpectedly fails.
       const { data: persisted } = await admin.from('authorized_emails').select('role').eq('email', email).maybeSingle();
