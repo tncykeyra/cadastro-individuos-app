@@ -155,7 +155,7 @@ Deno.serve(async (request) => {
     return respond({ error: 'Apenas administradores podem cadastrar usuários.' }, 403);
   }
 
-  let payload: { action?: string; email?: string; temporaryPassword?: string; userId?: string; city_id?: string; city_ids?: string[] };
+  let payload: { action?: string; email?: string; temporaryPassword?: string; userId?: string; city_id?: string; city_ids?: string[]; city_roles?: Array<{ city_id?: string; role?: string }> };
   try {
     payload = await request.json();
   } catch {
@@ -171,7 +171,7 @@ Deno.serve(async (request) => {
   if (payload.action === 'list_google_authorized') {
     const { data: emails, error } = await admin
       .from('authorized_emails')
-      .select('email, role, city_id, city_ids, created_at')
+      .select('email, role, city_id, city_ids, city_roles, created_at')
       .order('created_at', { ascending: false })
       .limit(250);
     if (error) return respond({ error: 'Não foi possível carregar os e-mails autorizados.' }, 500);
@@ -209,7 +209,16 @@ Deno.serve(async (request) => {
 
   if (payload.action === 'authorize-google') {
     try {
-    const cityIds = [...new Set((Array.isArray(payload.city_ids) ? payload.city_ids : (payload.city_id ? [payload.city_id] : [])).map(value => String(value).trim()).filter(Boolean))];
+    const requestedCityRoles = Array.isArray(payload.city_roles) ? payload.city_roles.map(item => ({
+      city_id: String(item?.city_id ?? '').trim(),
+      role: String(item?.role ?? '').trim(),
+    })) : [];
+    if (requestedCityRoles.some(item => !item.city_id || !['operator', 'admin'].includes(item.role)) ||
+        new Set(requestedCityRoles.map(item => item.city_id)).size !== requestedCityRoles.length) {
+      return respond({ error: 'Escolha um perfil válido para cada cidade.' }, 400);
+    }
+    const legacyCityIds = Array.isArray(payload.city_ids) ? payload.city_ids : (payload.city_id ? [payload.city_id] : []);
+    const cityIds = [...new Set((requestedCityRoles.length ? requestedCityRoles.map(item => item.city_id) : legacyCityIds).map(value => String(value).trim()).filter(Boolean))];
     if (cityIds.length) {
       const { data: master, error: masterError } = await caller.rpc('is_master_admin');
       if (masterError || master !== true) return respond({ error: 'Somente o administrador master pode atribuir cidades nesta autorização.' }, 403);
@@ -219,7 +228,7 @@ Deno.serve(async (request) => {
       }
     }
     const { data: existing, error: lookupError } = await admin
-      .from('authorized_emails').select('email, role, city_id').eq('email', email).maybeSingle();
+      .from('authorized_emails').select('email, role, city_id, city_ids, city_roles').eq('email', email).maybeSingle();
     if (lookupError) return respond({ error: 'Não foi possível consultar a lista de e-mails autorizados.' }, 500);
 
     const { data: disabledProfile, error: disabledProfileError } = await caller
@@ -227,18 +236,24 @@ Deno.serve(async (request) => {
     if (disabledProfileError) return respond({ error: 'Não foi possível verificar o perfil deste e-mail.' }, 500);
     if (disabledProfile) return respond({ error: 'O perfil está desativado. Reative-o na lista de Usuários antes de gerar um código.' }, 409);
 
-    let role: string = existing?.role === 'admin' ? 'admin' : 'operator';
+    let role: string = requestedCityRoles[0]?.role || (existing?.role === 'admin' ? 'admin' : 'operator');
     const alreadyAuthorized = Boolean(existing);
+    const cityRolesToSave = requestedCityRoles.length
+      ? requestedCityRoles
+      : cityIds.map(city_id => ({ city_id, role }));
+    const cityAssignment = cityIds.length
+      ? { city_id: cityIds[0], city_ids: cityIds, city_roles: cityRolesToSave }
+      : {};
     if (!existing) {
-      const { error } = await admin.from('authorized_emails').insert({ email, role: 'operator', city_id: cityIds[0] ?? null, city_ids: cityIds });
+      const { error } = await admin.from('authorized_emails').insert({ email, role, city_id: cityIds[0] ?? null, city_ids: cityIds, city_roles: cityRolesToSave });
       if (error?.code !== '23505' && error) return respond({ error: 'Não foi possível autorizar o e-mail na base de dados.' }, 500);
     } else {
-      const { error } = await admin.from('authorized_emails').update({ role, ...(cityIds.length ? { city_id: cityIds[0], city_ids: cityIds } : {}) }).eq('email', email);
+      const { error } = await admin.from('authorized_emails').update({ role, ...cityAssignment }).eq('email', email);
       if (error) return respond({ error: 'Não foi possível atualizar a autorização do e-mail.' }, 500);
     }
 
     const { data: authorized, error: authorizedError } = await admin
-      .from('authorized_emails').select('email, role, city_id, city_ids').eq('email', email).single();
+      .from('authorized_emails').select('email, role, city_id, city_ids, city_roles').eq('email', email).single();
     if (authorizedError || !authorized) return respond({ error: 'Não foi possível confirmar a autorização do e-mail.' }, 500);
     role = authorized.role;
 
@@ -260,8 +275,8 @@ Deno.serve(async (request) => {
         .from('profiles').select('id').eq('email', email).in('role', ['operator', 'admin']);
       if (assignmentLookupError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível localizar o perfil para atribuir cidades.' }, 500);
       for (const existingProfile of profilesToAssign ?? []) {
-        const { error: assignmentError } = await caller.rpc('master_replace_user_cities', {
-          p_user_id: existingProfile.id, p_city_ids: cityIds, p_role: role,
+        const { error: assignmentError } = await caller.rpc('master_replace_user_city_roles', {
+          p_user_id: existingProfile.id, p_city_roles: cityRolesToSave,
         });
         if (assignmentError) return respond({ error: 'O e-mail foi autorizado, mas as cidades não puderam ser atribuídas ao perfil existente.' }, 500);
       }
@@ -273,13 +288,13 @@ Deno.serve(async (request) => {
       console.error('[authorize-google] optional first-access code generation failed', codeError?.code ?? 'unknown');
       return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, firstAccessCode: null, codeUnavailable: true });
     }
-    return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, city_id: authorized.city_id, city_ids: authorized.city_ids, firstAccessCode: code, codeUnavailable: false });
+    return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, city_id: authorized.city_id, city_ids: authorized.city_ids, city_roles: authorized.city_roles, firstAccessCode: code, codeUnavailable: false });
     } catch (error) {
       // Return the persisted allowlist state if a later optional step unexpectedly fails.
-      const { data: persisted } = await admin.from('authorized_emails').select('role, city_id, city_ids').eq('email', email).maybeSingle();
+      const { data: persisted } = await admin.from('authorized_emails').select('role, city_id, city_ids, city_roles').eq('email', email).maybeSingle();
       if (persisted && ['operator', 'admin'].includes(persisted.role)) {
         console.error('[authorize-google] authorized; optional step failed', error instanceof Error ? error.name : 'UnknownError');
-        return respond({ ok: true, authorized: true, role: persisted.role, already_authorized: true, city_id: persisted.city_id, city_ids: persisted.city_ids, firstAccessCode: null, codeUnavailable: true });
+        return respond({ ok: true, authorized: true, role: persisted.role, already_authorized: true, city_id: persisted.city_id, city_ids: persisted.city_ids, city_roles: persisted.city_roles, firstAccessCode: null, codeUnavailable: true });
       }
       console.error('[authorize-google] request failed', error instanceof Error ? error.name : 'UnknownError');
       return respond({ error: 'Não foi possível autorizar este e-mail Google. Atualize a tela e tente novamente.' }, 500);
