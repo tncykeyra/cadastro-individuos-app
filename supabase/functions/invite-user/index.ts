@@ -201,7 +201,7 @@ Deno.serve(async (request) => {
     if (codeCleanupError) return respond({ error: 'Não foi possível invalidar os códigos pendentes deste e-mail.' }, 500);
     const { error: revokeError } = await admin.from('authorized_emails').delete().eq('email', email);
     if (revokeError) {
-      if (targetProfile && targetProfile.role !== 'disabled') await caller.rpc('admin_set_user_role', { target_user_id: targetProfile.id, target_role: targetProfile.role });
+      if (targetProfile && targetProfile.role !== 'disabled') await admin.from('profiles').update({ role: targetProfile.role }).eq('id', targetProfile.id);
       return respond({ error: 'Não foi possível remover este e-mail da lista autorizada.' }, 500);
     }
     return respond({ ok: true, revoked: true, had_authorization: Boolean(authorized) });
@@ -254,9 +254,12 @@ Deno.serve(async (request) => {
     }
 
     if (cityId) {
-      for (const pending of pendingProfiles ?? []) {
+      const { data: profilesToAssign, error: assignmentLookupError } = await caller
+        .from('profiles').select('id').eq('email', email).in('role', ['operator', 'admin']);
+      if (assignmentLookupError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível localizar o perfil para atribuir a cidade.' }, 500);
+      for (const existingProfile of profilesToAssign ?? []) {
         const { error: assignmentError } = await caller.rpc('master_assign_user_cities', {
-          p_user_id: pending.id, p_city_ids: [cityId], p_role: role,
+          p_user_id: existingProfile.id, p_city_ids: [cityId], p_role: role,
         });
         if (assignmentError) return respond({ error: 'O e-mail foi autorizado, mas a cidade não pôde ser atribuída ao perfil existente.' }, 500);
       }
