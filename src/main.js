@@ -378,8 +378,8 @@ function warrantDuplicateKeys(record){
 }
 async function findWarrantDuplicateTargets(records){
   const targets=new Map(),rows=[],processNumbers=[...new Set((records||[]).map(record=>normalizeWarrantProcessNumber(record.source_reference||'')).filter(Boolean))],numbers=[...new Set((records||[]).map(record=>String(record.warrant_number||'').trim().toLocaleUpperCase('pt-BR')).filter(isSpecificWarrantNumber))];
-  for(let offset=0;offset<processNumbers.length;offset+=100){const chunk=processNumbers.slice(offset,offset+100),{data,error}=await state.client.from('arrest_warrants').select('id,process_number_digits,warrant_number,source_agency').in('process_number_digits',chunk);if(error)throw error;rows.push(...(data||[]))}
-  for(let offset=0;offset<numbers.length;offset+=100){const chunk=numbers.slice(offset,offset+100),{data,error}=await state.client.from('arrest_warrants').select('id,process_number_digits,warrant_number,source_agency').in('warrant_number',chunk);if(error)throw error;rows.push(...(data||[]))}
+  for(let offset=0;offset<processNumbers.length;offset+=100){const chunk=processNumbers.slice(offset,offset+100),{data,error}=await state.client.from('arrest_warrants').select('id,city_id,process_number_digits,warrant_number,source_agency').eq('city_id',state.activeCityId).in('process_number_digits',chunk);if(error)throw error;rows.push(...(data||[]))}
+  for(let offset=0;offset<numbers.length;offset+=100){const chunk=numbers.slice(offset,offset+100),{data,error}=await state.client.from('arrest_warrants').select('id,city_id,process_number_digits,warrant_number,source_agency').eq('city_id',state.activeCityId).in('warrant_number',chunk);if(error)throw error;rows.push(...(data||[]))}
   for(const row of rows){if(row.process_number_digits)targets.set('process:'+row.process_number_digits,row);targets.set('number:'+String(row.source_agency||'BNMP').trim().toLocaleUpperCase('pt-BR')+'|'+String(row.warrant_number||'').trim().toLocaleUpperCase('pt-BR'),row)}
   return targets;
 }
@@ -601,7 +601,7 @@ async function stageDuplicateWarrantSubmission(payload,matchedWarrantId,reason,f
 async function findWarrantDuplicateTarget(payload){
   const processNumber=normalizeWarrantProcessNumber(payload.source_reference||'');
   if(processNumber){
-    const {data,error}=await state.client.from('arrest_warrants').select('id').eq('process_number_digits',processNumber).limit(1);
+    const {data,error}=await state.client.from('arrest_warrants').select('id').eq('city_id',state.activeCityId).eq('process_number_digits',processNumber).limit(1);
     if(error)throw error;if(data?.[0])return{warrantId:data[0].id,reason:'process_number'};
   }
   if(isSpecificWarrantNumber(payload.warrant_number)){
