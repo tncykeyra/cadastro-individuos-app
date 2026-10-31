@@ -46,6 +46,14 @@ export function normalizeWarrantName(value) {
   return normalizeWarrantText(value).replace(/\b(de|da|do|das|dos|e)\b/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+/** Labels de espécie/situação do mandado não são identificadores únicos. */
+export function isSpecificWarrantNumber(value) {
+  const normalized = normalizeWarrantText(value);
+  if (!normalized || !/\d/.test(normalized)) return false;
+  if (/^(?:prisao )?(?:preventiva|definitiva|temporaria|provisoria|civil|recaptura)(?: .*)?$/.test(normalized)) return false;
+  return true;
+}
+
 export function normalizeWarrantProcessNumber(value) {
   const source = String(value || '').trim();
   const match = source.match(/([0-9]{7}\s*-\s*[0-9]{2}\s*[.]\s*[0-9]{4}\s*[.]\s*[0-9]\s*[.]\s*[0-9]{2}\s*[.]\s*[0-9]{4})/);
@@ -179,8 +187,8 @@ export function parseWarrantCsv(text) {
       source_reference,
       status: 'pending'
     };
-    const uniqueKey = source_agency + '|' + warrant_number;
-    if (seen.has(uniqueKey)) {
+    const uniqueKey = isSpecificWarrantNumber(warrant_number) ? source_agency + '|' + warrant_number : '';
+    if (uniqueKey && seen.has(uniqueKey)) {
       duplicateRows++;
       duplicateRecords.push({ record, duplicate_reason: 'csv_duplicate', matched_key: uniqueKey });
       continue;
@@ -191,7 +199,7 @@ export function parseWarrantCsv(text) {
       duplicateRecords.push({ record, duplicate_reason: 'csv_duplicate', matched_key: processNumber });
       continue;
     }
-    seen.set(uniqueKey, record);
+    if (uniqueKey) seen.set(uniqueKey, record);
     if (processNumber) seenProcessNumbers.add(processNumber);
     records.push(record);
   }
