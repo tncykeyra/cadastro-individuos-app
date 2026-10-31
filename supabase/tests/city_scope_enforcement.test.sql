@@ -1,5 +1,5 @@
 begin;
-select plan(19);
+select plan(23);
 
 select ok(
   exists(select 1 from pg_policies where schemaname='public' and tablename='people' and policyname='city_scope_guard'),
@@ -89,6 +89,28 @@ select ok(
   pg_get_functiondef('public.set_active_city(uuid)'::regprocedure)
     like '%m.city_id=p_city_id%' and pg_get_functiondef('public.set_active_city(uuid)'::regprocedure) like '%m.user_id=(select auth.uid())%',
   'users can switch only to a city assigned to their account'
+);
+
+
+select ok(
+  pg_get_functiondef('public.submit_person_identity_change_proposal(uuid,text,text)'::regprocedure)
+    like '%p.city_id = v_city_id%',
+  'operator identity proposals can target only the active city'
+);
+select ok(
+  pg_get_functiondef('public.admin_review_person_identity_change_proposal(uuid,boolean,text)'::regprocedure)
+    like '%p.city_id = public.current_city_id()%',
+  'person identity reviews are city scoped, with explicit master override'
+);
+select ok(
+  pg_get_functiondef('public.submit_vehicle_plate_change_proposal(uuid,text)'::regprocedure)
+    like '%v.city_id = v_city_id%',
+  'operator plate proposals can target only the active city'
+);
+select ok(
+  pg_get_functiondef('public.admin_review_vehicle_plate_change_proposal(uuid,boolean,text)'::regprocedure)
+    like '%p.city_id = public.current_city_id()%',
+  'vehicle plate reviews are city scoped, with explicit master override'
 );
 
 select * from finish();
