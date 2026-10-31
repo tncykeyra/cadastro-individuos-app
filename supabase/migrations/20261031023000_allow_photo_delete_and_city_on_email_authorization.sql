@@ -88,7 +88,7 @@ begin
   end if;
 
   foreach v_path in array v_paths loop
-    if v_path <> v_current_path and not exists (
+    if v_path is distinct from v_current_path and not exists (
       select 1 from public.record_photos rp
       where rp.entity = p_entity and rp.entity_id = p_entity_id and rp.photo_path = v_path
     ) and not (
