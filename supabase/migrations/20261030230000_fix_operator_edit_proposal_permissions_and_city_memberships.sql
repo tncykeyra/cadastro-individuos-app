@@ -92,6 +92,9 @@ REVOKE ALL ON FUNCTION public.master_assign_user_cities(uuid, uuid[], text) FROM
 GRANT EXECUTE ON FUNCTION public.master_assign_user_cities(uuid, uuid[], text) TO authenticated;
 ALTER FUNCTION public.master_assign_user_cities(uuid, uuid[], text) OWNER TO postgres;
 
+-- Replace the legacy unique index: multiple city memberships are now valid.
+DROP INDEX IF EXISTS public.city_memberships_one_city_per_user;
+
 -- Preserve existing RPC callers while changing single-city assignment to additive behavior.
 CREATE OR REPLACE FUNCTION public.master_assign_city_user(
   p_user_id uuid,
