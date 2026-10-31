@@ -265,7 +265,7 @@ button,.button,input,select,textarea{min-width:0;max-width:100%}
 .warrant-tool-card,.warrant-active-section{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;min-width:0;box-shadow:0 4px 18px #17212708}
 .warrant-tool-card h2,.warrant-section-title h2{font-size:1.12rem;margin:0}
 .warrant-tool-card>p{color:var(--muted);line-height:1.55;margin:8px 0 14px}
-.warrant-file-label{display:inline-flex;align-items:center;position:relative}
+.warrant-file-label{display:inline-flex;align-items:center;position:relative;overflow:hidden}.warrant-file-label .warrant-pdf-input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.warrant-file-label:focus-within{outline:3px solid color-mix(in srgb,var(--brand) 35%,transparent);outline-offset:2px}.warrant-file-label[aria-disabled="true"]{opacity:.65;pointer-events:none}
 .warrant-manual-tool>summary{cursor:pointer;list-style:none;display:flex;flex-direction:column;gap:5px}
 .warrant-manual-tool>summary::-webkit-details-marker{display:none}
 .warrant-manual-tool>summary:after{content:"＋";font-size:1.3rem;color:var(--brand);position:absolute;right:22px;top:18px}
