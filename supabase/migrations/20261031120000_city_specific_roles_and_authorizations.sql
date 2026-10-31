@@ -185,4 +185,55 @@ $function$;
 
 alter function public.new_profile_for_auth_user() owner to postgres;
 
+
+-- The Users page changes the account's base role. City-specific roles remain
+-- authoritative for local permissions and are intentionally preserved.
+create or replace function public.master_set_user_account_role(
+  p_user_id uuid,
+  p_role text
+)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+declare
+  v_email text;
+begin
+  if (select auth.uid()) is null or not public.is_master_admin() then
+    raise exception 'Somente o administrador master pode alterar o perfil base.' using errcode='42501';
+  end if;
+  if p_role not in ('operator', 'admin') then
+    raise exception 'Perfil base inválido.' using errcode='22023';
+  end if;
+  if p_user_id = (select auth.uid()) then
+    raise exception 'Não é permitido alterar o próprio perfil.' using errcode='42501';
+  end if;
+
+  select lower(btrim(p.email))
+    into v_email
+  from public.profiles p
+  where p.id = p_user_id and p.role in ('operator', 'admin', 'pending');
+  if v_email is null then
+    raise exception 'Usuário não encontrado ou desativado.' using errcode='22023';
+  end if;
+
+  update public.profiles
+  set role = p_role::public.app_role, updated_at = now()
+  where id = p_user_id;
+
+  insert into public.authorized_emails(email, role)
+  values (v_email, p_role::public.app_role)
+  on conflict (email) do update
+    set role = excluded.role;
+
+  insert into public.audit_events(actor_id, action, entity, entity_id)
+  values ((select auth.uid()), 'account_role_changed:' || p_role, 'profile', p_user_id);
+end;
+$function$;
+
+alter function public.master_set_user_account_role(uuid, text) owner to postgres;
+revoke all on function public.master_set_user_account_role(uuid, text) from public, anon;
+grant execute on function public.master_set_user_account_role(uuid, text) to authenticated;
+
 commit;
