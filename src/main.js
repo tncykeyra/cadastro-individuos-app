@@ -481,7 +481,7 @@ async function submitWarrantDeleteAll(event){
     }
     const deleted=Number(data?.deleted_count)||0;
     warrantSearchResults.clear();warrantEditRecords.clear();$('#recordDialog').close();
-    toast(storageWarning?'Mandados excluídos ('+deleted+').'+storageWarning:'Todos os '+deleted+' mandados foram excluídos. O histórico de auditoria foi preservado.');
+    toast(storageWarning?'Mandados e pendências removidos desta cidade.'+storageWarning:'Mandados e pendências desta cidade foram removidos. PDFs anexados excluídos; histórico de auditoria preservado.');
     await renderWarrants();
   }finally{if(submit&&$('#recordDialog')?.open)submit.disabled=false}
 }
