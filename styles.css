@@ -905,3 +905,30 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
 @media(max-width:420px){.city-role-option{grid-template-columns:18px minmax(0,1fr);gap:7px}.city-role-option select{grid-column:2;max-width:100%}}
 .city-access-fieldset>small{display:block;margin-top:9px;color:var(--muted);line-height:1.45}
 @media(max-width:700px){.city-management-grid{grid-template-columns:minmax(0,1fr)}.city-management-panel{padding:14px}.city-access-options{grid-template-columns:minmax(0,1fr);max-height:260px}}
+
+
+/* Layout dos controles de usuário e acesso por cidade: responsivo sem cortar seletores. */
+.user-table,.user-create-row,.user-account-row,.authorized-role-control,.city-access-fieldset,.city-access-options,.city-access-option{box-sizing:border-box;min-width:0;max-width:100%}
+.user-account-row{align-items:center}
+.user-account-row>:nth-child(2){min-width:0;overflow-wrap:anywhere}
+.user-account-row .row-title,.user-account-row .row-subtitle{min-width:0;overflow-wrap:anywhere;word-break:break-word}
+.user-account-row select.role-select,.authorized-role-control select.role-select,.city-role-option select{display:block;width:100%;min-width:0;max-width:100%;min-height:44px;box-sizing:border-box;font-size:16px}
+.authorized-role-control{width:100%;min-width:0}
+.city-access-fieldset{width:100%;overflow:hidden}
+.city-access-options{width:100%;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr))}
+.city-access-option{width:100%;overflow:hidden}
+.city-role-option select{grid-column:auto}
+@media(max-width:860px){
+  .user-account-row{grid-template-columns:48px minmax(0,1fr);gap:10px;padding:12px}
+  .user-account-row .role-select,.user-account-row .authorized-role-control,.user-account-row .button{grid-column:2;justify-self:stretch;width:100%;min-width:0;max-width:100%}
+  .user-account-row .button{white-space:normal;overflow-wrap:anywhere;min-height:44px}
+  .city-access-options{grid-template-columns:minmax(0,1fr);max-height:320px}
+  .city-role-option{grid-template-columns:20px minmax(0,1fr) minmax(0,1fr);gap:8px}
+  .city-role-option select{grid-column:2 / -1}
+}
+@media(max-width:420px){
+  .user-account-row{grid-template-columns:40px minmax(0,1fr);gap:8px;padding:10px}
+  .city-access-fieldset{padding:10px}
+  .city-role-option{grid-template-columns:20px minmax(0,1fr);gap:7px}
+  .city-role-option select{grid-column:2}
+}
