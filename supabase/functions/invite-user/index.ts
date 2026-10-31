@@ -171,7 +171,7 @@ Deno.serve(async (request) => {
   if (payload.action === 'list_google_authorized') {
     const { data: emails, error } = await admin
       .from('authorized_emails')
-      .select('email, role, city_id, created_at')
+      .select('email, role, city_id, city_ids, created_at')
       .order('created_at', { ascending: false })
       .limit(250);
     if (error) return respond({ error: 'Não foi possível carregar os e-mails autorizados.' }, 500);
@@ -232,7 +232,7 @@ Deno.serve(async (request) => {
     if (!existing) {
       const { error } = await admin.from('authorized_emails').insert({ email, role: 'operator', city_id: cityIds[0] ?? null, city_ids: cityIds });
       if (error?.code !== '23505' && error) return respond({ error: 'Não foi possível autorizar o e-mail na base de dados.' }, 500);
-    } else if (existing.role !== role) {
+    } else {
       const { error } = await admin.from('authorized_emails').update({ role, ...(cityIds.length ? { city_id: cityIds[0], city_ids: cityIds } : {}) }).eq('email', email);
       if (error) return respond({ error: 'Não foi possível atualizar a autorização do e-mail.' }, 500);
     }
@@ -276,10 +276,10 @@ Deno.serve(async (request) => {
     return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, city_id: authorized.city_id, city_ids: authorized.city_ids, firstAccessCode: code, codeUnavailable: false });
     } catch (error) {
       // Return the persisted allowlist state if a later optional step unexpectedly fails.
-      const { data: persisted } = await admin.from('authorized_emails').select('role').eq('email', email).maybeSingle();
+      const { data: persisted } = await admin.from('authorized_emails').select('role, city_id, city_ids').eq('email', email).maybeSingle();
       if (persisted && ['operator', 'admin'].includes(persisted.role)) {
         console.error('[authorize-google] authorized; optional step failed', error instanceof Error ? error.name : 'UnknownError');
-        return respond({ ok: true, authorized: true, role: persisted.role, already_authorized: true, firstAccessCode: null, codeUnavailable: true });
+        return respond({ ok: true, authorized: true, role: persisted.role, already_authorized: true, city_id: persisted.city_id, city_ids: persisted.city_ids, firstAccessCode: null, codeUnavailable: true });
       }
       console.error('[authorize-google] request failed', error instanceof Error ? error.name : 'UnknownError');
       return respond({ error: 'Não foi possível autorizar este e-mail Google. Atualize a tela e tente novamente.' }, 500);
