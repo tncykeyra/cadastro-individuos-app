@@ -155,7 +155,7 @@ Deno.serve(async (request) => {
     return respond({ error: 'Apenas administradores podem cadastrar usuários.' }, 403);
   }
 
-  let payload: { action?: string; email?: string; temporaryPassword?: string; userId?: string };
+  let payload: { action?: string; email?: string; temporaryPassword?: string; userId?: string; city_id?: string };
   try {
     payload = await request.json();
   } catch {
@@ -171,7 +171,7 @@ Deno.serve(async (request) => {
   if (payload.action === 'list_google_authorized') {
     const { data: emails, error } = await admin
       .from('authorized_emails')
-      .select('email, role, created_at')
+      .select('email, role, city_id, created_at')
       .order('created_at', { ascending: false })
       .limit(250);
     if (error) return respond({ error: 'Não foi possível carregar os e-mails autorizados.' }, 500);
@@ -192,11 +192,13 @@ Deno.serve(async (request) => {
       if ((count ?? 0) <= 1) return respond({ error: 'Não é possível revogar o último administrador.' }, 409);
     }
     if (targetProfile && targetProfile.role !== 'disabled') {
-      const { error } = await caller.rpc('admin_set_user_role', { target_user_id: targetProfile.id, target_role: 'disabled' });
+      const { error } = await admin.from('profiles').update({ role: 'disabled' }).eq('id', targetProfile.id);
       if (error) return respond({ error: 'Não foi possível bloquear o perfil deste usuário.' }, 500);
     }
     const { data: authorized, error: lookupError } = await admin.from('authorized_emails').select('email,role').eq('email', email).maybeSingle();
     if (lookupError) return respond({ error: 'Não foi possível consultar a autorização deste e-mail.' }, 500);
+    const { error: codeCleanupError } = await admin.from('email_first_access_codes').delete().eq('email', email);
+    if (codeCleanupError) return respond({ error: 'Não foi possível invalidar os códigos pendentes deste e-mail.' }, 500);
     const { error: revokeError } = await admin.from('authorized_emails').delete().eq('email', email);
     if (revokeError) {
       if (targetProfile && targetProfile.role !== 'disabled') await caller.rpc('admin_set_user_role', { target_user_id: targetProfile.id, target_role: targetProfile.role });
@@ -207,8 +209,15 @@ Deno.serve(async (request) => {
 
   if (payload.action === 'authorize-google') {
     try {
+    const cityId = String(payload.city_id ?? '').trim() || null;
+    if (cityId) {
+      const { data: master, error: masterError } = await caller.rpc('is_master_admin');
+      if (masterError || master !== true) return respond({ error: 'Somente o administrador master pode atribuir a cidade nesta autorização.' }, 403);
+      const { data: city, error: cityError } = await admin.from('cities').select('id,name,active').eq('id', cityId).maybeSingle();
+      if (cityError || !city?.active) return respond({ error: 'Selecione uma cidade ativa.' }, 400);
+    }
     const { data: existing, error: lookupError } = await admin
-      .from('authorized_emails').select('email, role').eq('email', email).maybeSingle();
+      .from('authorized_emails').select('email, role, city_id').eq('email', email).maybeSingle();
     if (lookupError) return respond({ error: 'Não foi possível consultar a lista de e-mails autorizados.' }, 500);
 
     const { data: disabledProfile, error: disabledProfileError } = await caller
@@ -219,15 +228,15 @@ Deno.serve(async (request) => {
     let role: string = existing?.role === 'admin' ? 'admin' : 'operator';
     const alreadyAuthorized = Boolean(existing);
     if (!existing) {
-      const { error } = await admin.from('authorized_emails').insert({ email, role: 'operator' });
+      const { error } = await admin.from('authorized_emails').insert({ email, role: 'operator', city_id: cityId });
       if (error?.code !== '23505' && error) return respond({ error: 'Não foi possível autorizar o e-mail na base de dados.' }, 500);
     } else if (existing.role !== role) {
-      const { error } = await admin.from('authorized_emails').update({ role }).eq('email', email);
+      const { error } = await admin.from('authorized_emails').update({ role, ...(cityId ? { city_id: cityId } : {}) }).eq('email', email);
       if (error) return respond({ error: 'Não foi possível atualizar a autorização do e-mail.' }, 500);
     }
 
     const { data: authorized, error: authorizedError } = await admin
-      .from('authorized_emails').select('email, role').eq('email', email).single();
+      .from('authorized_emails').select('email, role, city_id').eq('email', email).single();
     if (authorizedError || !authorized) return respond({ error: 'Não foi possível confirmar a autorização do e-mail.' }, 500);
     role = authorized.role;
 
@@ -244,6 +253,14 @@ Deno.serve(async (request) => {
       if (roleError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível atualizar um perfil pendente.' }, 500);
     }
 
+    if (cityId) {
+      for (const pending of pendingProfiles ?? []) {
+        const { error: assignmentError } = await caller.rpc('master_assign_user_cities', {
+          p_user_id: pending.id, p_city_ids: [cityId], p_role: role,
+        });
+        if (assignmentError) return respond({ error: 'O e-mail foi autorizado, mas a cidade não pôde ser atribuída ao perfil existente.' }, 500);
+      }
+    }
     const { code, error: codeError } = await issueActivationCode(admin, email, user.id);
     if (codeError || !code) {
       // The Google allowlist write is authoritative. The optional WhatsApp/password code
@@ -251,7 +268,7 @@ Deno.serve(async (request) => {
       console.error('[authorize-google] optional first-access code generation failed', codeError?.code ?? 'unknown');
       return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, firstAccessCode: null, codeUnavailable: true });
     }
-    return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, firstAccessCode: code, codeUnavailable: false });
+    return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, city_id: authorized.city_id, firstAccessCode: code, codeUnavailable: false });
     } catch (error) {
       // Return the persisted allowlist state if a later optional step unexpectedly fails.
       const { data: persisted } = await admin.from('authorized_emails').select('role').eq('email', email).maybeSingle();
