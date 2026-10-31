@@ -891,3 +891,12 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
   .drawer .nav-item{min-height:48px}
   .side-nav{gap:5px;padding:12px 0}
 }
+
+.city-access-fieldset{min-width:0;margin:4px 0;padding:12px;border:1px solid var(--line);border-radius:12px}
+.city-access-fieldset legend{padding:0 6px;font-weight:700}
+.city-access-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;max-height:220px;overflow:auto}
+.city-access-option{display:flex!important;align-items:center;gap:9px;min-width:0;min-height:42px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer}
+.city-access-option input{width:18px!important;height:18px;min-height:18px!important;flex:0 0 auto;accent-color:var(--brand)}
+.city-access-option span{overflow:hidden;text-overflow:ellipsis}
+.city-access-fieldset>small{display:block;margin-top:9px;color:var(--muted);line-height:1.45}
+@media(max-width:700px){.city-management-grid{grid-template-columns:minmax(0,1fr)}.city-management-panel{padding:14px}.city-access-options{grid-template-columns:minmax(0,1fr);max-height:260px}}
