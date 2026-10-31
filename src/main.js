@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { isUsefulSearch, normalizePlate, isValidPlate, dedupePhotoSources, formatPersonName, normalizeRecordPhotos } from './domain.js';
 import { buildRecordPdf } from './pdf.js';
 import { isValidCpf, mergeFiliationIntoNotes } from './ocr-domain.js';
-import { parseWarrantCsv, normalizeWarrantProcessNumber, extractWarrantSuggestions, extractWarrantPersonSuggestions, formatWarrantOcrProgress, resolveWarrantBatchValues } from './warrants.js';
+import { parseWarrantCsv, normalizeWarrantProcessNumber, isSpecificWarrantNumber, extractWarrantSuggestions, extractWarrantPersonSuggestions, formatWarrantOcrProgress, resolveWarrantBatchValues } from './warrants.js';
 import { processOcrFiles } from './ocr-engine.js';
 import { renderFiscalizationPage, wireFiscalizationActions } from './fiscalization.js';
 import { renderIntelligentEntry, parseIntelligentText, parseIntelligentBundle, inspectRecords, getSmartPersonSearchTerms, duplicateReviewPairKey } from './intelligent-tools.js';
@@ -369,13 +369,15 @@ async function warrantReadCsv(file){
   return parseWarrantCsv(text);
 }
 function warrantDuplicateKeys(record){
-  const keys=['number:'+String(record.source_agency||'BNMP').trim().toLocaleUpperCase('pt-BR')+'|'+String(record.warrant_number||'').trim().toLocaleUpperCase('pt-BR')];
+  const keys=[];
+  const number=String(record.warrant_number||'').trim().toLocaleUpperCase('pt-BR');
+  if(isSpecificWarrantNumber(number))keys.push('number:'+String(record.source_agency||'BNMP').trim().toLocaleUpperCase('pt-BR')+'|'+number);
   const processNumber=normalizeWarrantProcessNumber(record.source_reference||'');
   if(processNumber)keys.unshift('process:'+processNumber);
   return keys;
 }
 async function findWarrantDuplicateTargets(records){
-  const targets=new Map(),rows=[],processNumbers=[...new Set((records||[]).map(record=>normalizeWarrantProcessNumber(record.source_reference||'')).filter(Boolean))],numbers=[...new Set((records||[]).map(record=>String(record.warrant_number||'').trim().toLocaleUpperCase('pt-BR')).filter(Boolean))];
+  const targets=new Map(),rows=[],processNumbers=[...new Set((records||[]).map(record=>normalizeWarrantProcessNumber(record.source_reference||'')).filter(Boolean))],numbers=[...new Set((records||[]).map(record=>String(record.warrant_number||'').trim().toLocaleUpperCase('pt-BR')).filter(isSpecificWarrantNumber))];
   for(let offset=0;offset<processNumbers.length;offset+=100){const chunk=processNumbers.slice(offset,offset+100),{data,error}=await state.client.from('arrest_warrants').select('id,process_number_digits,warrant_number,source_agency').in('process_number_digits',chunk);if(error)throw error;rows.push(...(data||[]))}
   for(let offset=0;offset<numbers.length;offset+=100){const chunk=numbers.slice(offset,offset+100),{data,error}=await state.client.from('arrest_warrants').select('id,process_number_digits,warrant_number,source_agency').in('warrant_number',chunk);if(error)throw error;rows.push(...(data||[]))}
   for(const row of rows){if(row.process_number_digits)targets.set('process:'+row.process_number_digits,row);targets.set('number:'+String(row.source_agency||'BNMP').trim().toLocaleUpperCase('pt-BR')+'|'+String(row.warrant_number||'').trim().toLocaleUpperCase('pt-BR'),row)}
@@ -602,8 +604,10 @@ async function findWarrantDuplicateTarget(payload){
     const {data,error}=await state.client.from('arrest_warrants').select('id').eq('process_number_digits',processNumber).limit(1);
     if(error)throw error;if(data?.[0])return{warrantId:data[0].id,reason:'process_number'};
   }
-  const {data,error}=await state.client.from('arrest_warrants').select('id').eq('source_agency',payload.source_agency).eq('warrant_number',payload.warrant_number).limit(1);
-  if(error)throw error;if(data?.[0])return{warrantId:data[0].id,reason:'agency_warrant_number'};
+  if(isSpecificWarrantNumber(payload.warrant_number)){
+    const {data,error}=await state.client.from('arrest_warrants').select('id').eq('city_id',state.activeCityId).eq('source_agency',payload.source_agency).eq('warrant_number',payload.warrant_number).limit(1);
+    if(error)throw error;if(data?.[0])return{warrantId:data[0].id,reason:'agency_warrant_number'};
+  }
   return null;
 }
 async function saveWarrantRecord(values,file=null){
