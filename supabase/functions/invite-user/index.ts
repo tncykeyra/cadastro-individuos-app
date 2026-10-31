@@ -260,7 +260,7 @@ Deno.serve(async (request) => {
         .from('profiles').select('id').eq('email', email).in('role', ['operator', 'admin']);
       if (assignmentLookupError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível localizar o perfil para atribuir cidades.' }, 500);
       for (const existingProfile of profilesToAssign ?? []) {
-        const { error: assignmentError } = await caller.rpc('master_assign_user_cities', {
+        const { error: assignmentError } = await caller.rpc('master_replace_user_cities', {
           p_user_id: existingProfile.id, p_city_ids: cityIds, p_role: role,
         });
         if (assignmentError) return respond({ error: 'O e-mail foi autorizado, mas as cidades não puderam ser atribuídas ao perfil existente.' }, 500);
