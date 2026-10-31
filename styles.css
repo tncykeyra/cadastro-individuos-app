@@ -932,3 +932,98 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
   .city-role-option{grid-template-columns:20px minmax(0,1fr);gap:7px}
   .city-role-option select{grid-column:2}
 }
+
+
+/* Formulários de autorização: bloco vertical, sem sobreposição em telas estreitas. */
+.user-table:has(>#googleAuthorizeForm),
+.user-table:has(>#passwordUserForm){
+  overflow:visible;
+  background:transparent;
+  border:0;
+  border-radius:0;
+}
+#googleAuthorizeForm.user-create-row,
+#passwordUserForm.user-create-row{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  align-items:stretch!important;
+  gap:16px!important;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  margin:0;
+  padding:18px;
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:var(--surface);
+  overflow:visible;
+}
+#googleAuthorizeForm>.field,
+#passwordUserForm>.field,
+#googleAuthorizeForm>.city-access-fieldset{
+  grid-column:1/-1;
+  width:100%;
+  min-width:0;
+  margin:0;
+}
+#googleAuthorizeForm>.field input,
+#passwordUserForm>.field input{
+  width:100%;
+  min-width:0;
+  min-height:48px;
+  box-sizing:border-box;
+  font-size:16px;
+}
+#googleAuthorizeForm>.city-access-fieldset{
+  padding:14px;
+}
+#googleAuthorizeForm .city-access-options{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));
+  gap:9px;
+  width:100%;
+  max-height:min(38dvh,320px);
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+}
+#googleAuthorizeForm .city-role-option{
+  display:grid!important;
+  grid-template-columns:20px minmax(0,1fr)!important;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  min-width:0;
+  min-height:64px;
+}
+#googleAuthorizeForm .city-role-option .city-access-name{
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+#googleAuthorizeForm .city-role-option select{
+  grid-column:2;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  min-height:42px;
+  box-sizing:border-box;
+}
+#googleAuthorizeForm>.button,
+#passwordUserForm>.button{
+  grid-column:1/-1;
+  width:100%;
+  min-width:0;
+  min-height:48px;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+:root[data-theme="dark"] #googleAuthorizeForm.user-create-row,
+:root[data-theme="dark"] #passwordUserForm.user-create-row{
+  background:#000;
+}
+@media(max-width:620px){
+  #googleAuthorizeForm.user-create-row,
+  #passwordUserForm.user-create-row{padding:14px;gap:14px!important}
+  #googleAuthorizeForm>.city-access-fieldset{padding:11px}
+  #googleAuthorizeForm .city-access-options{grid-template-columns:minmax(0,1fr);max-height:42dvh}
+}
