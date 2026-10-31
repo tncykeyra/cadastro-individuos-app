@@ -62,4 +62,53 @@ begin
 end;
 $function$;
 
+
+-- Replace prior city memberships only when the master explicitly selects the full access set.
+create or replace function public.master_replace_user_cities(p_user_id uuid, p_city_ids uuid[], p_role text)
+returns void
+language plpgsql
+security definer
+set search_path=''
+as $function$
+declare
+  requested_count integer;
+  active_count integer;
+begin
+  if (select auth.uid()) is null or not public.is_master_admin() then
+    raise exception 'Somente o administrador master pode atribuir cidades.' using errcode='42501';
+  end if;
+  if p_role not in ('operator','admin') then
+    raise exception 'Perfil de cidade inválido.' using errcode='22023';
+  end if;
+  if not exists(select 1 from public.profiles p where p.id=p_user_id and p.role in ('operator','admin')) then
+    raise exception 'O usuário precisa ter concluído o primeiro acesso.' using errcode='22023';
+  end if;
+  if exists(select 1 from public.city_memberships m where m.user_id=p_user_id and m.is_master) then
+    raise exception 'O administrador master não pode receber vínculo local.' using errcode='42501';
+  end if;
+  select count(distinct selected.city_id) into requested_count
+  from unnest(coalesce(p_city_ids,array[]::uuid[])) selected(city_id);
+  if requested_count=0 then raise exception 'Selecione ao menos uma cidade.' using errcode='22023'; end if;
+  select count(distinct selected.city_id) into active_count
+  from unnest(p_city_ids) selected(city_id)
+  join public.cities c on c.id=selected.city_id and c.active;
+  if active_count<>requested_count then raise exception 'Uma ou mais cidades estão indisponíveis.' using errcode='22023'; end if;
+
+  delete from public.city_memberships m
+  where m.user_id=p_user_id and not m.is_master and not (m.city_id=any(p_city_ids));
+
+  insert into public.city_memberships(user_id,city_id,role,is_master,created_by)
+  select p_user_id,selected.city_id,p_role,false,(select auth.uid())
+  from (select distinct city_id from unnest(p_city_ids) selected(city_id)) selected
+  on conflict (user_id,city_id) do update
+    set role=excluded.role,is_master=false,created_by=(select auth.uid()),created_at=now();
+
+  update public.profiles p
+  set active_city_id=case when p.active_city_id=any(p_city_ids) then p.active_city_id else p_city_ids[1] end
+  where p.id=p_user_id;
+end;
+$function$;
+revoke all on function public.master_replace_user_cities(uuid,uuid[],text) from public,anon;
+grant execute on function public.master_replace_user_cities(uuid,uuid[],text) to authenticated;
+
 commit;
