@@ -11,7 +11,7 @@ const config={url:import.meta.env.VITE_SUPABASE_URL,key:import.meta.env.VITE_SUP
 const appIconUrl=import.meta.env.BASE_URL+'icon.svg?v=10';
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 if(!document.querySelector('[data-operator-ui-css]')){const styleLink=document.createElement('link');styleLink.rel='stylesheet';styleLink.href=import.meta.env.BASE_URL+'operator-tour.css?v=4';styleLink.dataset.operatorUiCss='';document.head.append(styleLink)}
-const state={client:null,session:null,profile:null,cities:[],activeCityId:null,cityRole:null,cityContextReady:false,cityAccessError:'',page:'dashboard',selected:null,query:'',searchInput:'',people:[],vehicles:[],profiles:[],revisions:[],loading:false,searchTimer:null,searchRequest:0,lastSearchKey:'',searchLoading:false,install:null,passwordSetup:false,smartInitialKind:'person',smartExactMatch:false,smartMatchesCount:0,teamTab:'google',teamPage:'authorize',teamCreatedUser:null,editingAuthorizedEmail:null,pendingIdentityCount:null,pendingWarrantReviewCount:null,pendingVehiclePlateCount:null,warrantTab:'list',revisionOffset:0,revisionTotal:0,revisionFilters:{entity:'all',action:'all',actor:'all',from:'',to:''},historyProfiles:[],historyPeople:[],historyVehicles:[],letter:'all',listPage:0,listPageSize:30,listTotal:0,serverPaged:false,routeStack:[],modalHistory:false,drawerHistory:false,ignoreNavigationPop:false,closingModalFromBack:false,warrantPdfPickerActive:false,warrantPdfPickerTimer:null ,warrantQuery:''};
+const state={client:null,session:null,profile:null,cities:[],activeCityId:null,cityRole:null,cityContextReady:false,cityAccessError:'',page:'dashboard',selected:null,query:'',searchInput:'',people:[],vehicles:[],profiles:[],revisions:[],loading:false,searchTimer:null,searchRequest:0,lastSearchKey:'',searchLoading:false,install:null,passwordSetup:false,smartInitialKind:'person',smartExactMatch:false,smartMatchesCount:0,teamTab:'google',teamPage:'authorize',teamCreatedUser:null,editingAuthorizedEmail:null,pendingIdentityCount:null,pendingWarrantReviewCount:null,pendingWarrantDuplicateCount:0,pendingVehiclePlateCount:null,warrantTab:'list',revisionOffset:0,revisionTotal:0,revisionFilters:{entity:'all',action:'all',actor:'all',from:'',to:''},historyProfiles:[],historyPeople:[],historyVehicles:[],letter:'all',listPage:0,listPageSize:30,listTotal:0,serverPaged:false,routeStack:[],modalHistory:false,drawerHistory:false,ignoreNavigationPop:false,closingModalFromBack:false,warrantPdfPickerActive:false,warrantPdfPickerTimer:null ,warrantQuery:''};
 const icon={dashboard:'▦',people:'♙',vehicles:'⌑',warrants:'⚖',fiscalization:'🚦',team:'♧',history:'↺',smart:'✨',review:'🔎',maintenance:'🛠️',cities:'⌖'};
 const shareIcon=()=>'<svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.7 6.8-4.1M8.6 13.3l6.8 4.1"/></svg>';
 const label={dashboard:'Dashboard',people:'Indivíduos',vehicles:'Veículos',warrants:'Mandados',fiscalization:'Fiscalização',team:'Usuários',history:'Histórico',smart:'Cadastro Inteligente',review:'Revisão Inteligente',maintenance:'Manutenção Inteligente',cities:'Cidades e acessos'};
@@ -312,7 +312,7 @@ async function renderWarrants(){
     if(proposalResult.error)throw proposalResult.error;
     if(duplicateResult.error)throw duplicateResult.error;
     matches=matchResult.data||[];proposals=proposalResult.data||[];duplicateSubmissions=duplicateResult.data||[];
-    state.pendingWarrantReviewCount=matches.length+proposals.length+duplicateSubmissions.length;nav();
+    state.pendingWarrantDuplicateCount=duplicateSubmissions.length;state.pendingWarrantReviewCount=matches.length+proposals.length+duplicateSubmissions.length;nav();
   }
   if(rows.length){
     const rowIds=rows.map(w=>w.id);
@@ -355,7 +355,7 @@ async function renderWarrants(){
   if(!admin)state.warrantTab='list';
   const tabBar=admin?'<nav class="warrant-tabs" aria-label="Seções de mandados"><button type="button" class="team-tab warrant-tab '+(state.warrantTab==='list'?'active':'')+'" data-warrant-tab="list">Mandados incluídos <span>'+rows.length+'</span></button><button type="button" class="team-tab warrant-tab '+(state.warrantTab==='include'?'active':'')+'" data-warrant-tab="include">Incluir mandados</button><button type="button" class="team-tab warrant-tab '+(state.warrantTab==='review'?'active':'')+'" data-warrant-tab="review">Revisão <span>'+(matches.length+proposals.length+duplicateSubmissions.length)+'</span></button></nav>':'';
   const inclusionSection='<section class="warrant-inclusion-section"><div class="warrant-section-title"><div><h2>Incluir mandados</h2><p>Importe uma planilha, envie até '+MAX_WARRANT_PDF_BATCH+' PDFs ou cadastre um mandado.</p></div></div>'+toolsHtml+'</section>';
-  const activeSection='<section class="warrant-active-section"><div class="warrant-section-title"><div><h2>'+(admin?'Mandados já incluídos':'Mandados vinculados')+'</h2><p>Registros disponíveis conforme seu perfil.</p></div>'+(admin?'<button type="button" class="button danger small" data-warrant-delete-all '+(rows.length?'':'disabled')+'>Excluir todos os mandados</button>':'')+'</div>'+searchBox+list+'<div class="empty warrant-search-empty" data-warrant-search-empty hidden>Nenhum mandado corresponde à pesquisa.</div></section>';
+  const activeSection='<section class="warrant-active-section"><div class="warrant-section-title"><div><h2>'+(admin?'Mandados já incluídos':'Mandados vinculados')+'</h2><p>Registros disponíveis conforme seu perfil.</p></div>'+(admin?'<button type="button" class="button danger small" data-warrant-delete-all '+(rows.length+duplicateSubmissions.length?'':'disabled')+'>Excluir todos os mandados</button>':'')+'</div>'+searchBox+list+'<div class="empty warrant-search-empty" data-warrant-search-empty hidden>Nenhum mandado corresponde à pesquisa.</div></section>';
   const tabContent=admin?(state.warrantTab==='include'?inclusionSection:state.warrantTab==='review'?reviewHtml:activeSection):activeSection;
   frame('<section class="page-section warrants-page"><header class="warrant-page-header"><div><p class="eyebrow">CADASTRO CRIMINAL</p><h1>Mandados de prisão</h1><p class="muted">'+(admin?'Consulte, inclua e revise mandados de prisão.':'Consulte os mandados vinculados a indivíduos revisados pela administração.')+'</p></div>'+(admin?'<span class="warrant-admin-pill">Área administrativa</span>':'')+'</header>'+tabBar+tabContent+'</section>');
   document.querySelectorAll('[data-warrant-tab]').forEach(button=>button.addEventListener('click',async()=>{state.warrantTab=button.dataset.warrantTab;saveLastView();await renderWarrants()}));
@@ -459,9 +459,9 @@ function showWarrantEditDialog(warrantId){
 
 function showWarrantDeleteAllDialog(){
   if(!isAdmin())throw new Error('Apenas administradores podem excluir mandados.');
-  const count=warrantEditRecords.size;
-  if(!count)throw new Error('Não há mandados para excluir.');
-  $('#recordDialog').innerHTML='<button class="close" type="button" data-close aria-label="Fechar">×</button><div class="dialog-content"><p class="eyebrow">EXCLUSÃO ADMINISTRATIVA</p><h2>Excluir todos os mandados?</h2><p>Esta ação removerá '+count+' mandado(s), vínculos e PDFs anexados. Os registros de auditoria serão preservados. A exclusão não pode ser desfeita.</p><form id="warrantDeleteAllForm"><label class="field">Para confirmar, digite APAGAR TODOS<input name="confirmation" required autocomplete="off" spellcheck="false"></label><div class="dialog-actions"><button class="button secondary" type="button" data-close>Cancelar</button><button class="button danger" type="submit">Excluir todos</button></div></form></div>';
+  const warrantCount=warrantEditRecords.size,submissionCount=Number(state.pendingWarrantDuplicateCount)||0,count=warrantCount+submissionCount;
+  if(!count)throw new Error('Não há mandados ou pendências para excluir nesta cidade.');
+  $('#recordDialog').innerHTML='<button class="close" type="button" data-close aria-label="Fechar">×</button><div class="dialog-content"><p class="eyebrow">EXCLUSÃO ADMINISTRATIVA</p><h2>Excluir mandados e pendências?</h2><p>Esta ação removerá '+warrantCount+' mandado(s) e '+submissionCount+' pendência(s) desta cidade, além dos vínculos e PDFs anexados. Os registros de auditoria serão preservados. A exclusão não pode ser desfeita.</p><form id="warrantDeleteAllForm"><label class="field">Para confirmar, digite APAGAR TODOS<input name="confirmation" required autocomplete="off" spellcheck="false"></label><div class="dialog-actions"><button class="button secondary" type="button" data-close>Cancelar</button><button class="button danger" type="submit">Excluir todos</button></div></form></div>';
   showTrackedDialog($('#recordDialog'));
 }
 async function submitWarrantDeleteAll(event){
@@ -481,7 +481,7 @@ async function submitWarrantDeleteAll(event){
     }
     const deleted=Number(data?.deleted_count)||0;
     warrantSearchResults.clear();warrantEditRecords.clear();$('#recordDialog').close();
-    toast(storageWarning?'Mandados excluídos ('+deleted+').'+storageWarning:'Todos os '+deleted+' mandados foram excluídos. O histórico de auditoria foi preservado.');
+    toast(storageWarning?'Mandados e pendências removidos desta cidade.'+storageWarning:'Mandados e pendências desta cidade foram removidos. PDFs anexados excluídos; histórico de auditoria preservado.');
     await renderWarrants();
   }finally{if(submit&&$('#recordDialog')?.open)submit.disabled=false}
 }
