@@ -60,7 +60,7 @@ async function loadCityContext(){
   }
 }
 function nav(){
-  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 0.1.42';
+  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 0.1.44';
   const allowed=!!state.session&&['operator','admin'].includes(state.profile?.role)&&!(state.cityContextReady&&!state.cities.length);
   const admin=isAdmin(),master=isMasterAdmin();
   const sideItems=allowed?[['dashboard','Dashboard'],['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados'],['fiscalization','Fiscalização'],['smart','Cadastro Inteligente'],...(admin?[['review','Revisão Inteligente'],['maintenance','Manutenção Inteligente'],['history','Histórico']]:[]),...(master?[['team','Usuários'],['cities','Cidades e acessos']]:[])]:[];
@@ -247,7 +247,7 @@ function warrantRecordMarkup(warrant,admin,docsById,linkedPeople=[]){
 function warrantPdfBatchMarkup(){
   if(!isAdmin()||!warrantPdfBatch.length)return '';
   const fields=[['warrant_number','Número do mandado','text',120],['full_name','Nome completo','text',180],['cpf','CPF','text',14],['person_rg','RG','text',100],['birth_date','Data de nascimento','date',10],['person_address_primary','Endereço','text',1000],['source_reference','Processo/referência','text',200],['person_filiation','Filiação','textarea',2000],['person_process_information','Informações processuais','textarea',12000]];
-  const cards=warrantPdfBatch.map((entry,index)=>{const values=entry.values||{};return '<article class="warrant-pdf-batch-row" data-warrant-pdf-batch-row="'+index+'"><div class="warrant-pdf-batch-heading"><div><strong>'+esc(entry.file.name)+'</strong><small>'+Math.ceil(entry.file.size/1024)+' KB · PDF privado</small></div><button class="button secondary small" type="button" data-warrant-pdf-remove="'+index+'"'+(warrantPdfBatchSaving||warrantPdfBatchReading?' disabled':'')+'>Remover</button></div><p class="warrant-pdf-batch-status" data-warrant-pdf-batch-status="'+index+'" role="status" aria-live="polite">'+esc(entry.status||'Aguardando leitura…')+'</p><div class="warrant-pdf-batch-fields">'+fields.map(([name,label,type,max])=>{const value=values[name]||'';return '<label'+(type==='textarea'?' class="warrant-batch-full"':'')+'>'+label+(type==='textarea'?'<textarea name="'+name+'" maxlength="'+max+'" data-warrant-pdf-batch-field="'+name+'" data-index="'+index+'">'+esc(value)+'</textarea>':'<input name="'+name+'" type="'+type+'" maxlength="'+max+'" value="'+esc(value)+'" data-warrant-pdf-batch-field="'+name+'" data-index="'+index+'">')+'</label>'}).join('')+'</div></article>'}).join('');
+  const cards=warrantPdfBatch.map((entry,index)=>{const values=entry.values||{};return '<article class="warrant-pdf-batch-row" data-warrant-pdf-batch-row="'+index+'"><div class="warrant-pdf-batch-heading"><div><strong>'+esc(entry.file.name)+'</strong><small>'+Math.ceil(entry.file.size/1024)+' KB · PDF privado</small></div><button class="button secondary small" type="button" data-warrant-pdf-remove="'+index+'"'+(warrantPdfBatchSaving||warrantPdfBatchReading?' disabled':'')+'>Remover</button></div><p class="warrant-pdf-batch-status" data-warrant-pdf-batch-status="'+index+'" role="status" aria-live="polite">'+esc(entry.status||'Aguardando leitura…')+'</p><div class="warrant-pdf-batch-fields">'+fields.map(([name,label,type,max])=>{const value=values[name]||'';return '<label'+(type==='textarea'?' class="warrant-batch-full"':'')+'>'+label+(type==='textarea'?'<textarea name="'+name+'" maxlength="'+max+'"'+(warrantPdfBatchSaving||warrantPdfBatchReading?' disabled':'')+' data-warrant-pdf-batch-field="'+name+'" data-index="'+index+'">'+esc(value)+'</textarea>':'<input name="'+name+'" type="'+type+'" maxlength="'+max+'" value="'+esc(value)+'"'+(warrantPdfBatchSaving||warrantPdfBatchReading?' disabled':'')+' data-warrant-pdf-batch-field="'+name+'" data-index="'+index+'">')+'</label>'}).join('')+'</div></article>'}).join('');
   return '<section class="warrant-pdf-batch-queue"><div class="warrant-section-title"><div><h2>PDFs para conferir</h2><p>'+warrantPdfBatch.length+' arquivo(s) na fila. Confira ou complete cada ficha antes de salvar.</p></div></div><div class="warrant-pdf-batch-list">'+cards+'</div><div class="warrant-actions"><button class="button" type="button" data-warrant-save-pdf-batch'+(warrantPdfBatchSaving||warrantPdfBatchReading?' disabled':'')+'>Salvar mandados da fila</button><button class="button secondary" type="button" data-warrant-clear-pdf-batch'+(warrantPdfBatchSaving||warrantPdfBatchReading?' disabled':'')+'>Limpar fila</button></div></section>';
 }
 
@@ -303,25 +303,40 @@ async function renderWarrants(){
   }
   let rows=warrants,matches=[],confirmedMatches=[],docsById=new Map(),proposals=[],duplicateSubmissions=[];
   if(admin){
-    const {data:pendingMatches,error:matchError}=await state.client.from('arrest_warrant_matches').select('id,warrant_id,person_id,match_basis,confidence,review_status,created_at').eq('review_status','candidate').order('created_at',{ascending:false}).limit(200);
-    if(matchError)throw matchError;matches=pendingMatches||[];
-    const {data:pendingProposals,error:proposalError}=await state.client.from('arrest_warrant_person_proposals').select('id,warrant_id,full_name,cpf_digits,rg,birth_date,address_primary,filiation,process_information,created_at').eq('status','pending').order('created_at',{ascending:false}).limit(100);
-    if(proposalError)throw proposalError;proposals=pendingProposals||[];
-    const {data:pendingDuplicates,error:duplicateError}=await state.client.from('arrest_warrant_duplicate_submissions').select('id,matched_warrant_id,source_kind,duplicate_reason,payload,storage_path,document_name,file_size_bytes,content_sha256,created_at').eq('status','pending').order('created_at',{ascending:false}).limit(200);
-    if(duplicateError)throw duplicateError;duplicateSubmissions=pendingDuplicates||[];
+    const [matchResult,proposalResult,duplicateResult]=await Promise.all([
+      state.client.from('arrest_warrant_matches').select('id,warrant_id,person_id,match_basis,confidence,review_status,created_at').eq('review_status','candidate').order('created_at',{ascending:false}).limit(200),
+      state.client.from('arrest_warrant_person_proposals').select('id,warrant_id,full_name,cpf_digits,rg,birth_date,address_primary,filiation,process_information,created_at').eq('status','pending').order('created_at',{ascending:false}).limit(100),
+      state.client.from('arrest_warrant_duplicate_submissions').select('id,matched_warrant_id,source_kind,duplicate_reason,payload,storage_path,document_name,file_size_bytes,content_sha256,created_at').eq('status','pending').order('created_at',{ascending:false}).limit(200)
+    ]);
+    if(matchResult.error)throw matchResult.error;
+    if(proposalResult.error)throw proposalResult.error;
+    if(duplicateResult.error)throw duplicateResult.error;
+    matches=matchResult.data||[];proposals=proposalResult.data||[];duplicateSubmissions=duplicateResult.data||[];
     state.pendingWarrantReviewCount=matches.length+proposals.length+duplicateSubmissions.length;nav();
   }
   if(rows.length){
-    for(let i=0;i<rows.length;i+=200){const ids=rows.slice(i,i+200).map(w=>w.id);const {data:confirmed,error:matchError}=await state.client.from('arrest_warrant_matches').select('warrant_id,person_id').in('warrant_id',ids).eq('review_status','confirmed');if(matchError)throw matchError;confirmedMatches.push(...(confirmed||[]))}
+    const rowIds=rows.map(w=>w.id);
+    const confirmedResults=await Promise.all(Array.from({length:Math.ceil(rowIds.length/200)},(_,chunk)=>state.client.from('arrest_warrant_matches').select('warrant_id,person_id').in('warrant_id',rowIds.slice(chunk*200,(chunk+1)*200)).eq('review_status','confirmed')));
+    for(const result of confirmedResults){if(result.error)throw result.error;confirmedMatches.push(...(result.data||[]))}
     if(!admin){const allowed=new Set(confirmedMatches.map(m=>m.warrant_id));rows=rows.filter(w=>allowed.has(w.id))}
   }
   if(rows.length){
-    for(let i=0;i<rows.length;i+=200){const ids=rows.slice(i,i+200).map(w=>w.id);const {data:docs,error:docError}=await state.client.from('arrest_warrant_documents').select('id,warrant_id,storage_path,file_name').in('warrant_id',ids);if(docError)throw docError;for(const doc of docs||[]){const list=docsById.get(doc.warrant_id)||[];list.push(doc);docsById.set(doc.warrant_id,list)}}
+    const rowIds=rows.map(w=>w.id);
+    const documentResults=await Promise.all(Array.from({length:Math.ceil(rowIds.length/200)},(_,chunk)=>state.client.from('arrest_warrant_documents').select('id,warrant_id,storage_path,file_name').in('warrant_id',rowIds.slice(chunk*200,(chunk+1)*200))));
+    for(const result of documentResults){
+      if(result.error)throw result.error;
+      for(const doc of result.data||[]){const list=docsById.get(doc.warrant_id)||[];list.push(doc);docsById.set(doc.warrant_id,list)}
+    }
   }
   const candidateWarrantIds=[...new Set(matches.map(m=>m.warrant_id))],personIds=[...new Set([...matches.map(m=>m.person_id),...confirmedMatches.map(m=>m.person_id)])];
   let warrantMap=new Map(),personMap=new Map();
-  if(candidateWarrantIds.length){const {data,error}=await state.client.from('arrest_warrants').select(warrantSelect).in('id',candidateWarrantIds);if(error)throw error;warrantMap=new Map((data||[]).map(w=>[w.id,w]))}
-  if(personIds.length){for(let i=0;i<personIds.length;i+=200){const ids=personIds.slice(i,i+200);const {data,error}=await state.client.from('people').select('id,full_name,birthday,photo_path').in('id',ids);if(error)throw error;for(const person of data||[])personMap.set(person.id,person)}}
+  const [candidateWarrantsResult,...personResults]=await Promise.all([
+    candidateWarrantIds.length?state.client.from('arrest_warrants').select(warrantSelect).in('id',candidateWarrantIds):Promise.resolve({data:[],error:null}),
+    ...Array.from({length:Math.ceil(personIds.length/200)},(_,chunk)=>state.client.from('people').select('id,full_name,birthday,photo_path').in('id',personIds.slice(chunk*200,(chunk+1)*200)))
+  ]);
+  if(candidateWarrantsResult.error)throw candidateWarrantsResult.error;
+  warrantMap=new Map((candidateWarrantsResult.data||[]).map(w=>[w.id,w]));
+  for(const result of personResults){if(result.error)throw result.error;for(const person of result.data||[])personMap.set(person.id,person)}
   warrantEditRecords.clear();for(const warrant of rows)warrantEditRecords.set(warrant.id,warrant);
   const linkedPeopleByWarrant=new Map();
   for(const match of confirmedMatches){const person=personMap.get(match.person_id);if(!person)continue;const linked=linkedPeopleByWarrant.get(match.warrant_id)||[];linked.push(person);linkedPeopleByWarrant.set(match.warrant_id,linked)}
@@ -751,35 +766,42 @@ async function saveWarrantPdfBatch(){
   if(!warrantPdfBatch.length)throw new Error('Selecione ao menos um PDF.');
   warrantPdfBatchSaving=true;
   const initialCount=warrantPdfBatch.length;let saved=0,failed=0,partial=0,reviewCount=0,duplicateCount=0;
+  const fields=['warrant_number','full_name','cpf','person_rg','birth_date','person_address_primary','source_agency','source_reference','person_filiation','person_process_information'];
+  const prepared=warrantPdfBatch.map((entry,index)=>{
+    const row=document.querySelector('[data-warrant-pdf-batch-row="'+index+'"]'),editedValues={};
+    for(const name of fields){const input=row?.querySelector('[name="'+name+'"]');if(input)editedValues[name]=input.value}
+    const values=resolveWarrantBatchValues(entry.values,editedValues,fields);
+    entry.values=values;return{entry,index,values};
+  });
+  updateWarrantBatchQueue();
+  const parallelSlots=3;let nextIndex=0;
   try{
-    for(let index=0;index<warrantPdfBatch.length;index++){
-      const entry=warrantPdfBatch[index],row=document.querySelector('[data-warrant-pdf-batch-row="'+index+'"]');
-      const fields=['warrant_number','full_name','cpf','person_rg','birth_date','person_address_primary','source_agency','source_reference','person_filiation','person_process_information'];
-      const editedValues={};
-      for(const name of fields){const input=row?.querySelector('[name="'+name+'"]');if(input)editedValues[name]=input.value}
-      const values=resolveWarrantBatchValues(entry.values,editedValues,fields);
-      entry.values=values;await persistWarrantQueueEntry(entry).catch(error=>console.warn('Não foi possível salvar os campos da fila localmente.',error));
-      warrantBatchStatus(index,'Salvando mandado '+(index+1)+' de '+initialCount+'…');
-      try{
-        let result;
-        if(entry.persistedWarrantId&&entry.uploadedDocumentPath){
-          const {error}=await state.client.from('arrest_warrant_documents').insert({warrant_id:entry.persistedWarrantId,storage_path:entry.uploadedDocumentPath,file_name:entry.file.name.slice(0,220),content_type:'application/pdf',file_size_bytes:entry.file.size,created_by:state.session.user.id});
-          if(error)throw error;
-          result={id:entry.persistedWarrantId,reviewMessage:entry.reviewMessage||'',documentSaved:true,documentWarning:''};
-        }else{
-          result=await saveWarrantRecord(values,entry.file);
-          if(!result.documentSaved&&result.documentPath){
-            entry.persistedWarrantId=result.id;entry.uploadedDocumentPath=result.documentPath;entry.reviewMessage=result.reviewMessage;
-            partial++;entry.status='Mandado criado; vínculo do PDF pendente. Toque em “Salvar mandados da fila” para tentar novamente.';
-            warrantBatchStatus(index,entry.status);continue;
+    await Promise.all(Array.from({length:Math.min(parallelSlots,prepared.length)},async()=>{
+      while(nextIndex<prepared.length){
+        const item=prepared[nextIndex++],{entry,index,values}=item;
+        await persistWarrantQueueEntry(entry).catch(error=>console.warn('Não foi possível salvar os campos da fila localmente.',error));
+        warrantBatchStatus(index,'Salvando mandado '+(index+1)+' de '+initialCount+'…');
+        try{
+          let result;
+          if(entry.persistedWarrantId&&entry.uploadedDocumentPath){
+            const {error}=await state.client.from('arrest_warrant_documents').insert({warrant_id:entry.persistedWarrantId,storage_path:entry.uploadedDocumentPath,file_name:entry.file.name.slice(0,220),content_type:'application/pdf',file_size_bytes:entry.file.size,created_by:state.session.user.id});
+            if(error)throw error;
+            result={id:entry.persistedWarrantId,reviewMessage:entry.reviewMessage||'',documentSaved:true,documentWarning:''};
+          }else{
+            result=await saveWarrantRecord(values,entry.file);
+            if(!result.documentSaved&&result.documentPath){
+              entry.persistedWarrantId=result.id;entry.uploadedDocumentPath=result.documentPath;entry.reviewMessage=result.reviewMessage;
+              partial++;entry.status='Mandado criado; vínculo do PDF pendente. Toque em “Salvar mandados da fila” para tentar novamente.';
+              warrantBatchStatus(index,entry.status);continue;
+            }
           }
-        }
-        entry.saved=true;saved++;if(result.duplicatePending)duplicateCount++;else if(result.reviewMessage)reviewCount++;
-        entry.status=result.duplicatePending?'Possível duplicidade preservada para revisão administrativa.':'Mandado e PDF salvos.'+result.reviewMessage;
-        await deletePersistedWarrantQueueEntry(entry);
-        warrantBatchStatus(index,entry.status);
-      }catch(error){failed++;entry.status='Não concluído: '+msg(error);warrantBatchStatus(index,entry.status)}
-    }
+          entry.saved=true;saved++;if(result.duplicatePending)duplicateCount++;else if(result.reviewMessage)reviewCount++;
+          entry.status=result.duplicatePending?'Possível duplicidade preservada para revisão administrativa.':'Mandado e PDF salvos.'+result.reviewMessage;
+          await deletePersistedWarrantQueueEntry(entry);
+          warrantBatchStatus(index,entry.status);
+        }catch(error){failed++;entry.status='Não concluído: '+msg(error);warrantBatchStatus(index,entry.status)}
+      }
+    }));
   }finally{warrantPdfBatchSaving=false}
   warrantPdfBatch=warrantPdfBatch.filter(entry=>!entry.saved);
   if(saved)warrantSearchResults.clear();
