@@ -252,9 +252,14 @@ Deno.serve(async (request) => {
       return respond({ error: 'Selecione ao menos uma cidade e escolha um perfil válido em cada uma.' }, 400);
     }
     const cityIds = requestedCityRoles.map(item => item.city_id);
-    const { data: cities, error: cityError } = await admin.from('cities').select('id,active').in('id', cityIds);
-    if (cityError || (cities ?? []).length !== cityIds.length || (cities ?? []).some(city => !city.active)) {
-      return respond({ error: 'Uma ou mais cidades selecionadas estão indisponíveis.' }, 400);
+    const { data: cities, error: cityError } = await admin.from('cities').select('id,name,active').in('id', cityIds);
+    if (cityError) return respond({ error: 'Não foi possível consultar as cidades agora. Tente novamente. (consulta de disponibilidade)' }, 503);
+    const availableById = new Map((cities ?? []).map(city => [city.id, city]));
+    const missing = cityIds.filter(id => !availableById.has(id));
+    const inactive = cityIds.map(id => availableById.get(id)).filter(city => city && city.active !== true).map(city => city.name);
+    if (missing.length || inactive.length) {
+      const details = [...inactive, ...(missing.length ? ['cidade não encontrada'] : [])].join(', ');
+      return respond({ error: 'Não foi possível salvar os acessos: ' + details + '. Atualize a lista de cidades e tente novamente.' }, 400);
     }
     const { data: authorizationRow, error: authorizationLookupError } = await admin
       .from('authorized_emails').select('email, role, city_id, city_ids, city_roles').eq('email', email).maybeSingle();
@@ -334,9 +339,14 @@ Deno.serve(async (request) => {
     if (cityIds.length) {
       const { data: master, error: masterError } = await caller.rpc('is_master_admin');
       if (masterError || master !== true) return respond({ error: 'Somente o administrador master pode atribuir cidades nesta autorização.' }, 403);
-      const { data: cities, error: cityError } = await admin.from('cities').select('id,active').in('id', cityIds);
-      if (cityError || (cities ?? []).length !== cityIds.length || (cities ?? []).some(city => !city.active)) {
-        return respond({ error: 'Uma ou mais cidades selecionadas estão indisponíveis.' }, 400);
+      const { data: cities, error: cityError } = await admin.from('cities').select('id,name,active').in('id', cityIds);
+      if (cityError) return respond({ error: 'Não foi possível consultar as cidades agora. Tente novamente. (consulta de disponibilidade)' }, 503);
+      const availableById = new Map((cities ?? []).map(city => [city.id, city]));
+      const missing = cityIds.filter(id => !availableById.has(id));
+      const inactive = cityIds.map(id => availableById.get(id)).filter(city => city && city.active !== true).map(city => city.name);
+      if (missing.length || inactive.length) {
+        const details = [...inactive, ...(missing.length ? ['cidade não encontrada'] : [])].join(', ');
+        return respond({ error: 'Não foi possível autorizar: ' + details + '. Atualize a lista de cidades e tente novamente.' }, 400);
       }
     }
     const { data: existing, error: lookupError } = await admin
