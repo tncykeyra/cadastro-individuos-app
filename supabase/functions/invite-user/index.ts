@@ -353,7 +353,7 @@ Deno.serve(async (request) => {
       .from('authorized_emails').select('email, role, city_id, city_ids, city_roles').eq('email', email).maybeSingle();
     if (lookupError) return respond({ error: 'Não foi possível consultar a lista de e-mails autorizados.' }, 500);
 
-    const { data: disabledProfile, error: disabledProfileError } = await caller
+    const { data: disabledProfile, error: disabledProfileError } = await admin
       .from('profiles').select('id').eq('email', email).eq('role', 'disabled').limit(1).maybeSingle();
     if (disabledProfileError) return respond({ error: 'Não foi possível verificar o perfil deste e-mail.' }, 500);
     if (disabledProfile) return respond({ error: 'O perfil está desativado. Reative-o na lista de Usuários antes de gerar um código.' }, 409);
@@ -382,7 +382,7 @@ Deno.serve(async (request) => {
     if (!['operator', 'admin'].includes(role)) {
       return respond({ error: 'Este papel não pode receber um código de primeiro acesso.' }, 409);
     }
-    const { data: pendingProfiles, error: pendingError } = await caller
+    const { data: pendingProfiles, error: pendingError } = await admin
       .from('profiles').select('id').eq('email', email).eq('role', 'pending').limit(10);
     if (pendingError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível atualizar um perfil pendente.' }, 500);
     for (const pending of pendingProfiles ?? []) {
@@ -393,7 +393,7 @@ Deno.serve(async (request) => {
     }
 
     if (cityIds.length) {
-      const { data: profilesToAssign, error: assignmentLookupError } = await caller
+      const { data: profilesToAssign, error: assignmentLookupError } = await admin
         .from('profiles').select('id').eq('email', email).in('role', ['operator', 'admin']);
       if (assignmentLookupError) return respond({ error: 'O e-mail foi autorizado, mas não foi possível localizar o perfil para atribuir cidades.' }, 500);
       for (const existingProfile of profilesToAssign ?? []) {
