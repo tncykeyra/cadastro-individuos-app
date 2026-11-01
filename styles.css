@@ -1072,3 +1072,22 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
 .cross-city-person-alert small{color:#586970}
 :root[data-theme="dark"] .cross-city-person-alert{border-color:#34464d;border-left-color:#78a8b6;background:#101719;color:#f0f5f6}
 :root[data-theme="dark"] .cross-city-person-alert small{color:#bdc9cd}
+
+
+/* Alinha as ações de associação em detalhes de pessoa e veículo no mobile. */
+@media(max-width:620px){
+  .association-section-heading{
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    justify-items:stretch;
+    align-items:start;
+    gap:10px;
+  }
+  .association-section-heading h2{min-width:0;line-height:1.25}
+  .association-section-heading>.button{
+    justify-self:stretch;
+    width:100%;
+    min-height:46px;
+    white-space:normal;
+  }
+}
