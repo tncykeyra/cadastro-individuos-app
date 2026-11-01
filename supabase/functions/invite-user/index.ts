@@ -484,21 +484,29 @@ Deno.serve(async (request) => {
     const cityRolesToSave = requestedCityRoles.length
       ? requestedCityRoles
       : cityIds.map(city_id => ({ city_id, role }));
-    const cityAssignment = cityIds.length
-      ? { city_id: cityIds[0], city_ids: cityIds, city_roles: cityRolesToSave }
-      : {};
-    if (!existing) {
-      const { error } = await admin.from('authorized_emails').insert({ email, role, city_id: cityIds[0] ?? null, city_ids: cityIds, city_roles: cityRolesToSave });
-      if (error?.code !== '23505' && error) return respond({ error: 'Não foi possível autorizar o e-mail na base de dados.' }, 500);
-    } else {
-      const { error } = await admin.from('authorized_emails').update({ role, ...cityAssignment }).eq('email', email);
-      if (error) return respond({ error: 'Não foi possível atualizar a autorização do e-mail.' }, 500);
+    if (!cityIds.length || !cityRolesToSave.length) {
+      return respond({ error: 'Selecione ao menos uma cidade e uma função antes de autorizar o e-mail.' }, 400);
+    }
+    // Upsert makes a repeated/concurrent authorization apply the latest city and role choices
+    // instead of treating a unique-key race as a successful no-op.
+    const { error: authorizationWriteError } = await admin.from('authorized_emails').upsert({
+      email, role, city_id: cityIds[0], city_ids: cityIds, city_roles: cityRolesToSave,
+    }, { onConflict: 'email' });
+    if (authorizationWriteError) {
+      return respond({ error: 'Não foi possível salvar a autorização. Nenhuma confirmação de acesso foi emitida.' }, 500);
     }
 
     const { data: authorized, error: authorizedError } = await admin
       .from('authorized_emails').select('email, role, city_id, city_ids, city_roles').eq('email', email).single();
     if (authorizedError || !authorized) return respond({ error: 'Não foi possível confirmar a autorização do e-mail.' }, 500);
     role = authorized.role;
+    const savedCityRoles = Array.isArray(authorized.city_roles) ? authorized.city_roles : [];
+    const expectedCityRoles = new Map(cityRolesToSave.map(item => [item.city_id, item.role]));
+    const savedCityRoleMap = new Map(savedCityRoles.map((item: any) => [String(item?.city_id ?? ''), String(item?.role ?? '')]));
+    if (savedCityRoleMap.size !== expectedCityRoles.size ||
+        [...expectedCityRoles].some(([cityId, cityRole]) => savedCityRoleMap.get(cityId) !== cityRole)) {
+      return respond({ error: 'A autorização foi gravada, mas a cidade e o perfil não foram confirmados. Revise os acessos antes do primeiro login.' }, 500);
+    }
 
     if (!['operator', 'admin'].includes(role)) {
       return respond({ error: 'Este papel não pode receber um código de primeiro acesso.' }, 409);
@@ -522,6 +530,14 @@ Deno.serve(async (request) => {
           p_user_id: existingProfile.id, p_city_roles: cityRolesToSave,
         });
         if (assignmentError) return respond({ error: 'O e-mail foi autorizado, mas as cidades não puderam ser atribuídas ao perfil existente.' }, 500);
+        const { data: confirmedMemberships, error: membershipCheckError } = await admin
+          .from('city_memberships').select('city_id, role').eq('user_id', existingProfile.id).eq('is_master', false);
+        if (membershipCheckError) return respond({ error: 'Não foi possível confirmar os acessos por cidade do perfil existente.' }, 500);
+        const memberships = new Map((confirmedMemberships ?? []).map((item: any) => [String(item.city_id), String(item.role)]));
+        if (memberships.size !== expectedCityRoles.size ||
+            [...expectedCityRoles].some(([cityId, cityRole]) => memberships.get(cityId) !== cityRole)) {
+          return respond({ error: 'Os acessos por cidade não coincidem com a seleção. O primeiro acesso foi bloqueado para evitar perfil incorreto.' }, 500);
+        }
       }
     }
     const auditError = cityRolesToSave.length ? await recordCityAuthorizations(admin, cityRolesToSave.map(item => ({ email, city_id: item.city_id, role: item.role })), { id: user.id, email: String(user.email ?? profile?.email ?? '').trim().toLowerCase(), name: String(profile?.display_name ?? '').trim() }) : null;
