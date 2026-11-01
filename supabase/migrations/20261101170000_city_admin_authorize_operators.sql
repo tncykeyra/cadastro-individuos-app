@@ -65,7 +65,9 @@ begin
     v_city_roles := jsonb_build_array(jsonb_build_object('city_id', v_city_id, 'role', 'operator'));
     v_existing_city_ids := array[v_city_id];
   else
-    if v_city_roles is null or jsonb_typeof(v_city_roles) <> 'array' then
+    if v_city_roles is null then
+      v_city_roles := '[]'::jsonb;
+    elsif jsonb_typeof(v_city_roles) <> 'array' then
       raise exception 'A autorização existente precisa ser revisada pelo administrador master.' using errcode='22023';
     end if;
 
