@@ -60,7 +60,7 @@ async function loadCityContext(){
   }
 }
 function nav(){
-  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 0.1.54';
+  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 0.1.55';
   const allowed=!!state.session&&['operator','admin'].includes(state.profile?.role)&&!(state.cityContextReady&&!state.cities.length);
   const admin=isAdmin(),master=isMasterAdmin();
   const sideItems=allowed?[['dashboard','Dashboard'],['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados'],['fiscalization','Fiscalização'],['smart','Cadastro Inteligente'],...(admin?[['review','Revisão Inteligente'],['maintenance','Manutenção Inteligente'],['history','Histórico']]:[]),...(master?[['team','Usuários'],['cities','Cidades e acessos']]:[])]:[];
