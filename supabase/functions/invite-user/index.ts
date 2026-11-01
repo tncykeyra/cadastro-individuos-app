@@ -432,27 +432,13 @@ Deno.serve(async (request) => {
 
     const { data: targetResult, error: targetError } = await admin.auth.admin.getUserById(targetId);
     if (targetError || !targetResult?.user) return respond({ error: 'A conta selecionada não foi encontrada.' }, 404);
-    const { data: targetProfile } = await admin.from('profiles').select('role').eq('id', targetId).maybeSingle();
-    if (targetProfile?.role === 'admin') {
-      const { count, error: countError } = await admin.from('profiles').select('id', { count: 'exact', head: true }).eq('role', 'admin');
-      if (countError) return respond({ error: 'Não foi possível verificar os administradores ativos.' }, 500);
-      if ((count ?? 0) <= 1) return respond({ error: 'Não é possível excluir o último administrador.' }, 409);
-    }
-
-    // Reassign linked records to the administrator first, preserving the records themselves.
-    // The caller client preserves auth.uid() for update triggers and audit checks.
-    const references: Array<[string, string, boolean]> = [
-      ['people', 'created_by', false], ['people', 'updated_by', false],
-      ['vehicles', 'created_by', false], ['vehicles', 'updated_by', false],
-      ['person_vehicle_links', 'created_by', false],
-      ['record_photos', 'created_by', true],
-      ['person_photos', 'created_by', true], ['person_photos', 'updated_by', true],
-      ['vehicle_photos', 'created_by', true], ['vehicle_photos', 'updated_by', true],
-    ];
-    for (const [table, column, optionalPhotoField] of references) {
-      const { error } = await caller.from(table).update({ [column]: user.id }).eq(column, targetId);
-      if (optionalPhotoField && ['42P01', '42703', 'PGRST204', 'PGRST205'].includes(error?.code ?? '')) continue;
-      if (error) return respond({ error: 'Não foi possível preservar a autoria dos registros vinculados à conta: ' + error.message + '. Nenhuma conta foi excluída.' }, 500);
+    // A rotina transacional do banco preserva todas as referências e auditorias,
+    // valida o último administrador e mantém os registros em suas cidades.
+    const { error: prepareError } = await caller.rpc('master_prepare_user_deletion', {
+      p_target_user_id: targetId,
+    });
+    if (prepareError) {
+      return respond({ error: prepareError.message || 'Não foi possível preparar a exclusão com segurança. Nenhuma conta foi excluída.' }, prepareError.code === '42501' ? 403 : 400);
     }
 
     const targetEmail = String(targetResult.user.email ?? '').trim().toLowerCase();
