@@ -1066,12 +1066,13 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
   .person-relationship-copy small{font-size:.72rem}
 }
 
-.cross-city-person-alert{display:grid;gap:5px;margin:14px 0;padding:12px 14px;border:1px solid #d6e2e8;border-left:4px solid #527888;border-radius:12px;background:#f4f8fa;color:#24343b;line-height:1.45}
-.cross-city-person-alert strong{font-size:.98rem}
-.cross-city-person-alert span{font-weight:600}
-.cross-city-person-alert small{color:#586970}
-:root[data-theme="dark"] .cross-city-person-alert{border-color:#34464d;border-left-color:#78a8b6;background:#101719;color:#f0f5f6}
-:root[data-theme="dark"] .cross-city-person-alert small{color:#bdc9cd}
+.cross-city-person-alert{display:grid;gap:6px;margin:14px 0;padding:14px 16px;border:1px solid #f0d28b;border-left:5px solid #c27a12;border-radius:12px;background:#fff8e8;color:#392b12;line-height:1.45;box-shadow:0 2px 8px rgba(72,48,7,.06)}
+.cross-city-person-alert strong{font-size:1rem;color:#704607}
+.cross-city-person-alert span{font-weight:650}
+.cross-city-person-alert small{color:#66583d}
+:root[data-theme="dark"] .cross-city-person-alert{border-color:#675020;border-left-color:#e1ad4a;background:#211b10;color:#fff2d7;box-shadow:none}
+:root[data-theme="dark"] .cross-city-person-alert strong{color:#ffd47b}
+:root[data-theme="dark"] .cross-city-person-alert small{color:#e0d1ae}
 
 
 /* Alinha as ações de associação em detalhes de pessoa e veículo no mobile. */
