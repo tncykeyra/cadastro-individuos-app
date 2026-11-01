@@ -163,7 +163,7 @@ Deno.serve(async (request) => {
     return respond({ error: 'Informe um e-mail válido.' }, 400);
   }
   const email = String(payload.email ?? '').trim().toLowerCase();
-  if (!['delete', 'list_google_authorized'].includes(payload.action ?? '') && !emailPattern.test(email)) return respond({ error: 'Informe um e-mail válido.' }, 400);
+  if (!['delete', 'list_google_authorized', 'list_local_admins'].includes(payload.action ?? '') && !emailPattern.test(email)) return respond({ error: 'Informe um e-mail válido.' }, 400);
 
   const admin = createClient(url, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
@@ -198,6 +198,40 @@ Deno.serve(async (request) => {
       .limit(250);
     if (error) return respond({ error: 'Não foi possível carregar os e-mails autorizados.' }, 500);
     return respond({ ok: true, emails: emails ?? [] });
+  }
+
+  if (payload.action === 'list_local_admins') {
+    if (!isMaster) return respond({ error: 'Somente o administrador master pode consultar administradores de outras cidades.' }, 403);
+    const { data: memberships, error: membershipsError } = await admin.from('city_memberships')
+      .select('user_id, city_id')
+      .eq('role', 'admin')
+      .eq('is_master', false)
+      .limit(2000);
+    if (membershipsError) return respond({ error: 'Não foi possível carregar os administradores locais.' }, 500);
+    const userIds = [...new Set((memberships ?? []).map(row => row.user_id).filter(Boolean))];
+    const cityIds = [...new Set((memberships ?? []).map(row => row.city_id).filter(Boolean))];
+    if (!userIds.length) return respond({ ok: true, admins: [] });
+    const [{ data: profiles, error: profilesError }, { data: cities, error: citiesError }] = await Promise.all([
+      admin.from('profiles').select('id, email, display_name, role, created_at').in('id', userIds).limit(1000),
+      cityIds.length ? admin.from('cities').select('id, name').in('id', cityIds).limit(500) : Promise.resolve({ data: [], error: null }),
+    ]);
+    if (profilesError || citiesError) return respond({ error: 'Não foi possível carregar os dados dos administradores locais.' }, 500);
+    const cityById = new Map((cities ?? []).map(city => [city.id, city]));
+    const membershipsByUser = new Map<string, Array<{ id: string; name: string }>>();
+    for (const membership of memberships ?? []) {
+      const city = cityById.get(membership.city_id);
+      const current = membershipsByUser.get(membership.user_id) ?? [];
+      if (city && !current.some(item => item.id === city.id)) current.push({ id: city.id, name: city.name });
+      membershipsByUser.set(membership.user_id, current);
+    }
+    const admins = (profiles ?? []).map(profile => ({
+      email: profile.email,
+      display_name: profile.display_name,
+      role: profile.role,
+      created_at: profile.created_at,
+      cities: membershipsByUser.get(profile.id) ?? [],
+    })).filter(profile => profile.email);
+    return respond({ ok: true, admins });
   }
 
   if (payload.action === 'set-google-role') {
