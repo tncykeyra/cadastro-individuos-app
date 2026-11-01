@@ -1091,3 +1091,137 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
     white-space:normal;
   }
 }
+
+
+/* Contraste consistente para leitura do tema noturno em telas e navegadores variados. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #f4f6f7;
+  --muted: #c0c7cb;
+  --line: #3b4247;
+  --soft: #111416;
+  --surface: #111416;
+  --page: #000;
+  --shadow: 0 12px 34px #000a;
+}
+:root[data-theme="dark"] #mainContent :is(
+  [class*="card"], [class*="box"], [class*="panel"], [class*="result"],
+  [class*="toolbar"], [class*="surface"], [class*="row"], [class*="item"],
+  .info-box, .dashboard-card, .stat, .person-card, .vehicle-card, .warrant-record,
+  .warrant-review-card, .revision, .association-result, .association-search-selected
+):not([class*="photo"]):not([class*="image"]):not([class*="alert"]):not([class*="notice"]):not([class*="error"]):not([class*="success"]):not([class*="warning"]):not([class*="badge"]):not([class*="button"]):not([class*="icon"]):not([class*="player"]) {
+  color: var(--ink) !important;
+}
+:root[data-theme="dark"] #mainContent :is(
+  h1, h2, h3, h4, h5, p, label, legend, dt, dd, li, strong, em,
+  .info-value, .row-title, .row-subtitle, .card-meta, .muted, .form-hint,
+  .info-label, .dashboard-label, .pagination-summary, .warrant-meta,
+  .field-hint, .empty-state, .section-description
+) {
+  color: var(--ink);
+}
+:root[data-theme="dark"] #mainContent :is(
+  .info-label, .muted, .card-meta, .row-subtitle, .form-hint, .field-hint,
+  .dashboard-label, .pagination-summary, .warrant-meta, .section-description
+) { color: var(--muted) !important; }
+:root[data-theme="dark"] #mainContent :is(
+  input, textarea, select, .search, .role-select, .page-select
+) {
+  color: var(--ink) !important;
+  background-color: #171a1c !important;
+  border-color: #4a5258 !important;
+  caret-color: #fff;
+  -webkit-text-fill-color: var(--ink);
+}
+:root[data-theme="dark"] #mainContent :is(input, textarea, select):focus-visible {
+  outline: 3px solid #9ac9ff;
+  outline-offset: 2px;
+  border-color: #9ac9ff !important;
+}
+:root[data-theme="dark"] #mainContent :is(input, textarea)::placeholder {
+  color: #b3bdc3 !important;
+  opacity: 1;
+}
+:root[data-theme="dark"] #mainContent input:-webkit-autofill,
+:root[data-theme="dark"] #mainContent input:-webkit-autofill:hover,
+:root[data-theme="dark"] #mainContent input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  box-shadow: 0 0 0 1000px #171a1c inset;
+  caret-color: var(--ink);
+}
+:root[data-theme="dark"] #mainContent :is(.notice, .warning, .duplicate-warning, .warrant-person-alert, .duplicate-warning, .person-relationships-disclaimer) {
+  background: #30250d !important;
+  color: #ffedb8 !important;
+  border-color: #806522 !important;
+}
+:root[data-theme="dark"] #mainContent :is(.notice, .warning, .duplicate-warning, .warrant-person-alert, .person-relationships-disclaimer) :is(h1,h2,h3,h4,p,span,strong,small,a) {
+  color: inherit !important;
+}
+:root[data-theme="dark"] #mainContent :is(.error-box, .error, .danger-notice, .identity-change-notice, .dashboard-proposal-alert, .vehicle-plate-proposal-notice, .cross-city-person-alert) {
+  background: #351619 !important;
+  color: #ffe2e4 !important;
+  border-color: #8f3b42 !important;
+}
+:root[data-theme="dark"] #mainContent :is(.error-box, .error, .danger-notice, .identity-change-notice, .dashboard-proposal-alert, .vehicle-plate-proposal-notice, .cross-city-person-alert) :is(h1,h2,h3,h4,p,span,strong,small,a) {
+  color: inherit !important;
+}
+:root[data-theme="dark"] #mainContent :is(.success, .success-box, .photo-upload-status.success, .status-success) {
+  background: #10281b !important;
+  color: #c8f5d5 !important;
+  border-color: #2f7547 !important;
+}
+:root[data-theme="dark"] #mainContent :is(.success, .success-box, .photo-upload-status.success, .status-success) :is(p,span,strong,small) {
+  color: inherit !important;
+}
+:root[data-theme="dark"] #mainContent :is(.info-notice, .info-alert, .loading-status, .warrant-pdf-batch-status) {
+  color: #d8ecff !important;
+}
+:root[data-theme="dark"] #mainContent .warrant-status {
+  border: 1px solid #596168;
+  background: #20262a;
+  color: #edf2f4;
+}
+:root[data-theme="dark"] #mainContent .warrant-status.pending {
+  background: #30250d;
+  color: #ffedb8;
+  border-color: #806522;
+}
+:root[data-theme="dark"] #mainContent .warrant-status.reported {
+  background: #142733;
+  color: #d8efff;
+  border-color: #42677c;
+}
+:root[data-theme="dark"] #mainContent .warrant-status.closed,
+:root[data-theme="dark"] #mainContent .warrant-status.discharged,
+:root[data-theme="dark"] #mainContent .warrant-status.cancelled,
+:root[data-theme="dark"] #mainContent .warrant-status.revoked {
+  background: #10281b;
+  color: #c8f5d5;
+  border-color: #2f7547;
+}
+:root[data-theme="dark"] #mainContent a:not(.button) { color: #a9d4ff; }
+:root[data-theme="dark"] #mainContent :is(button, .button):focus-visible,
+:root[data-theme="dark"] .theme-toggle:focus-visible,
+:root[data-theme="dark"] .menu-toggle:focus-visible {
+  outline: 3px solid #9ac9ff !important;
+  outline-offset: 3px;
+}
+:root[data-theme="dark"] #mainContent :is(button, .button):disabled {
+  color: #d1d6d9 !important;
+  opacity: .72;
+}
+:root[data-theme="dark"] #mainContent :is(table, th, td) {
+  border-color: #3b4247 !important;
+}
+:root[data-theme="dark"] #mainContent th { color: #f4f6f7 !important; background: #171a1c !important; }
+:root[data-theme="dark"] #mainContent td { color: #e5e9eb !important; }
+:root[data-theme="dark"] #bottomNav { background: #050505f5; border-color: #343a3e; }
+@media (prefers-contrast: more) {
+  :root[data-theme="dark"] { --muted: #e0e4e6; --line: #70787d; }
+  :root[data-theme="dark"] #mainContent :is(input, textarea, select) { border-color: #858e94 !important; }
+}
+@media (forced-colors: active) {
+  :root[data-theme="dark"] #mainContent :is(a, button, input, textarea, select, [tabindex]) {
+    forced-color-adjust: auto;
+  }
+}
