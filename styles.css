@@ -1225,3 +1225,98 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
     forced-color-adjust: auto;
   }
 }
+
+
+/* Mandados no tema noturno: superfícies em camadas e texto com contraste consistente. */
+:root[data-theme="dark"] #mainContent :is(
+  .warrant-tool-card, .warrant-active-section, .warrant-review-card,
+  .warrant-record, .warrant-duplicate-review, .warrant-proposal-card,
+  .warrant-linked-person, .warrant-search-result, .warrant-alert-item,
+  .warrant-pdf-batch-row, .warrant-import-preview, .warrant-review-card details,
+  .warrant-review-card .warrant-review-body
+) {
+  color: #f2f5f6 !important;
+  background: #111416 !important;
+  background-color: #111416 !important;
+  border-color: #3b4449 !important;
+  box-shadow: 0 5px 18px #0005;
+}
+:root[data-theme="dark"] #mainContent :is(
+  .warrant-summary, .warrant-proposal-fields div, .warrant-duplicate-facts,
+  .warrant-pdf-batch-fields, .warrant-review-details, .warrant-section-body,
+  .warrant-import-preview .warrant-summary
+) {
+  color: #e3e8ea !important;
+  background: #1a1f22 !important;
+  border-color: #414a4f !important;
+}
+:root[data-theme="dark"] #mainContent :is(
+  .warrant-review-card, .warrant-record, .warrant-proposal-card,
+  .warrant-tool-card, .warrant-active-section, .warrant-duplicate-review,
+  .warrant-pdf-batch-row, .warrant-import-preview
+) :is(h1,h2,h3,h4,p,span,strong,small,dt,dd,label,legend) {
+  color: inherit;
+}
+:root[data-theme="dark"] #mainContent :is(
+  .warrant-meta, .warrant-review-heading p, .warrant-proposal-heading,
+  .warrant-linked-person small, .warrant-search-result small,
+  .warrant-empty-review, .warrant-pdf-batch-status, .warrant-pdf-selection-help
+) { color: #c0c9cd !important; }
+:root[data-theme="dark"] #mainContent :is(
+  .warrant-person-search, .warrant-record-top, .warrant-review-heading,
+  .warrant-section-title, .warrant-pdf-batch-heading
+) { border-color: #3b4449 !important; }
+:root[data-theme="dark"] #mainContent :is(.warrant-person-search summary,.warrant-linked-open) {
+  color: #b9dcff !important;
+}
+:root[data-theme="dark"] #mainContent :is(.warrant-search-row input,.warrant-pdf-batch-fields input,.warrant-pdf-batch-fields textarea,.warrant-form-grid input,.warrant-form-grid textarea,.warrant-form-grid select) {
+  color: #f2f5f6 !important;
+  background: #1a1f22 !important;
+  border-color: #505b61 !important;
+  -webkit-text-fill-color: #f2f5f6;
+}
+:root[data-theme="dark"] #mainContent :is(.warrant-actions .button.secondary,.warrant-record-actions .button.secondary,.warrant-tool-card .button.secondary,.warrant-active-section .button.secondary) {
+  color: #edf2f4 !important;
+  background: #20262a !important;
+  border: 1px solid #505b61 !important;
+}
+:root[data-theme="dark"] #mainContent :is(.warrant-card-alert,.warrant-person-alert,.warrant-caution,.warrant-import-confirm) {
+  color: #ffedb8 !important;
+  background: #30250d !important;
+  border-color: #806522 !important;
+}
+:root[data-theme="dark"] #mainContent .warrant-alert-icon {
+  color: #ffdf81 !important;
+  background: #493b16 !important;
+}
+:root[data-theme="dark"] #mainContent :is(.warrant-review-photo-frame,.warrant-linked-photo,.warrant-proposal-avatar) {
+  color: #d2d9dc !important;
+  background: #20262a !important;
+  border-color: #454e53 !important;
+}
+:root[data-theme="dark"] #mainContent .warrant-status {
+  color: #edf2f4 !important;
+  background: #20262a !important;
+  border-color: #596168 !important;
+}
+:root[data-theme="dark"] #mainContent .warrant-status.pending {
+  color: #ffedb8 !important;
+  background: #30250d !important;
+  border-color: #806522 !important;
+}
+:root[data-theme="dark"] #mainContent .warrant-status.reported {
+  color: #d8efff !important;
+  background: #142733 !important;
+  border-color: #42677c !important;
+}
+:root[data-theme="dark"] #mainContent :is(.warrant-review-card,.warrant-record,.warrant-proposal-card,.warrant-tool-card,.warrant-active-section,.warrant-search-result) :is(button,.button):focus-visible,
+:root[data-theme="dark"] #mainContent .warrant-proposal-summary:focus-visible {
+  outline: 3px solid #9ac9ff !important;
+  outline-offset: 2px;
+}
+@media (max-width: 620px) {
+  :root[data-theme="dark"] #mainContent :is(.warrant-tool-card,.warrant-active-section,.warrant-review-card,.warrant-record,.warrant-duplicate-review,.warrant-proposal-card,.warrant-pdf-batch-row) {
+    padding: 13px !important;
+    border-radius: 14px !important;
+  }
+}
