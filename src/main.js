@@ -67,7 +67,7 @@ async function loadCityContext(){
   }
 }
 function nav(){
-  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 0.1.59';
+  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 0.1.60';
   const allowed=!!state.session&&['operator','admin'].includes(state.profile?.role)&&!(state.cityContextReady&&!state.cities.length);
   const admin=isAdmin(),master=isMasterAdmin();
   const sideItems=allowed?[['dashboard','Painel da cidade'],['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados'],['fiscalization','Fiscalização'],['smart','Cadastro Inteligente'],...(admin?[['review','Revisão Inteligente'],['maintenance','Manutenção Inteligente'],['history','Histórico']]:[]),...(admin?[['team','Usuários']]:[]),...(master?[['cities','Cidades e acessos']]:[])]:[];
@@ -1613,19 +1613,20 @@ function generateTemporaryPassword(){const groups=['ABCDEFGHJKLMNPQRSTUVWXYZ','a
 async function renderCities(){
   if(!isMasterAdmin()){frame('<div class="error-box">Acesso exclusivo ao administrador master.</div>');return}
   const [{data:cities,error:cityError},{data:profiles,error:profileError},{data:members,error:memberError}]=await Promise.all([
-    state.client.rpc('list_my_cities'),
+    state.client.rpc('master_list_city_catalog'),
     state.client.from('profiles').select('id,email,display_name,role,created_at').order('created_at',{ascending:false}).limit(500),
     state.client.from('city_memberships').select('user_id,city_id,role,is_master,created_at').order('created_at',{ascending:true})
   ]);
   if(cityError)throw cityError;if(profileError)throw profileError;if(memberError)throw memberError;
-  const activeCities=(cities||[]);
+  const cityCatalog=cities||[],activeCities=cityCatalog.filter(city=>city.active);
   const userOptions=(profiles||[]).filter(profile=>['operator','admin'].includes(profile.role)).map(profile=>'<option value="'+esc(profile.id)+'">'+esc(profile.display_name||profile.email)+' · '+esc(profile.email)+'</option>').join('');
-  const cityChecks=activeCities.map(city=>'<label class="city-access-option city-role-option"><input type="checkbox" name="city_ids" value="'+esc(city.id)+'"><span class="city-access-name">'+esc(city.name)+'</span><select data-city-role-for="'+esc(city.id)+'" aria-label="Perfil em '+esc(city.name)+'" disabled><option value="operator">Operador</option><option value="admin">Administrador</option></select></label>').join('')||'<div class="empty">Nenhuma cidade ativa disponível.</div>';
+  const cityChecks=activeCities.map(city=>'<label class="city-access-option city-role-option"><input type="checkbox" name="city_ids" value="'+esc(city.id)+'"><span class="city-access-name">'+esc(city.name)+'</span><select data-city-role-for="'+esc(city.id)+'" aria-label="Perfil em '+esc(city.name)+'" disabled><option value="operator">Operador</option><option value="admin">Administrador</option></select></label>').join('')||'<div class="empty">Ative uma cidade para liberar atribuições.</div>';
+  const cityRows=cityCatalog.map(city=>'<div class="city-catalog-row"><div class="city-catalog-meta"><strong>'+esc(city.name)+'</strong><small>'+Number(city.assigned_users||0)+' usuário(s) vinculado(s)</small></div><span class="city-status '+(city.active?'is-active':'is-inactive')+'">'+(city.active?'Ativa':'Inativa')+'</span>'+(city.active?'':'<button class="button small" type="button" data-city-activate="'+esc(city.id)+'">Ativar cidade</button>')+'</div>').join('')||'<div class="empty">Nenhuma cidade cadastrada.</div>';
   const memberRows=(members||[]).map(member=>{
-    const profile=(profiles||[]).find(candidate=>candidate.id===member.user_id),city=(cities||[]).find(candidate=>candidate.id===member.city_id);
+    const profile=(profiles||[]).find(candidate=>candidate.id===member.user_id),city=cityCatalog.find(candidate=>candidate.id===member.city_id);
     return '<div class="list-row city-member-row"><div class="vehicle-thumb">'+esc((profile?.email||'?')[0].toUpperCase())+'</div><div class="city-member-meta"><strong>'+esc(profile?.display_name||profile?.email||'Usuário')+'</strong><small>'+esc(profile?.email||'')+' · '+esc(city?.name||'Cidade')+' · '+esc(member.is_master?'Master':member.role==='admin'?'Admin da cidade':'Operador')+'</small></div>'+(member.is_master?'':'<button class="button danger small" type="button" data-city-remove-user="'+esc(member.user_id)+'" data-city-remove-city="'+esc(member.city_id)+'" aria-label="Remover acesso de '+esc(profile?.email||'usuário')+' em '+esc(city?.name||'cidade')+'">Remover</button>')+'</div>'
   }).join('')||'<div class="empty">Nenhum vínculo de acesso encontrado.</div>';
-  frame('<section class="page-intro"><h1>Cidades e acessos</h1><p>Gerencie municípios e defina em quais deles cada operador ou administrador pode trabalhar.</p></section><div class="city-management-grid"><section class="panel city-management-panel"><h2>Cidades disponíveis</h2><div class="city-chip-list">'+(cities||[]).map(city=>'<span class="city-chip">'+esc(city.name)+(city.active?' · Cidade atual':'')+'</span>').join('')+'</div><form id="createCityForm" class="city-management-form"><label for="newCityName">Adicionar cidade</label><div class="city-form-row"><input id="newCityName" name="name" maxlength="100" required placeholder="Ex.: Cândido Mota"><button class="button" type="submit">＋ Criar cidade</button></div></form></section><section class="panel city-management-panel"><h2>Atribuir operador ou administrador</h2><form id="assignCityUserForm" class="city-management-form"><label for="cityUser">Usuário</label><select id="cityUser" name="user_id" required><option value="">Selecione</option>'+userOptions+'</select><fieldset class="city-access-fieldset"><legend>Cidades de acesso</legend><button class="button secondary compact" type="button" data-select-all-authorized-cities>Selecionar todas as cidades ativas</button><div class="city-access-options">'+cityChecks+'</div><small>Escolha um perfil para cada cidade. O mesmo usuário pode ser administrador em uma e operador em outra. Ao salvar, a seleção substitui os vínculos anteriores.</small></fieldset><button class="button" type="submit">Salvar cidades de acesso</button></form></section></div><section class="panel city-management-panel city-members-panel"><div class="section-heading"><h2>Acessos atribuídos</h2><span class="count-badge">'+(members||[]).length+'</span></div><div class="city-member-list">'+memberRows+'</div></section>');
+  frame('<section class="page-intro"><h1>Cidades e acessos</h1><p>Ative as cidades cadastradas e defina onde cada usuário pode trabalhar.</p></section><div class="city-management-grid"><section class="panel city-management-panel"><h2>Cidades cadastradas</h2><div class="city-catalog-list">'+cityRows+'</div><form id="createCityForm" class="city-management-form"><label for="newCityName">Adicionar cidade</label><div class="city-form-row"><input id="newCityName" name="name" maxlength="100" required placeholder="Ex.: Cândido Mota"><button class="button" type="submit">＋ Criar cidade</button></div><small>Novas cidades já ficam ativas e disponíveis para autorização.</small></form></section><section class="panel city-management-panel"><h2>Atribuir operador ou administrador</h2><form id="assignCityUserForm" class="city-management-form"><label for="cityUser">Usuário</label><select id="cityUser" name="user_id" required><option value="">Selecione</option>'+userOptions+'</select><fieldset class="city-access-fieldset"><legend>Cidades de acesso</legend><button class="button secondary compact" type="button" data-select-all-authorized-cities>Selecionar todas as cidades ativas</button><div class="city-access-options">'+cityChecks+'</div><small>Escolha um perfil para cada cidade. O mesmo usuário pode ser administrador em uma e operador em outra. Ao salvar, a seleção substitui os vínculos anteriores.</small></fieldset><button class="button" type="submit">Salvar cidades de acesso</button></form></section></div><section class="panel city-management-panel city-members-panel"><div class="section-heading"><h2>Acessos atribuídos</h2><span class="count-badge">'+(members||[]).length+'</span></div><div class="city-member-list">'+memberRows+'</div></section>');
   const selectUser=$('#cityUser');
   selectUser.onchange=()=>{
     const userId=selectUser.value,userMemberships=(members||[]).filter(member=>member.user_id===userId&&!member.is_master);
@@ -1636,11 +1637,21 @@ async function renderCities(){
       if(roleSelect){roleSelect.value=membership?.role==='admin'?'admin':'operator';roleSelect.disabled=!membership}
     });
   };
-  document.querySelectorAll('#googleAuthorizeForm input[name="authorized_city_ids"]').forEach(input=>input.addEventListener('change',()=>{
-    const roleSelect=document.querySelector('[data-authorized-city-role-for="'+input.value+'"]');
+  document.querySelectorAll('#assignCityUserForm input[name="city_ids"]').forEach(input=>input.addEventListener('change',()=>{
+    const roleSelect=document.querySelector('[data-city-role-for="'+input.value+'"]');
     if(roleSelect)roleSelect.disabled=!input.checked;
   }));
-  $('#createCityForm').onsubmit=async event=>{event.preventDefault();const name=$('#newCityName').value.trim();if(!name)return;const button=event.submitter;button.disabled=true;try{const {data,error}=await state.client.rpc('master_create_city',{p_name:name});if(error)throw error;toast('Cidade criada.');await loadCityContext();await renderCities();}catch(error){toast(msg(error))}finally{button.disabled=false}};
+  document.querySelectorAll('[data-city-activate]').forEach(button=>button.onclick=async()=>{
+    button.disabled=true;
+    try{
+      const {error}=await state.client.rpc('master_activate_city',{p_city_id:button.dataset.cityActivate});
+      if(error)throw error;
+      await loadCityContext();
+      await renderCities();
+      toast('Cidade ativada e liberada para atribuição de usuários.');
+    }catch(error){toast(msg(error));button.disabled=false}
+  });
+  $('#createCityForm').onsubmit=async event=>{event.preventDefault();const name=$('#newCityName').value.trim();if(!name)return;const button=event.submitter;button.disabled=true;try{const {data,error}=await state.client.rpc('master_create_city',{p_name:name});if(error)throw error;toast('Cidade criada e ativada.');await loadCityContext();await renderCities();}catch(error){toast(msg(error))}finally{button.disabled=false}};
   $('#assignCityUserForm').onsubmit=async event=>{
     event.preventDefault();const form=event.currentTarget,formData=new FormData(form),button=event.submitter,cityIds=formData.getAll('city_ids');
     if(!cityIds.length){toast('Selecione ao menos uma cidade.');return}
@@ -1651,8 +1662,7 @@ async function renderCities(){
     finally{button.disabled=false}
   };
   document.querySelectorAll('[data-city-remove-user]').forEach(button=>button.onclick=async()=>{if(!confirm('Remover o acesso deste usuário à cidade?'))return;button.disabled=true;try{const {error}=await state.client.rpc('remove_city_user',{p_user_id:button.dataset.cityRemoveUser,p_city_id:button.dataset.cityRemoveCity});if(error)throw error;toast('Acesso removido.');await renderCities()}catch(error){toast(msg(error))}finally{button.disabled=false}});
-}
-async function renderCityAdminOperators(){
+}async function renderCityAdminOperators(){
   const city=(state.cities||[]).find(item=>item.id===state.activeCityId);
   if(!city||state.cityRole!=='admin')throw new Error('Não foi possível confirmar a cidade administrada.');
   let emails=[],loadError='';
