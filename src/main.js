@@ -60,7 +60,7 @@ async function loadCityContext(){
   }
 }
 function nav(){
-  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 0.1.52';
+  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 0.1.53';
   const allowed=!!state.session&&['operator','admin'].includes(state.profile?.role)&&!(state.cityContextReady&&!state.cities.length);
   const admin=isAdmin(),master=isMasterAdmin();
   const sideItems=allowed?[['dashboard','Dashboard'],['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados'],['fiscalization','Fiscalização'],['smart','Cadastro Inteligente'],...(admin?[['review','Revisão Inteligente'],['maintenance','Manutenção Inteligente'],['history','Histórico']]:[]),...(master?[['team','Usuários'],['cities','Cidades e acessos']]:[])]:[];
@@ -246,8 +246,8 @@ function warrantRecordMarkup(warrant,admin,docsById,linkedPeople=[]){
 }
 function warrantPdfBatchMarkup(){
   if(!isAdmin()||!warrantPdfBatch.length)return '';
-  const fields=[['warrant_number','Número do mandado','text',120],['full_name','Nome completo','text',180],['cpf','CPF','text',14],['person_rg','RG','text',100],['birth_date','Data de nascimento','date',10],['person_address_primary','Endereço','text',1000],['source_reference','Processo/referência','text',200],['person_filiation','Filiação','textarea',2000],['person_process_information','Informações processuais','textarea',12000]];
-  const cards=warrantPdfBatch.map((entry,index)=>{const values=entry.values||{};return '<article class="warrant-pdf-batch-row" data-warrant-pdf-batch-row="'+index+'"><div class="warrant-pdf-batch-heading"><div><strong>'+esc(entry.file.name)+'</strong><small>'+Math.ceil(entry.file.size/1024)+' KB · PDF privado</small></div><button class="button secondary small" type="button" data-warrant-pdf-remove="'+index+'"'+(warrantPdfBatchSaving||warrantPdfBatchReading?' disabled':'')+'>Remover</button></div><p class="warrant-pdf-batch-status" data-warrant-pdf-batch-status="'+index+'" role="status" aria-live="polite">'+esc(entry.status||'Aguardando leitura…')+'</p><div class="warrant-pdf-batch-fields">'+fields.map(([name,label,type,max])=>{const value=values[name]||'';return '<label'+(type==='textarea'?' class="warrant-batch-full"':'')+'>'+label+(type==='textarea'?'<textarea name="'+name+'" maxlength="'+max+'"'+(warrantPdfBatchSaving||warrantPdfBatchReading?' disabled':'')+' data-warrant-pdf-batch-field="'+name+'" data-index="'+index+'">'+esc(value)+'</textarea>':'<input name="'+name+'" type="'+type+'" maxlength="'+max+'" value="'+esc(value)+'"'+(warrantPdfBatchSaving||warrantPdfBatchReading?' disabled':'')+' data-warrant-pdf-batch-field="'+name+'" data-index="'+index+'">')+'</label>'}).join('')+'</div></article>'}).join('');
+  const fields=[['full_name','Nome completo','text',180],['cpf','CPF','text',14],['person_rg','RG','text',100],['birth_date','Data de nascimento','date',10],['person_address_primary','Endereço','text',1000],['source_reference','Número do processo','text',200],['person_filiation','Filiação','textarea',2000],['person_process_information','Informações processuais','textarea',12000]];
+  const cards=warrantPdfBatch.map((entry,index)=>{const values=entry.values||{};return '<article class="warrant-pdf-batch-row" data-warrant-pdf-batch-row="'+index+'"><div class="warrant-pdf-batch-heading"><div><strong>'+esc(entry.file.name)+'</strong><small>'+Math.ceil(entry.file.size/1024)+' KB · PDF privado</small></div><button class="button secondary small" type="button" data-warrant-pdf-remove="'+index+'"'+(warrantPdfBatchSaving||warrantPdfBatchReading?' disabled':'')+'>Remover</button></div><p class="warrant-pdf-batch-status" data-warrant-pdf-batch-status="'+index+'" role="status" aria-live="polite">'+esc(entry.status||'Aguardando leitura…')+'</p><div class="warrant-pdf-batch-fields">'+fields.map(([name,label,type,max])=>{const value=values[name]||'';return '<label'+(type==='textarea'?' class="warrant-batch-full"':'')+'>'+label+(name==='source_reference'?' *':'')+(type==='textarea'?'<textarea name="'+name+'" maxlength="'+max+'"'+(warrantPdfBatchSaving||warrantPdfBatchReading?' disabled':'')+' data-warrant-pdf-batch-field="'+name+'" data-index="'+index+'">'+esc(value)+'</textarea>':'<input name="'+name+'" type="'+type+'" maxlength="'+max+'" value="'+esc(value)+'"'+(warrantPdfBatchSaving||warrantPdfBatchReading?' disabled':'')+' data-warrant-pdf-batch-field="'+name+'" data-index="'+index+'">')+'</label>'}).join('')+'</div></article>'}).join('');
   return '<section class="warrant-pdf-batch-queue"><div class="warrant-section-title"><div><h2>PDFs para conferir</h2><p>'+warrantPdfBatch.length+' arquivo(s) na fila. Confira ou complete cada ficha antes de salvar.</p></div></div><div class="warrant-pdf-batch-list">'+cards+'</div><div class="warrant-actions"><button class="button" type="button" data-warrant-save-pdf-batch'+(warrantPdfBatchSaving||warrantPdfBatchReading?' disabled':'')+'>Salvar mandados da fila</button><button class="button secondary" type="button" data-warrant-clear-pdf-batch'+(warrantPdfBatchSaving||warrantPdfBatchReading?' disabled':'')+'>Limpar fila</button></div></section>';
 }
 
@@ -612,10 +612,12 @@ async function findWarrantDuplicateTarget(payload){
 }
 async function saveWarrantRecord(values,file=null){
   if(!isAdmin())throw new Error('Apenas administradores podem incluir mandados.');
-  const number=String(values.warrant_number||'').trim().toLocaleUpperCase('pt-BR'),name=formatPersonName(values.full_name),cpf=String(values.cpf||values.cpf_digits||'').replace(/\D/g,'');
+  const name=formatPersonName(values.full_name),cpf=String(values.cpf||values.cpf_digits||'').replace(/\D/g,'');
   const rg=String(values.person_rg||values.rg||'').trim(),address=String(values.person_address_primary||values.address_primary||'').trim(),filiation=String(values.person_filiation||values.filiation||'').trim(),processInformation=String(values.person_process_information||values.process_information||'').trim(),sourceReference=String(values.source_reference||'').trim();
+  const number=String(file?sourceReference:(values.warrant_number||'')).trim().toLocaleUpperCase('pt-BR');
   const sourceAgency=String(values.source_agency||'BNMP').trim().toLocaleUpperCase('pt-BR')||'BNMP';
-  if(!number)throw new Error('Informe o número do mandado.');
+  if(file&&!normalizeWarrantProcessNumber(sourceReference))throw new Error('Informe o número completo do processo do mandado antes de salvar o PDF.');
+  if(!file&&!number)throw new Error('Informe o número do mandado.');
   if(!name)throw new Error('Informe o nome completo do indivíduo.');
   if(cpf&&(!/^\d{11}$/.test(cpf)||!isValidCpf(cpf)))throw new Error('Confira o CPF informado.');
   if(file&&(file.type!=='application/pdf'&&!/\.pdf$/i.test(file.name)))throw new Error('Selecione um arquivo PDF válido.');
@@ -727,7 +729,7 @@ async function processWarrantPdfBatchEntry(index){
     if(entry.file.type!=='application/pdf'&&!/\.pdf$/i.test(entry.file.name))throw new Error('O arquivo não parece ser um PDF.');
     const result=await processOcrFiles([entry.file],{onProgress:progress=>warrantBatchStatus(index,'PDF '+(index+1)+' de '+warrantPdfBatch.length+' · '+formatWarrantOcrProgress(progress))});
     const suggestion=extractWarrantPersonSuggestions(result.text);
-    entry.values={...entry.values,warrant_number:suggestion.warrant_number||'',full_name:suggestion.full_name||'',cpf:suggestion.cpf_digits||'',person_rg:suggestion.rg||'',birth_date:suggestion.birth_date||'',person_address_primary:suggestion.address_primary||'',source_reference:suggestion.process_reference||'',source_agency:'BNMP',person_filiation:suggestion.filiation||'',person_process_information:suggestion.process_information||''};
+    entry.values={...entry.values,full_name:suggestion.full_name||'',cpf:suggestion.cpf_digits||'',person_rg:suggestion.rg||'',birth_date:suggestion.birth_date||'',person_address_primary:suggestion.address_primary||'',source_reference:suggestion.process_reference||'',source_agency:'BNMP',person_filiation:suggestion.filiation||'',person_process_information:suggestion.process_information||''};
     entry.status=result.text?'Leitura concluída. Confira e complete os campos.':'PDF processado, mas nenhum texto foi identificado. Preencha os campos manualmente.';
   }catch(error){entry.status='Falha na leitura: '+msg(error)}
   await persistWarrantQueueEntry(entry);warrantBatchStatus(index,entry.status);
@@ -770,7 +772,7 @@ async function saveWarrantPdfBatch(){
   if(!warrantPdfBatch.length)throw new Error('Selecione ao menos um PDF.');
   warrantPdfBatchSaving=true;
   const initialCount=warrantPdfBatch.length;let saved=0,failed=0,partial=0,reviewCount=0,duplicateCount=0;
-  const fields=['warrant_number','full_name','cpf','person_rg','birth_date','person_address_primary','source_agency','source_reference','person_filiation','person_process_information'];
+  const fields=['full_name','cpf','person_rg','birth_date','person_address_primary','source_agency','source_reference','person_filiation','person_process_information'];
   const prepared=warrantPdfBatch.map((entry,index)=>{
     const row=document.querySelector('[data-warrant-pdf-batch-row="'+index+'"]'),editedValues={};
     for(const name of fields){const input=row?.querySelector('[name="'+name+'"]');if(input)editedValues[name]=input.value}
