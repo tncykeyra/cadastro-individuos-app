@@ -3,9 +3,16 @@ import { isUsefulSearch, normalizePlate, isValidPlate, dedupePhotoSources, forma
 import { buildRecordPdf } from './pdf.js';
 import { isValidCpf, mergeFiliationIntoNotes } from './ocr-domain.js';
 import { parseWarrantCsv, normalizeWarrantProcessNumber, isSpecificWarrantNumber, extractWarrantSuggestions, extractWarrantPersonSuggestions, formatWarrantOcrProgress, resolveWarrantBatchValues } from './warrants.js';
-import { processOcrFiles } from './ocr-engine.js';
+
 import { renderFiscalizationPage, wireFiscalizationActions } from './fiscalization.js';
 import { renderIntelligentEntry, parseIntelligentText, parseIntelligentBundle, inspectRecords, getSmartPersonSearchTerms, duplicateReviewPairKey } from './intelligent-tools.js';
+
+let ocrEnginePromise;
+async function processOcrFiles(...args){
+  if(!ocrEnginePromise)ocrEnginePromise=import('./ocr-engine.js').catch(error=>{ocrEnginePromise=null;throw error});
+  const engine=await ocrEnginePromise;
+  return engine.processOcrFiles(...args)
+}
 
 const config={url:import.meta.env.VITE_SUPABASE_URL,key:import.meta.env.VITE_SUPABASE_ANON_KEY};
 const appIconUrl=import.meta.env.BASE_URL+'icon.svg?v=10';
@@ -1417,8 +1424,7 @@ async function deactivatePersonRelationship(relationId){
 
 async function showLinkForm(entity,id){
   const isPerson=entity==='person',labelKey=isPerson?'plate':'full_name';
-  let options;
-  try{options=await loadAllActive(isPerson?'vehicles':'people',isPerson?'plate':'full_name')}catch(error){toast(msg(error));return}
+  let options=[];
   const d=$('#recordDialog');
   d.__ocrAssistant?.destroy?.();d.__ocrAssistant=null;
   const targetField=isPerson
@@ -1456,14 +1462,23 @@ async function showLinkForm(entity,id){
   const associationOption=(record,kind,title,description,icon)=>'<button class="association-search-option" type="button" role="option" data-association-'+kind+'="'+esc(record.id)+'"><span class="association-result-row">'+associationThumb(record,icon)+'<span class="association-result-copy"><strong>'+esc(title)+'</strong><span>'+esc(description)+'</span></span></span></button>';
   if(isPerson){
     const search=d.querySelector('#vehicleAssociationSearch'),target=d.querySelector('#linkTarget'),results=d.querySelector('#vehicleAssociationResults');
-    const renderResults=()=>{
+    let associationSearchRequest=0;
+    const renderResults=async()=>{
+      const request=++associationSearchRequest;
       const plate=search.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
-      if(!plate){results.innerHTML='<div class="association-search-hint">Digite uma placa para pesquisar.</div>';return}
-      if(plate.length<7){results.innerHTML='<div class="association-search-hint">A placa deve conter 7 caracteres: AAA0000 ou AAA0A00.</div>';return}
-      if(!/^(?:[A-Z]{3}[0-9]{4}|[A-Z]{3}[0-9][A-Z][0-9]{2})$/.test(plate)){results.innerHTML='<div class="association-search-empty" role="alert">Placa inválida. Use o padrão AAA0000 ou AAA0A00.</div>';return}
-      const matches=options.filter(v=>String(v.plate||'').toUpperCase().replace(/[^A-Z0-9]/g,'')===plate).slice(0,12);
-      if(matches.length){results.innerHTML=matches.map(v=>associationOption(v,'vehicle',v.plate||'Placa não informada',[v.make,v.model,v.color].filter(Boolean).join(' · ')||'Dados complementares não informados','🚘')).join('');void hydrateAssociationThumbs('vehicles',matches,results);return}
-      results.innerHTML='<div class="association-search-empty">Nenhum veículo encontrado com esta placa. Você ainda pode cadastrar.</div>'
+      if(!plate){options=[];results.innerHTML='<div class="association-search-hint">Digite uma placa para pesquisar.</div>';return}
+      if(plate.length<7){options=[];results.innerHTML='<div class="association-search-hint">A placa deve conter 7 caracteres: AAA0000 ou AAA0A00.</div>';return}
+      if(!/^(?:[A-Z]{3}[0-9]{4}|[A-Z]{3}[0-9][A-Z][0-9]{2})$/.test(plate)){options=[];results.innerHTML='<div class="association-search-empty" role="alert">Placa inválida. Use o padrão AAA0000 ou AAA0A00.</div>';return}
+      results.innerHTML='<div class="association-search-hint">Pesquisando placa…</div>';
+      try{
+        const {data,error}=await state.client.rpc('search_vehicles',{search_term:plate,result_limit:12});
+        if(request!==associationSearchRequest||!results.isConnected)return;
+        if(error)throw error;
+        const matches=(data||[]).filter(v=>String(v.plate||'').toUpperCase().replace(/[^A-Z0-9]/g,'')===plate).slice(0,12);
+        options=matches;
+        if(matches.length){results.innerHTML=matches.map(v=>associationOption(v,'vehicle',v.plate||'Placa não informada',[v.make,v.model,v.color].filter(Boolean).join(' · ')||'Dados complementares não informados','🚘')).join('');void hydrateAssociationThumbs('vehicles',matches,results);return}
+        results.innerHTML='<div class="association-search-empty">Nenhum veículo encontrado com esta placa. Você ainda pode cadastrar.</div>'
+      }catch(error){if(request===associationSearchRequest&&results.isConnected)results.innerHTML='<div class="association-search-empty" role="alert">Não foi possível pesquisar agora. Verifique a conexão e tente novamente.</div>';console.warn('Falha na pesquisa de veículo para associação.',error)}
     };
     const selectVehicle=vehicle=>{
       if(!vehicle?.id)return false;
@@ -1518,15 +1533,24 @@ async function showLinkForm(entity,id){
   }else{
     const search=d.querySelector('#personAssociationSearch'),target=d.querySelector('#linkTarget'),results=d.querySelector('#personAssociationResults');
     const normalizeText=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
-    const renderPeopleResults=()=>{
-      const query=normalizeText(search.value),digits=query.replace(/\D/g,'');
-      if(query.length<2&&digits.length<2){results.innerHTML='<div class="association-search-hint">Digite pelo menos 2 caracteres do nome, CPF ou RG.</div>';return}
-      const matches=options.filter(person=>{
-        const name=normalizeText(person.full_name),cpf=String(person.cpf_digits||person.cpf||'').replace(/\D/g,''),rg=String(person.rg||'').replace(/\D/g,'');
-        return name.includes(query)||(digits.length>=2&&(cpf.includes(digits)||rg.includes(digits)))
-      }).slice(0,12);
-      if(matches.length){results.innerHTML=matches.map(person=>associationOption(person,'person',person.full_name||'Sem nome','CPF: '+(person.cpf_digits?formatCpf(person.cpf_digits):person.cpf||'—')+' · RG: '+(person.rg||'—'),'👤')).join('');void hydrateAssociationThumbs('vehicles',matches,results);return}
-      results.innerHTML='<div class="association-search-empty">Nenhuma pessoa encontrada. Confira o nome, CPF ou RG.</div>'
+    let personSearchRequest=0;
+    const renderPeopleResults=async()=>{
+      const request=++personSearchRequest;
+      const query=search.value.trim(),digits=query.replace(/\D/g,'');
+      if(query.length<2&&digits.length<2){options=[];results.innerHTML='<div class="association-search-hint">Digite pelo menos 2 caracteres do nome, CPF ou RG.</div>';return}
+      results.innerHTML='<div class="association-search-hint">Pesquisando pessoas…</div>';
+      try{
+        const {data,error}=await state.client.rpc('search_people',{search_term:query,result_limit:12});
+        if(request!==personSearchRequest||!results.isConnected)return;
+        if(error)throw error;
+        const matches=(data||[]).filter(person=>{
+          const name=normalizeText(person.full_name),cpf=String(person.cpf_digits||person.cpf||'').replace(/\D/g,''),rg=String(person.rg||'').replace(/\D/g,'');
+          return name.includes(normalizeText(query))||(digits.length>=2&&(cpf.includes(digits)||rg.includes(digits)))
+        }).slice(0,12);
+        options=matches;
+        if(matches.length){results.innerHTML=matches.map(person=>associationOption(person,'person',person.full_name||'Sem nome','CPF: '+(person.cpf_digits?formatCpf(person.cpf_digits):person.cpf||'—')+' · RG: '+(person.rg||'—'),'👤')).join('');void hydrateAssociationThumbs('people',matches,results);return}
+        results.innerHTML='<div class="association-search-empty">Nenhuma pessoa encontrada. Confira o nome, CPF ou RG.</div>'
+      }catch(error){if(request===personSearchRequest&&results.isConnected)results.innerHTML='<div class="association-search-empty" role="alert">Não foi possível pesquisar agora. Verifique a conexão e tente novamente.</div>';console.warn('Falha na pesquisa de pessoa para associação.',error)}
     };
     const selectPerson=person=>{
       if(!person?.id)return false;
