@@ -29,6 +29,69 @@ const issueActivationCode = async (admin: ReturnType<typeof createClient>, email
   }, { onConflict: 'email' });
   return { code: error ? null : code, error };
 };
+
+const recordCityAuthorizations = async (
+  admin: ReturnType<typeof createClient>,
+  entries: Array<{ email: string; city_id: string; role: string }>,
+  actor: { id: string; email: string; name: string },
+) => {
+  for (const entry of entries) {
+    const email = entry.email.trim().toLowerCase();
+    const cityId = entry.city_id.trim();
+    if (!email || !cityId || !['operator', 'admin'].includes(entry.role)) continue;
+    const { data: existing, error: lookupError } = await admin.from('authorized_email_city_audit')
+      .select('email').eq('email', email).eq('city_id', cityId).maybeSingle();
+    if (lookupError) return lookupError;
+    if (existing) {
+      const { error } = await admin.from('authorized_email_city_audit').update({
+        role: entry.role, updated_by: actor.id, updated_by_email: actor.email,
+        updated_by_name: actor.name, updated_at: new Date().toISOString(),
+      }).eq('email', email).eq('city_id', cityId);
+      if (error) return error;
+    } else {
+      const { error } = await admin.from('authorized_email_city_audit').insert({
+        email, city_id: cityId, role: entry.role, created_by: actor.id,
+        created_by_email: actor.email, created_by_name: actor.name,
+        updated_by: actor.id, updated_by_email: actor.email,
+        updated_by_name: actor.name,
+      });
+      if (error?.code === '23505') {
+        const { error: retryError } = await admin.from('authorized_email_city_audit').update({
+          role: entry.role, updated_by: actor.id, updated_by_email: actor.email,
+          updated_by_name: actor.name, updated_at: new Date().toISOString(),
+        }).eq('email', email).eq('city_id', cityId);
+        if (retryError) return retryError;
+      } else if (error) return error;
+    }
+  }
+  return null;
+};
+
+const getCityAuthorizationAudit = async (
+  admin: ReturnType<typeof createClient>,
+  emails: string[],
+  cityIds?: string[],
+) => {
+  const normalizedEmails = [...new Set(emails.map(value => value.trim().toLowerCase()).filter(Boolean))];
+  if (!normalizedEmails.length) return [];
+  let query = admin.from('authorized_email_city_audit')
+    .select('email, city_id, role, created_by_email, created_by_name, created_at, updated_by_email, updated_by_name, updated_at')
+    .in('email', normalizedEmails).limit(5000);
+  if (cityIds?.length) query = query.in('city_id', cityIds);
+  const { data, error } = await query;
+  if (error) throw error;
+  const cities = [...new Set((data ?? []).map((row: any) => row.city_id).filter(Boolean))];
+  const { data: cityRows, error: citiesError } = cities.length
+    ? await admin.from('cities').select('id,name').in('id', cities).limit(500)
+    : { data: [], error: null };
+  if (citiesError) throw citiesError;
+  const cityById = new Map((cityRows ?? []).map((city: any) => [city.id, city.name]));
+  return (data ?? []).map((row: any) => ({
+    ...row,
+    city_name: cityById.get(row.city_id) ?? 'Cidade',
+  }));
+};
+
 const appUrl = 'https://tncykeyra.github.io/cadastro-individuos-app/';
 
 Deno.serve(async (request) => {
@@ -147,7 +210,7 @@ Deno.serve(async (request) => {
   if (userError || !user) return respond({ error: 'Sessão inválida. Entre novamente.' }, 401);
 
   const [{ data: profile, error: profileError }, { data: masterValue, error: masterError }, { data: adminValue, error: adminError }, { data: activeCityId, error: cityError }] = await Promise.all([
-    caller.from('profiles').select('role').eq('id', user.id).single(),
+    caller.from('profiles').select('role,email,display_name').eq('id', user.id).single(),
     caller.rpc('is_master_admin'),
     caller.rpc('is_admin'),
     caller.rpc('current_city_id'),
@@ -173,7 +236,8 @@ Deno.serve(async (request) => {
     if (payload.action === 'authorize-city-operator') {
       const { error } = await caller.rpc('admin_authorize_city_operator', { p_email: email });
       if (error) return respond({ error: error.message || 'Não foi possível autorizar o operador nesta cidade.' }, error.code === '42501' ? 403 : 400);
-      return respond({ ok: true, authorized: true, email, role: 'operator', city_id: activeCityId });
+      const auditError = await recordCityAuthorizations(admin, [{ email, city_id: String(activeCityId), role: 'operator' }], { id: user.id, email: String(user.email ?? profile?.email ?? '').trim().toLowerCase(), name: String(profile?.display_name ?? '').trim() });
+      return respond({ ok: true, authorized: true, email, role: 'operator', city_id: activeCityId, authorshipRecorded: !auditError, warning: auditError ? 'A autorização foi aplicada, mas a autoria não pôde ser registrada. Avise o administrador master.' : undefined });
     }
     if (payload.action === 'list_google_authorized') {
       const { data: rows, error } = await admin.from('authorized_emails')
@@ -185,6 +249,10 @@ Deno.serve(async (request) => {
         const hasCity = row.city_id === activeCityId || (Array.isArray(row.city_ids) && row.city_ids.includes(activeCityId));
         return hasCity && row.role === 'operator';
       }).map(row => ({ email: row.email, role: 'operator', created_at: row.created_at }));
+      try {
+        const audit = await getCityAuthorizationAudit(admin, scoped.map(row => row.email), [String(activeCityId)]);
+        for (const entry of scoped) entry.city_authorizations = audit.filter((item: any) => item.email === String(entry.email).toLowerCase());
+      } catch { /* Existing access remains visible if historical audit data is unavailable. */ }
       return respond({ ok: true, emails: scoped });
     }
     return respond({ error: 'Administradores locais só podem autorizar operadores na própria cidade.' }, 403);
@@ -197,13 +265,20 @@ Deno.serve(async (request) => {
       .order('created_at', { ascending: false })
       .limit(250);
     if (error) return respond({ error: 'Não foi possível carregar os e-mails autorizados.' }, 500);
-    return respond({ ok: true, emails: emails ?? [] });
+    const rows = emails ?? [];
+    try {
+      const audit = await getCityAuthorizationAudit(admin, rows.map(row => row.email));
+      for (const entry of rows) entry.city_authorizations = audit.filter((item: any) => item.email === String(entry.email).toLowerCase());
+    } catch {
+      return respond({ error: 'Os acessos foram carregados, mas não foi possível consultar a autoria. Atualize a página e tente novamente.' }, 500);
+    }
+    return respond({ ok: true, emails: rows });
   }
 
   if (payload.action === 'list_local_admins') {
     if (!isMaster) return respond({ error: 'Somente o administrador master pode consultar administradores de outras cidades.' }, 403);
     const { data: memberships, error: membershipsError } = await admin.from('city_memberships')
-      .select('user_id, city_id')
+      .select('user_id, city_id, created_by, created_at')
       .eq('role', 'admin')
       .eq('is_master', false)
       .limit(2000);
@@ -211,17 +286,24 @@ Deno.serve(async (request) => {
     const userIds = [...new Set((memberships ?? []).map(row => row.user_id).filter(Boolean))];
     const cityIds = [...new Set((memberships ?? []).map(row => row.city_id).filter(Boolean))];
     if (!userIds.length) return respond({ ok: true, admins: [] });
-    const [{ data: profiles, error: profilesError }, { data: cities, error: citiesError }] = await Promise.all([
+    const creatorIds = [...new Set((memberships ?? []).map(row => row.created_by).filter(Boolean))];
+    const [{ data: profiles, error: profilesError }, { data: cities, error: citiesError }, { data: creators, error: creatorsError }] = await Promise.all([
       admin.from('profiles').select('id, email, display_name, role, created_at').in('id', userIds).limit(1000),
       cityIds.length ? admin.from('cities').select('id, name').in('id', cityIds).limit(500) : Promise.resolve({ data: [], error: null }),
+      creatorIds.length ? admin.from('profiles').select('id, email, display_name').in('id', creatorIds).limit(1000) : Promise.resolve({ data: [], error: null }),
     ]);
-    if (profilesError || citiesError) return respond({ error: 'Não foi possível carregar os dados dos administradores locais.' }, 500);
+    if (profilesError || citiesError || creatorsError) return respond({ error: 'Não foi possível carregar os dados dos administradores locais.' }, 500);
     const cityById = new Map((cities ?? []).map(city => [city.id, city]));
-    const membershipsByUser = new Map<string, Array<{ id: string; name: string }>>();
+    const creatorById = new Map((creators ?? []).map(profile => [profile.id, profile]));
+    const membershipsByUser = new Map<string, Array<{ id: string; name: string; created_at: string; created_by_email: string | null; created_by_name: string | null }>>();
     for (const membership of memberships ?? []) {
       const city = cityById.get(membership.city_id);
+      const creator = creatorById.get(membership.created_by);
       const current = membershipsByUser.get(membership.user_id) ?? [];
-      if (city && !current.some(item => item.id === city.id)) current.push({ id: city.id, name: city.name });
+      if (city && !current.some(item => item.id === city.id)) current.push({
+        id: city.id, name: city.name, created_at: membership.created_at,
+        created_by_email: creator?.email ?? null, created_by_name: creator?.display_name ?? null,
+      });
       membershipsByUser.set(membership.user_id, current);
     }
     const admins = (profiles ?? []).map(profile => ({
@@ -231,6 +313,10 @@ Deno.serve(async (request) => {
       created_at: profile.created_at,
       cities: membershipsByUser.get(profile.id) ?? [],
     })).filter(profile => profile.email);
+    try {
+      const audit = await getCityAuthorizationAudit(admin, admins.map(profile => profile.email), cityIds);
+      for (const entry of admins) entry.city_authorizations = audit.filter((item: any) => item.email === String(entry.email).toLowerCase());
+    } catch { /* Membership creator snapshots remain available as a fallback. */ }
     return respond({ ok: true, admins });
   }
 
@@ -326,7 +412,8 @@ Deno.serve(async (request) => {
           : 'Não foi possível atualizar os vínculos por cidade. A autorização anterior foi mantida.' }, 400);
       }
     }
-    return respond({ ok: true, email, city_ids: cityIds, city_roles: requestedCityRoles });
+    const auditError = await recordCityAuthorizations(admin, requestedCityRoles.map(item => ({ email, city_id: item.city_id, role: item.role })), { id: user.id, email: String(user.email ?? profile?.email ?? '').trim().toLowerCase(), name: String(profile?.display_name ?? '').trim() });
+    return respond({ ok: true, email, city_ids: cityIds, city_roles: requestedCityRoles, authorshipRecorded: !auditError, warning: auditError ? 'Os acessos foram salvos, mas a autoria não pôde ser registrada. Avise o administrador master.' : undefined });
   }
 
   if (payload.action === 'revoke-google') {
@@ -437,14 +524,15 @@ Deno.serve(async (request) => {
         if (assignmentError) return respond({ error: 'O e-mail foi autorizado, mas as cidades não puderam ser atribuídas ao perfil existente.' }, 500);
       }
     }
+    const auditError = cityRolesToSave.length ? await recordCityAuthorizations(admin, cityRolesToSave.map(item => ({ email, city_id: item.city_id, role: item.role })), { id: user.id, email: String(user.email ?? profile?.email ?? '').trim().toLowerCase(), name: String(profile?.display_name ?? '').trim() }) : null;
     const { code, error: codeError } = await issueActivationCode(admin, email, user.id);
     if (codeError || !code) {
       // The Google allowlist write is authoritative. The optional WhatsApp/password code
       // must never turn a successful Google authorization into an apparent failure.
       console.error('[authorize-google] optional first-access code generation failed', codeError?.code ?? 'unknown');
-      return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, firstAccessCode: null, codeUnavailable: true });
+      return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, firstAccessCode: null, codeUnavailable: true, authorshipRecorded: !auditError, warning: auditError ? 'A autorização foi aplicada, mas a autoria não pôde ser registrada.' : undefined });
     }
-    return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, city_id: authorized.city_id, city_ids: authorized.city_ids, city_roles: authorized.city_roles, firstAccessCode: code, codeUnavailable: false });
+    return respond({ ok: true, authorized: true, role, already_authorized: alreadyAuthorized, city_id: authorized.city_id, city_ids: authorized.city_ids, city_roles: authorized.city_roles, firstAccessCode: code, codeUnavailable: false, authorshipRecorded: !auditError, warning: auditError ? 'A autorização foi aplicada, mas a autoria não pôde ser registrada.' : undefined });
     } catch (error) {
       // Return the persisted allowlist state if a later optional step unexpectedly fails.
       const { data: persisted } = await admin.from('authorized_emails').select('role, city_id, city_ids, city_roles').eq('email', email).maybeSingle();
