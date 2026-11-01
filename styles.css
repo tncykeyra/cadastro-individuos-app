@@ -1320,3 +1320,222 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
     border-radius: 14px !important;
   }
 }
+
+
+/* Tema noturno global: superfícies, formulários e estados em todas as telas. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #f4f6f7;
+  --muted: #c0c8cc;
+  --line: #3b4449;
+  --soft: #171b1e;
+  --surface: #111416;
+  --page: #000;
+  --shadow: 0 12px 34px #000a;
+}
+:root[data-theme="dark"] #mainContent :is(
+  .person-card,.vehicle-card,.dashboard-card,.dashboard-person-card,.stat,.list,
+  .list-row,.empty,.revision,.site-card,.info-box,.auth-card,.page-section,
+  .association-result,.association-search-selected,.association-search-selected-card,
+  .association-search-option,.association-result-row,.duplicate-mini-card,
+  .duplicate-record,.duplicate-candidate,.duplicate-review-pair,
+  .identity-proposal-card,.identity-proposals-panel,.identity-proposal-comparison>div,
+  .revision-person-card,.history-results,.history-filters,.camera-capture-panel,
+  .city-management-panel,.city-members-panel,.merge-field-panel,.photo-preview-card,
+  .photo-preview-grid,.created-user-result,.user-create-row,.user-account-row,
+  .warrant-tool-card,.warrant-active-section,.warrant-review-card,.warrant-record,
+  .warrant-duplicate-review,.warrant-proposal-card,.warrant-linked-person,
+  .warrant-search-result,.warrant-alert-item,.warrant-pdf-batch-row,
+  .warrant-import-preview,.fiscalization-card,.fiscalization-video-card,
+  .fiscalization-tabs,.fiscalization-video-intro,.fiscalization-video-player,
+  .fiscalization-category,.fiscalization-source,.fiscalization-filter,
+  .fiscalization-tab,.team-tabs,.team-page-tabs,.team-page-tab,
+  .person-relationship-card,.person-relationship-candidate,
+  .person-relationship-selected,.cross-city-person-alert
+) {
+  background: #111416 !important;
+  background-color: #111416 !important;
+  color: #f1f4f5 !important;
+  border-color: #3b4449 !important;
+  box-shadow: 0 5px 18px #0004;
+}
+:root[data-theme="dark"] #mainContent :is(
+  .dashboard-substat,.dashboard-video-count,.dashboard-count-note,
+  .fiscalization-video-count,.fiscalization-video-icon,.linked-person-icon,
+  .vehicle-thumb,.association-result-thumb,.association-result-placeholder,
+  .duplicate-record-photo,.smart-bundle-thumb,.smart-candidate-photo,
+  .smart-check,.warrant-summary,.warrant-proposal-fields div,
+  .warrant-duplicate-facts,.warrant-review-details,.diff-row,
+  .merge-field-choice,.address-entry,.city-chip,.city-access-option,
+  .city-role-option,.team-page-count
+) {
+  background: #1b2023 !important;
+  background-color: #1b2023 !important;
+  color: #e4e9eb !important;
+  border-color: #424b50 !important;
+}
+:root[data-theme="dark"] #mainContent :is(
+  .person-card h3,.vehicle-card h3,.dashboard-card strong,.dashboard-person-card strong,
+  .row-title,.info-value,.detail-title h1,.detail-sections h2,.detail-sections h3,
+  .warrant-review-card h3,.warrant-record h3,.warrant-proposal-card h3,
+  .revision strong,.identity-proposal-card strong,.smart-mini-card strong,
+  .smart-candidate-copy strong,.duplicate-mini-card strong
+) { color: #f7f8f9 !important; }
+:root[data-theme="dark"] #mainContent :is(
+  .muted,.card-meta,.row-subtitle,.info-label,.dashboard-label,.pagination-summary,
+  .warrant-meta,.section-description,.form-hint,.field-hint,
+  .warrant-review-heading p,.warrant-proposal-heading,.warrant-empty-review,
+  .history-filters label,.history-filters small,.city-member-meta
+) { color: #c0c8cc !important; }
+:root[data-theme="dark"] :is(
+  #mainContent,#recordDialog,#photoDialog,#operatorTourDialog,dialog
+) :is(input,textarea,select,.search,.role-select,.page-select,.history-filters input,
+  .history-filters select,.field input,.field textarea,.field select,
+  .warrant-form input,.warrant-form textarea,.warrant-search-row input,
+  .warrant-pdf-batch-fields input,.warrant-pdf-batch-fields textarea,
+  .city-role-option select,.association-search input) {
+  color: #f4f6f7 !important;
+  background: #191e21 !important;
+  background-color: #191e21 !important;
+  border-color: #505a60 !important;
+  caret-color: #fff;
+  -webkit-text-fill-color: #f4f6f7;
+}
+:root[data-theme="dark"] :is(
+  #mainContent,#recordDialog,#photoDialog,#operatorTourDialog,dialog
+) :is(input,textarea,select)::placeholder { color: #b7c1c6 !important; opacity: 1; }
+:root[data-theme="dark"] :is(
+  #mainContent,#recordDialog,#photoDialog,#operatorTourDialog,dialog
+) :is(input,textarea,select):focus-visible {
+  outline: 3px solid #9ac9ff !important;
+  outline-offset: 2px;
+  border-color: #9ac9ff !important;
+}
+:root[data-theme="dark"] :is(#recordDialog,#operatorTourDialog,dialog) {
+  color-scheme: dark;
+  color: #f4f6f7;
+  background: #0b0d0f;
+  border-color: #41494e;
+}
+:root[data-theme="dark"] :is(.dialog-head,.dialog-actions,.dialog-content,.dialog-inner) {
+  color: #f4f6f7 !important;
+  background: #0b0d0f !important;
+  border-color: #343b3f !important;
+}
+:root[data-theme="dark"] #mainContent :is(
+  .button.secondary,.carousel-control-icon,.gallery-arrow,.more-button,
+  .close,.operator-tour-close,.search-button
+) {
+  color: #edf2f4 !important;
+  background: #20262a !important;
+  border-color: #505a60 !important;
+}
+:root[data-theme="dark"] #mainContent :is(.button.danger,.danger) {
+  color: #fff !important;
+  background: #9f2f35 !important;
+  border-color: #bd5258 !important;
+}
+:root[data-theme="dark"] #mainContent :is(
+  .notice,.warning,.duplicate-warning,.warrant-person-alert,.warrant-card-alert,
+  .warrant-caution,.warrant-import-confirm,.person-relationships-disclaimer
+) {
+  color: #ffedb8 !important;
+  background: #30250d !important;
+  border-color: #806522 !important;
+}
+:root[data-theme="dark"] #mainContent :is(
+  .error-box,.error,.danger-notice,.identity-change-notice,
+  .dashboard-proposal-alert,.vehicle-plate-proposal-notice
+) {
+  color: #ffe2e4 !important;
+  background: #351619 !important;
+  border-color: #8f3b42 !important;
+}
+:root[data-theme="dark"] #mainContent :is(
+  .success,.success-box,.photo-upload-status.success,.status-success
+) {
+  color: #c8f5d5 !important;
+  background: #10281b !important;
+  border-color: #2f7547 !important;
+}
+:root[data-theme="dark"] #mainContent :is(.info-notice,.info-alert,.auth-access-note) {
+  color: #d8ecff !important;
+  background: #142733 !important;
+  border-color: #42677c !important;
+}
+:root[data-theme="dark"] #mainContent :is(
+  .identity-suggestion-sent,.identity-proposal-status,.identity-proposal-count,
+  .team-page-tab.has-pending:not(.active)
+) {
+  color: #ffdfe1 !important;
+  background: #351619 !important;
+  border-color: #8f3b42 !important;
+}
+:root[data-theme="dark"] #mainContent :is(
+  .warrant-status,.warrant-admin-pill,.warrant-review-tag,.warrant-source,
+  .duplicate-review-badge,.count-badge,.city-chip
+) {
+  color: #e8edef !important;
+  background: #252b2f !important;
+  border-color: #505a60 !important;
+}
+:root[data-theme="dark"] #mainContent :is(.warrant-status.pending,.warrant-card-alert) {
+  color: #ffedb8 !important;
+  background: #30250d !important;
+  border-color: #806522 !important;
+}
+:root[data-theme="dark"] #mainContent :is(.warrant-status.reported,.status-info) {
+  color: #d8efff !important;
+  background: #142733 !important;
+  border-color: #42677c !important;
+}
+:root[data-theme="dark"] #mainContent :is(.warrant-status.closed,.warrant-status.discharged,
+  .warrant-status.cancelled,.warrant-status.revoked,.status-success) {
+  color: #c8f5d5 !important;
+  background: #10281b !important;
+  border-color: #2f7547 !important;
+}
+:root[data-theme="dark"] #mainContent :is(.team-page-tab.active,.team-page-tabs .active) {
+  color: #fff !important;
+  background: #3d484e !important;
+  border-color: #77858c !important;
+}
+:root[data-theme="dark"] #mainContent :is(.nav-alert-badge,.count-badge.alert) {
+  color: #fff !important;
+  background: #b52f38 !important;
+  border-color: #e9edef !important;
+}
+:root[data-theme="dark"] #mainContent a:not(.button),
+:root[data-theme="dark"] #recordDialog a:not(.button),
+:root[data-theme="dark"] #operatorTourDialog a:not(.button) { color: #a9d4ff; }
+:root[data-theme="dark"] :is(#mainContent,#recordDialog,#operatorTourDialog,dialog)
+  :is(button,.button,[role="button"],summary):focus-visible {
+  outline: 3px solid #9ac9ff !important;
+  outline-offset: 3px;
+}
+:root[data-theme="dark"] #mainContent :is(table,th,td) { border-color: #3b4449 !important; }
+:root[data-theme="dark"] #mainContent th { color: #f4f6f7 !important; background: #191e21 !important; }
+:root[data-theme="dark"] #mainContent td { color: #e5e9eb !important; background: #0f1214; }
+:root[data-theme="dark"] #mainContent :is(.carousel-stage,.card-photo-cover,.card-photo-thumbnail,
+  .vehicle-placeholder,.photo-preview-card,.crop-inline-controls,.association-search-option) {
+  background-color: #1b2023 !important;
+  border-color: #424b50 !important;
+}
+:root[data-theme="dark"] #mainContent :is(.identity-proposal-comparison>div:last-child,
+  .team-page-tab.has-pending:not(.active)) { background: #351619 !important; }
+:root[data-theme="dark"] #mainContent :is(.field label,.form-grid label,.warrant-form label) {
+  color: #edf1f3 !important;
+}
+:root[data-theme="dark"] #mainContent :is(button,.button):disabled {
+  color: #b7c1c6 !important;
+  opacity: .72;
+}
+@media (prefers-contrast: more) {
+  :root[data-theme="dark"] { --muted: #e0e4e6; --line: #70787d; }
+  :root[data-theme="dark"] :is(#mainContent,#recordDialog,#operatorTourDialog,dialog)
+    :is(input,textarea,select) { border-color: #929ba0 !important; }
+}
+@media (forced-colors: active) {
+  :root[data-theme="dark"] :is(#mainContent,#recordDialog,#operatorTourDialog,dialog)
+    :is(a,button,input,textarea,select,[tabindex]) { forced-color-adjust: auto; }
+}
