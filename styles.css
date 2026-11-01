@@ -1553,3 +1553,46 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
 @media(max-width:560px){.city-catalog-row{flex-wrap:wrap;padding:10px}.city-catalog-meta{flex-basis:calc(100% - 94px)}.city-catalog-row>.button{width:100%;min-height:42px}}
 :root[data-theme="dark"] .city-status.is-active{background:#183b2a;color:#9de5b6}
 :root[data-theme="dark"] .city-status.is-inactive{background:#493b19;color:#ffe09a}
+
+
+/* Ação de conta no cabeçalho do menu lateral. */
+.drawer-brand-copy{flex:1;min-width:0}
+.drawer-brand .signout{
+  display:grid;
+  grid-template-columns:30px minmax(0,1fr) 18px;
+  align-items:center;
+  gap:9px;
+  width:100%;
+  min-height:42px;
+  margin:11px 0 0;
+  padding:6px 9px;
+  border:1px solid var(--line);
+  border-radius:11px;
+  background:var(--surface);
+  color:var(--brand-dark);
+  box-shadow:0 2px 8px #1721270b;
+  font-size:.8rem;
+  font-weight:650;
+  line-height:1.25;
+  transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+.drawer-brand .signout:hover{
+  background:var(--soft);
+  border-color:#cbd2d5;
+  box-shadow:0 4px 12px #17212712;
+  transform:translateY(-1px);
+}
+.drawer-brand .signout-icon{
+  display:grid;
+  place-items:center;
+  width:30px;
+  height:30px;
+  border-radius:9px;
+  background:var(--soft);
+  color:var(--brand);
+}
+.drawer-brand .signout-icon svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.drawer-brand .signout-chevron{justify-self:end;color:var(--muted);font-size:1.25rem;line-height:1}
+[data-theme="dark"] .drawer-brand .signout{background:#171b1e;color:#eef1f2;border-color:#343a3e;box-shadow:none}
+[data-theme="dark"] .drawer-brand .signout:hover{background:#22292d;border-color:#59646a;box-shadow:none}
+[data-theme="dark"] .drawer-brand .signout-icon{background:#283136;color:#cbd7dc}
