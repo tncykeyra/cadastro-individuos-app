@@ -372,8 +372,8 @@ Deno.serve(async (request) => {
       return respond({ error: 'Selecione ao menos uma cidade e escolha um perfil válido em cada uma.' }, 400);
     }
     const cityIds = requestedCityRoles.map(item => item.city_id);
-    const { data: cities, error: cityError } = await caller.rpc('list_my_cities');
-    if (cityError || !Array.isArray(cities)) return respond({ error: 'Não foi possível consultar suas cidades autorizadas agora. Atualize a página e tente novamente.' }, 503);
+    const { data: cities, error: cityError } = await admin.from('cities').select('id,name,active').in('id', cityIds);
+    if (cityError || !Array.isArray(cities)) return respond({ error: 'Não foi possível validar as cidades selecionadas. Tente novamente.' }, 503);
     const availableById = new Map(cities.map((city: any) => [String(city.id), city]));
     const missing = cityIds.filter(id => !availableById.has(id));
     const inactive = cityIds.map(id => availableById.get(id)).filter(city => city && city.active !== true).map(city => city.name);
@@ -460,8 +460,8 @@ Deno.serve(async (request) => {
     if (cityIds.length) {
       const { data: master, error: masterError } = await caller.rpc('is_master_admin');
       if (masterError || master !== true) return respond({ error: 'Somente o administrador master pode atribuir cidades nesta autorização.' }, 403);
-      const { data: cities, error: cityError } = await caller.rpc('list_my_cities');
-      if (cityError || !Array.isArray(cities)) return respond({ error: 'Não foi possível consultar suas cidades autorizadas agora. Atualize a página e tente novamente.' }, 503);
+      const { data: cities, error: cityError } = await admin.from('cities').select('id,name,active').in('id', cityIds);
+      if (cityError || !Array.isArray(cities)) return respond({ error: 'Não foi possível validar as cidades selecionadas. Tente novamente.' }, 503);
       const availableById = new Map(cities.map((city: any) => [String(city.id), city]));
       const missing = cityIds.filter(id => !availableById.has(id));
       const inactive = cityIds.map(id => availableById.get(id)).filter(city => city && city.active !== true).map(city => city.name);
