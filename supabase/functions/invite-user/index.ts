@@ -146,14 +146,15 @@ Deno.serve(async (request) => {
   const { data: { user }, error: userError } = await caller.auth.getUser();
   if (userError || !user) return respond({ error: 'Sessão inválida. Entre novamente.' }, 401);
 
-  const { data: profile, error: profileError } = await caller
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single();
-  if (profileError || profile?.role !== 'admin') {
-    return respond({ error: 'Apenas administradores podem cadastrar usuários.' }, 403);
-  }
+  const [{ data: profile, error: profileError }, { data: masterValue, error: masterError }, { data: adminValue, error: adminError }, { data: activeCityId, error: cityError }] = await Promise.all([
+    caller.from('profiles').select('role').eq('id', user.id).single(),
+    caller.rpc('is_master_admin'),
+    caller.rpc('is_admin'),
+    caller.rpc('current_city_id'),
+  ]);
+  const isMaster = !masterError && masterValue === true;
+  const isCityAdmin = !profileError && profile?.role === 'admin' && !isMaster && !adminError && adminValue === true && !cityError && Boolean(activeCityId);
+  if (!isMaster && !isCityAdmin) return respond({ error: 'Apenas administradores autorizados podem gerenciar acessos.' }, 403);
 
   let payload: { action?: string; email?: string; temporaryPassword?: string; userId?: string; role?: string; city_id?: string; city_ids?: string[]; city_roles?: Array<{ city_id?: string; role?: string }> };
   try {
@@ -167,6 +168,27 @@ Deno.serve(async (request) => {
   const admin = createClient(url, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false },
   });
+
+  if (isCityAdmin) {
+    if (payload.action === 'authorize-city-operator') {
+      const { error } = await caller.rpc('admin_authorize_city_operator', { p_email: email });
+      if (error) return respond({ error: error.message || 'Não foi possível autorizar o operador nesta cidade.' }, error.code === '42501' ? 403 : 400);
+      return respond({ ok: true, authorized: true, email, role: 'operator', city_id: activeCityId });
+    }
+    if (payload.action === 'list_google_authorized') {
+      const { data: rows, error } = await admin.from('authorized_emails')
+        .select('email, role, city_id, city_ids, city_roles, created_at')
+        .order('created_at', { ascending: false }).limit(500);
+      if (error) return respond({ error: 'Não foi possível carregar os operadores autorizados.' }, 500);
+      const scoped = (rows ?? []).filter(row => {
+        if (Array.isArray(row.city_roles)) return row.city_roles.some((entry: any) => entry?.city_id === activeCityId && entry?.role === 'operator');
+        const hasCity = row.city_id === activeCityId || (Array.isArray(row.city_ids) && row.city_ids.includes(activeCityId));
+        return hasCity && row.role === 'operator';
+      }).map(row => ({ email: row.email, role: 'operator', created_at: row.created_at }));
+      return respond({ ok: true, emails: scoped });
+    }
+    return respond({ error: 'Administradores locais só podem autorizar operadores na própria cidade.' }, 403);
+  }
 
   if (payload.action === 'list_google_authorized') {
     const { data: emails, error } = await admin
