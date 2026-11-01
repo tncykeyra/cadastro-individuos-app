@@ -1539,3 +1539,16 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
   :root[data-theme="dark"] :is(#mainContent,#recordDialog,#operatorTourDialog,dialog)
     :is(a,button,input,textarea,select,[tabindex]) { forced-color-adjust: auto; }
 }
+
+/* Cadastro de cidades: estados e ação de ativação */
+.city-catalog-list{display:grid;gap:8px;margin:12px 0 18px}
+.city-catalog-row{display:flex;align-items:center;gap:10px;min-width:0;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.city-catalog-meta{display:grid;gap:3px;flex:1;min-width:0}
+.city-catalog-meta strong{overflow-wrap:anywhere}
+.city-catalog-meta small{color:var(--muted);font-size:.86rem}
+.city-status{flex:0 0 auto;padding:5px 9px;border-radius:999px;font-size:.78rem;font-weight:700}
+.city-status.is-active{background:#e7f4eb;color:#176b3a}
+.city-status.is-inactive{background:#fff2d9;color:#805900}
+@media(max-width:560px){.city-catalog-row{flex-wrap:wrap;padding:10px}.city-catalog-meta{flex-basis:calc(100% - 94px)}.city-catalog-row>.button{width:100%;min-height:42px}}
+:root[data-theme="dark"] .city-status.is-active{background:#183b2a;color:#9de5b6}
+:root[data-theme="dark"] .city-status.is-inactive{background:#493b19;color:#ffe09a}
