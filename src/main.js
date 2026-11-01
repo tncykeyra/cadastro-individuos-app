@@ -3,9 +3,16 @@ import { isUsefulSearch, normalizePlate, isValidPlate, dedupePhotoSources, forma
 import { buildRecordPdf } from './pdf.js';
 import { isValidCpf, mergeFiliationIntoNotes } from './ocr-domain.js';
 import { parseWarrantCsv, normalizeWarrantProcessNumber, isSpecificWarrantNumber, extractWarrantSuggestions, extractWarrantPersonSuggestions, formatWarrantOcrProgress, resolveWarrantBatchValues } from './warrants.js';
-import { processOcrFiles } from './ocr-engine.js';
+
 import { renderFiscalizationPage, wireFiscalizationActions } from './fiscalization.js';
 import { renderIntelligentEntry, parseIntelligentText, parseIntelligentBundle, inspectRecords, getSmartPersonSearchTerms, duplicateReviewPairKey } from './intelligent-tools.js';
+
+let ocrEnginePromise;
+async function processOcrFiles(...args){
+  if(!ocrEnginePromise)ocrEnginePromise=import('./ocr-engine.js').catch(error=>{ocrEnginePromise=null;throw error});
+  const engine=await ocrEnginePromise;
+  return engine.processOcrFiles(...args)
+}
 
 const config={url:import.meta.env.VITE_SUPABASE_URL,key:import.meta.env.VITE_SUPABASE_ANON_KEY};
 const appIconUrl=import.meta.env.BASE_URL+'icon.svg?v=10';
@@ -177,7 +184,6 @@ async function cacheDisplayedPhoto(path,url){
 document.addEventListener('load',event=>{const image=event.target;if(image instanceof HTMLImageElement&&image.dataset.cachePhotoPath)void cacheDisplayedPhoto(image.dataset.cachePhotoPath,image.currentSrc||image.src)},true)
 
 async function signedPhoto(path){if(!path)return '';const external=externalPhotoUrl(path);if(external)return external;const urls=await galleryPhotoUrls([path]);const url=urls.get(String(path))||'';if(!url||url.startsWith('blob:'))return url;try{const response=await fetch(url,{mode:'cors',cache:'force-cache'});if(response.ok){const blob=await response.blob();if(blob.size&&blob.type.startsWith('image/')){await writeCachedPhoto(state.session.user.id+':'+path,blob);const objectUrl=URL.createObjectURL(blob);photoUrls.set(state.session.user.id+':'+path,objectUrl);return objectUrl}}}catch{}return url}
-async function loadAllActive(table,orderColumn){const rows=[];for(let start=0;;start+=1000){const {data,error}=await state.client.from(table).select('*').is('archived_at',null).order(orderColumn).order('id').range(start,start+999);if(error)throw error;const batch=data||[];rows.push(...batch);if(batch.length<1000)return rows}}
 async function loadPagedActive(entity,orderColumn){const fetchPage=()=>{const columns=entity==='people'?'id,full_name,cpf_digits,rg,photo_path':'id,plate,make,model,color,photo_path';let query=state.client.from(entity).select(columns,{count:'exact'}).is('archived_at',null);if(entity==='people'&&state.letter!=='all'){const accents={A:['A','Á','À','Â','Ã','Ä'],C:['C','Ç'],E:['E','É','È','Ê','Ë'],I:['I','Í','Ì','Î','Ï'],O:['O','Ó','Ò','Ô','Õ','Ö'],U:['U','Ú','Ù','Û','Ü']};const prefixes=accents[state.letter]||[state.letter];query=query.or(prefixes.map(letter=>'full_name.ilike.'+letter+'%').join(','))}return query.order(orderColumn).order('id')};const loadPage=page=>fetchPage().range(page*state.listPageSize,(page+1)*state.listPageSize-1);let page=Math.max(0,Number(state.listPage)||0);let result=await loadPage(page);if(result.error&&(result.error.code==='PGRST103'||result.error.status===416||/requested range not satisfiable/i.test(result.error.message||''))){page=0;state.listPage=0;result=await loadPage(0)}if(result.error)throw result.error;const count=result.count||0,pages=Math.max(1,Math.ceil(count/state.listPageSize));if(page>=pages){page=pages-1;state.listPage=page;result=await loadPage(page);if(result.error)throw result.error}state.listTotal=result.count||0;state.serverPaged=true;return result.data||[]}
 async function loadRecords(requestId=state.searchRequest){state.serverPaged=false;state.listTotal=0;const query=state.query.trim();if(isUsefulSearch(query)){if(state.page==='people'){const [people,vehicles]=await Promise.all([state.client.rpc('search_people',{search_term:query,result_limit:100}),state.client.rpc('search_vehicles',{search_term:query,result_limit:100})]);if(requestId!==state.searchRequest)return;if(people.error)throw people.error;if(vehicles.error)throw vehicles.error;state.people=people.data||[];state.vehicles=vehicles.data||[]}else if(state.page==='vehicles'){const [vehicles,people]=await Promise.all([state.client.rpc('search_vehicles',{search_term:query,result_limit:100}),state.client.rpc('search_people',{search_term:query,result_limit:100})]);if(requestId!==state.searchRequest)return;if(vehicles.error)throw vehicles.error;if(people.error)throw people.error;state.vehicles=vehicles.data||[];state.people=people.data||[]}return}if(query){state.people=[];state.vehicles=[];return}if(state.page==='people'){state.people=await loadPagedActive('people','full_name');if(requestId!==state.searchRequest)return;state.vehicles=[]}else if(state.page==='vehicles'){state.vehicles=await loadPagedActive('vehicles','plate');if(requestId!==state.searchRequest)return;state.people=[]}}
 const warrantSearchResults = new Map();
@@ -1417,8 +1423,7 @@ async function deactivatePersonRelationship(relationId){
 
 async function showLinkForm(entity,id){
   const isPerson=entity==='person',labelKey=isPerson?'plate':'full_name';
-  let options;
-  try{options=await loadAllActive(isPerson?'vehicles':'people',isPerson?'plate':'full_name')}catch(error){toast(msg(error));return}
+  let options=[];
   const d=$('#recordDialog');
   d.__ocrAssistant?.destroy?.();d.__ocrAssistant=null;
   const targetField=isPerson
@@ -1456,14 +1461,23 @@ async function showLinkForm(entity,id){
   const associationOption=(record,kind,title,description,icon)=>'<button class="association-search-option" type="button" role="option" data-association-'+kind+'="'+esc(record.id)+'"><span class="association-result-row">'+associationThumb(record,icon)+'<span class="association-result-copy"><strong>'+esc(title)+'</strong><span>'+esc(description)+'</span></span></span></button>';
   if(isPerson){
     const search=d.querySelector('#vehicleAssociationSearch'),target=d.querySelector('#linkTarget'),results=d.querySelector('#vehicleAssociationResults');
-    const renderResults=()=>{
+    let associationSearchRequest=0;
+    const renderResults=async()=>{
+      const request=++associationSearchRequest;
       const plate=search.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
-      if(!plate){results.innerHTML='<div class="association-search-hint">Digite uma placa para pesquisar.</div>';return}
-      if(plate.length<7){results.innerHTML='<div class="association-search-hint">A placa deve conter 7 caracteres: AAA0000 ou AAA0A00.</div>';return}
-      if(!/^(?:[A-Z]{3}[0-9]{4}|[A-Z]{3}[0-9][A-Z][0-9]{2})$/.test(plate)){results.innerHTML='<div class="association-search-empty" role="alert">Placa inválida. Use o padrão AAA0000 ou AAA0A00.</div>';return}
-      const matches=options.filter(v=>String(v.plate||'').toUpperCase().replace(/[^A-Z0-9]/g,'')===plate).slice(0,12);
-      if(matches.length){results.innerHTML=matches.map(v=>associationOption(v,'vehicle',v.plate||'Placa não informada',[v.make,v.model,v.color].filter(Boolean).join(' · ')||'Dados complementares não informados','🚘')).join('');void hydrateAssociationThumbs('vehicles',matches,results);return}
-      results.innerHTML='<div class="association-search-empty">Nenhum veículo encontrado com esta placa. Você ainda pode cadastrar.</div>'
+      if(!plate){options=[];results.innerHTML='<div class="association-search-hint">Digite uma placa para pesquisar.</div>';return}
+      if(plate.length<7){options=[];results.innerHTML='<div class="association-search-hint">A placa deve conter 7 caracteres: AAA0000 ou AAA0A00.</div>';return}
+      if(!/^(?:[A-Z]{3}[0-9]{4}|[A-Z]{3}[0-9][A-Z][0-9]{2})$/.test(plate)){options=[];results.innerHTML='<div class="association-search-empty" role="alert">Placa inválida. Use o padrão AAA0000 ou AAA0A00.</div>';return}
+      results.innerHTML='<div class="association-search-hint">Pesquisando placa…</div>';
+      try{
+        const {data,error}=await state.client.rpc('search_vehicles',{search_term:plate,result_limit:12});
+        if(request!==associationSearchRequest||!results.isConnected)return;
+        if(error)throw error;
+        const matches=(data||[]).filter(v=>String(v.plate||'').toUpperCase().replace(/[^A-Z0-9]/g,'')===plate).slice(0,12);
+        options=matches;
+        if(matches.length){results.innerHTML=matches.map(v=>associationOption(v,'vehicle',v.plate||'Placa não informada',[v.make,v.model,v.color].filter(Boolean).join(' · ')||'Dados complementares não informados','🚘')).join('');void hydrateAssociationThumbs('vehicles',matches,results);return}
+        results.innerHTML='<div class="association-search-empty">Nenhum veículo encontrado com esta placa. Você ainda pode cadastrar.</div>'
+      }catch(error){if(request===associationSearchRequest&&results.isConnected)results.innerHTML='<div class="association-search-empty" role="alert">Não foi possível pesquisar agora. Verifique a conexão e tente novamente.</div>';console.warn('Falha na pesquisa de veículo para associação.',error)}
     };
     const selectVehicle=vehicle=>{
       if(!vehicle?.id)return false;
@@ -1474,6 +1488,7 @@ async function showLinkForm(entity,id){
       return true
     };
     search.addEventListener('input',()=>{
+      associationSearchRequest++;options=[];
       search.value=search.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
       target.value='';
       results.innerHTML=search.value?'<div class="association-search-hint">Toque na lupa ou pressione Enter para pesquisar a placa.</div>':'<div class="association-search-hint">Digite uma placa para pesquisar.</div>'
@@ -1518,15 +1533,24 @@ async function showLinkForm(entity,id){
   }else{
     const search=d.querySelector('#personAssociationSearch'),target=d.querySelector('#linkTarget'),results=d.querySelector('#personAssociationResults');
     const normalizeText=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
-    const renderPeopleResults=()=>{
-      const query=normalizeText(search.value),digits=query.replace(/\D/g,'');
-      if(query.length<2&&digits.length<2){results.innerHTML='<div class="association-search-hint">Digite pelo menos 2 caracteres do nome, CPF ou RG.</div>';return}
-      const matches=options.filter(person=>{
-        const name=normalizeText(person.full_name),cpf=String(person.cpf_digits||person.cpf||'').replace(/\D/g,''),rg=String(person.rg||'').replace(/\D/g,'');
-        return name.includes(query)||(digits.length>=2&&(cpf.includes(digits)||rg.includes(digits)))
-      }).slice(0,12);
-      if(matches.length){results.innerHTML=matches.map(person=>associationOption(person,'person',person.full_name||'Sem nome','CPF: '+(person.cpf_digits?formatCpf(person.cpf_digits):person.cpf||'—')+' · RG: '+(person.rg||'—'),'👤')).join('');void hydrateAssociationThumbs('vehicles',matches,results);return}
-      results.innerHTML='<div class="association-search-empty">Nenhuma pessoa encontrada. Confira o nome, CPF ou RG.</div>'
+    let personSearchRequest=0;
+    const renderPeopleResults=async()=>{
+      const request=++personSearchRequest;
+      const query=search.value.trim(),digits=query.replace(/\D/g,'');
+      if(query.length<2&&digits.length<2){options=[];results.innerHTML='<div class="association-search-hint">Digite pelo menos 2 caracteres do nome, CPF ou RG.</div>';return}
+      results.innerHTML='<div class="association-search-hint">Pesquisando pessoas…</div>';
+      try{
+        const {data,error}=await state.client.rpc('search_people',{search_term:query,result_limit:12});
+        if(request!==personSearchRequest||!results.isConnected)return;
+        if(error)throw error;
+        const matches=(data||[]).filter(person=>{
+          const name=normalizeText(person.full_name),cpf=String(person.cpf_digits||person.cpf||'').replace(/\D/g,''),rg=String(person.rg||'').replace(/\D/g,'');
+          return name.includes(normalizeText(query))||(digits.length>=2&&(cpf.includes(digits)||rg.includes(digits)))
+        }).slice(0,12);
+        options=matches;
+        if(matches.length){results.innerHTML=matches.map(person=>associationOption(person,'person',person.full_name||'Sem nome','CPF: '+(person.cpf_digits?formatCpf(person.cpf_digits):person.cpf||'—')+' · RG: '+(person.rg||'—'),'👤')).join('');void hydrateAssociationThumbs('people',matches,results);return}
+        results.innerHTML='<div class="association-search-empty">Nenhuma pessoa encontrada. Confira o nome, CPF ou RG.</div>'
+      }catch(error){if(request===personSearchRequest&&results.isConnected)results.innerHTML='<div class="association-search-empty" role="alert">Não foi possível pesquisar agora. Verifique a conexão e tente novamente.</div>';console.warn('Falha na pesquisa de pessoa para associação.',error)}
     };
     const selectPerson=person=>{
       if(!person?.id)return false;
@@ -1536,7 +1560,7 @@ async function showLinkForm(entity,id){
       void hydrateAssociationThumbs('people',[person],results);
       return true
     };
-    search.addEventListener('input',()=>{target.value='';results.innerHTML=search.value.trim()?'<div class="association-search-hint">Toque na lupa ou pressione Enter para pesquisar.</div>':'<div class="association-search-hint">Digite nome, CPF ou RG e toque na lupa.</div>'});
+    search.addEventListener('input',()=>{personSearchRequest++;options=[];target.value='';results.innerHTML=search.value.trim()?'<div class="association-search-hint">Toque na lupa ou pressione Enter para pesquisar.</div>':'<div class="association-search-hint">Digite nome, CPF ou RG e toque na lupa.</div>'});
     search.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();renderPeopleResults()}});
     d.querySelector('[data-search-associated-person]')?.addEventListener('click',renderPeopleResults);
     results.addEventListener('click',event=>{
