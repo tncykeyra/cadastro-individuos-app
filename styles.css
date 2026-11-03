@@ -1596,3 +1596,8 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
 [data-theme="dark"] .drawer-brand .signout{background:#171b1e;color:#eef1f2;border-color:#343a3e;box-shadow:none}
 [data-theme="dark"] .drawer-brand .signout:hover{background:#22292d;border-color:#59646a;box-shadow:none}
 [data-theme="dark"] .drawer-brand .signout-icon{background:#283136;color:#cbd7dc}
+
+/* Ações de cadastro: exportação e inclusão responsivas. */
+.page-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;min-width:0}.export-records-button{white-space:nowrap}
+@media(max-width:620px){.page-intro:has(.page-actions){align-items:stretch;flex-direction:column;gap:14px}.page-intro .page-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);width:100%;gap:8px}.page-intro .page-actions .button{min-width:0;padding-inline:10px;white-space:normal;font-size:.9rem}}
+@media(max-width:380px){.page-intro .page-actions{grid-template-columns:1fr}.page-intro .page-actions .button{width:100%}}
