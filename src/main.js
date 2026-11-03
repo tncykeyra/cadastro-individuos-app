@@ -1281,7 +1281,40 @@ async function hydrateWarrantCardBadges(records){
 }
 function exportDate(value){if(!value)return '';const date=new Date(value);return Number.isNaN(date.getTime())?String(value):date.toLocaleString('pt-BR')}
 function exportBirthday(value){if(!value)return '';const match=String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);return match?match[3]+'/'+match[2]+'/'+match[1]:String(value)}
-function setExportProgress(button,text){if(button?.isConnected)button.textContent=text}
+let exportInProgress=false;
+function setExportProgress(button,text){
+ if(button?.isConnected)button.textContent=text;
+ const label=document.querySelector('[data-export-progress-label]');if(label)label.textContent=text
+}
+function showExportProgress(){
+ document.querySelector('[data-export-progress]')?.remove();
+ const notice=document.createElement('section');notice.className='export-download-notice export-progress-notice';notice.dataset.exportProgress='';notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');
+ notice.innerHTML='<strong>Preparando planilha</strong><span data-export-progress-label>Carregando cadastros…</span>';
+ document.body.append(notice)
+}
+function showExportDownload(blob,fileName,summary){
+ document.querySelector('[data-export-progress]')?.remove();
+ document.querySelector('[data-export-ready]')?.remove();
+ const url=URL.createObjectURL(blob),notice=document.createElement('section');notice.className='export-download-notice';notice.dataset.exportReady='';notice.setAttribute('role','status');notice.setAttribute('aria-live','polite');
+ notice.innerHTML='<strong>Planilha pronta para baixar</strong><span>'+esc(summary)+'</span><div class="export-download-actions"><button class="button" type="button" data-save-export>⇩ Baixar planilha</button><button class="button secondary" type="button" data-dismiss-export aria-label="Fechar aviso">Fechar</button></div>';
+ const release=()=>{notice.remove();URL.revokeObjectURL(url)};
+ notice.querySelector('[data-dismiss-export]').addEventListener('click',release);
+ notice.querySelector('[data-save-export]').addEventListener('click',async event=>{
+  const saveButton=event.currentTarget;saveButton.disabled=true;
+  try{
+   if(typeof window.showSaveFilePicker==='function'){
+    let handle;
+    try{handle=await window.showSaveFilePicker({suggestedName:fileName,types:[{description:'Planilha Excel',accept:{'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx']}}]})}
+    catch(error){if(error?.name==='AbortError'){saveButton.disabled=false;return}throw error}
+    const writable=await handle.createWritable();try{await writable.write(blob);await writable.close()}catch(error){await writable.abort?.();throw error}
+   }else{
+    const link=document.createElement('a');link.href=url;link.download=fileName;link.rel='noopener';link.style.position='fixed';link.style.left='-10000px';document.body.append(link);link.click();link.remove()
+   }
+   toast('Download iniciado sem sair do aplicativo.');setTimeout(release,60000)
+  }catch(error){saveButton.disabled=false;toast('Não foi possível iniciar o download: '+msg(error))}
+ });
+ document.body.append(notice)
+}
 function exportImageData(url){
  return new Promise(async(resolve,reject)=>{
   try{
@@ -1339,13 +1372,11 @@ async function exportRecords(entity,button){
  const fields=isPeople?'id,full_name,cpf_digits,rg,registration,alias,birthday,address_primary,address_secondary,additional_addresses,notes,occurrence_notes,occurrence_reference,characteristics,photo_path,created_at,updated_at':'id,plate,make,model,color,notes,photo_path,created_at,updated_at';
  const safeCity=cityName.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()||'cidade';
  const downloadName=(isPeople?'individuos':'veiculos')+'-'+safeCity+'-'+new Date().toISOString().slice(0,10)+'.xlsx';
- const pageSize=500,rows=[];let offset=0,oldText=button?.textContent,saveFileHandle=null;
- if(button){button.disabled=true;setExportProgress(button,'Preparando exportação…')}
+ const pageSize=500,rows=[];let offset=0,oldText=button?.textContent;
+ if(exportInProgress){toast('Já existe uma exportação em andamento. Aguarde a conclusão.');return}
+ exportInProgress=true;showExportProgress();
+ if(button){button.disabled=true;setExportProgress(button,'Carregando cadastros…')}
  try{
-  if(typeof window.showSaveFilePicker==='function'){
-   try{saveFileHandle=await window.showSaveFilePicker({suggestedName:downloadName,types:[{description:'Planilha Excel',accept:{'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':['.xlsx']}}]})}
-   catch(error){if(error?.name==='AbortError')return;throw error}
-  }
   while(true){
    const query=state.client.from(entity).select(fields).eq('city_id',cityId).is('archived_at',null).order(isPeople?'full_name':'plate').order('id').range(offset,offset+pageSize-1);
    const {data,error}=await query;if(error)throw error;
@@ -1407,9 +1438,8 @@ async function exportRecords(entity,button){
   recordsSheet.getCell(1,1).note='Exportação gerada pelo Cadastro Criminal. A foto de capa também está na aba Galeria de fotos.';
   setExportProgress(button,'Gerando arquivo Excel…');
   const buffer=await workbook.xlsx.writeBuffer(),blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),url=URL.createObjectURL(blob),link=document.createElement('a');
-  if(saveFileHandle){const writable=await saveFileHandle.createWritable();try{await writable.write(blob);await writable.close()}catch(error){await writable.abort?.();throw error}URL.revokeObjectURL(url)}
-  else{link.href=url;link.download=downloadName;link.rel='noopener';link.style.position='fixed';link.style.left='-10000px';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
-  toast(rows.length.toLocaleString('pt-BR')+' cadastro(s) e '+includedPhotoCount.toLocaleString('pt-BR')+' foto(s) incluídos. '+skippedPhotoCount.toLocaleString('pt-BR')+' foto(s) não puderam ser carregadas. '+(saveFileHandle?'Arquivo salvo no local escolhido.':'Download enviado ao navegador sem sair do aplicativo.'));
+  showExportDownload(blob,downloadName,rows.length.toLocaleString('pt-BR')+' cadastro(s) · '+includedPhotoCount.toLocaleString('pt-BR')+' foto(s) incluídas · '+skippedPhotoCount.toLocaleString('pt-BR')+' não carregadas');
+  toast('Planilha pronta. Toque em “Baixar planilha” para salvar sem sair do aplicativo.');
  }catch(error){toast('Não foi possível concluir a exportação completa: '+msg(error))}
  finally{if(button?.isConnected){button.disabled=false;button.textContent=oldText||'⇩ Exportar planilha'}}
 }
