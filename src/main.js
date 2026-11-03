@@ -1342,23 +1342,24 @@ async function exportPhotoSources(entity,records){
   let offset=0;
   while(true){const {data,error}=await makeQuery().range(offset,offset+pageSize-1);if(error)throw error;const page=data||[];for(const photo of page)add(photo);if(page.length<pageSize)break;offset+=page.length}
  };
- for(let offset=0;offset<ids.length;offset+=100){
-  const batch=ids.slice(offset,offset+100);
-  await readPages(()=>state.client.from('record_photos').select('entity_id,photo_path,is_cover,crop_position,created_at').eq('entity',entity).in('entity_id',batch).order('created_at',{ascending:true}),(photo)=>byId.get(String(photo.entity_id))?.push(photo));
- }
- const legacyTable=entity==='people'?'person_photos':'vehicle_photos',foreignKey=entity==='people'?'person_id':'vehicle_id';
- for(let offset=0;offset<ids.length;offset+=100){
-  const batch=ids.slice(offset,offset+100);let legacyLoaded=false,lastError=null;
-  for(const [columns,sort] of [['photo_path,created_at,sort_order',['sort_order','created_at']],['photo_path,created_at',['created_at']],['photo_path',[]]]){
-   const collected=[];
-   try{
-    await readPages(()=>{let query=state.client.from(legacyTable).select(columns).in(foreignKey,batch);for(const column of sort)query=query.order(column,{ascending:true});return query},photo=>collected.push(photo));
-    for(const photo of collected)byId.get(String(photo[foreignKey]))?.push(photo);
-    legacyLoaded=true;break
-   }catch(error){lastError=error;if(/permission denied|not allowed|row-level security|rls/i.test(error?.message||''))throw error}
+ const batches=[];for(let offset=0;offset<ids.length;offset+=100)batches.push(ids.slice(offset,offset+100));
+ let batchIndex=0;
+ await Promise.all(Array.from({length:Math.min(4,batches.length)},async()=>{
+  while(batchIndex<batches.length){
+   const batch=batches[batchIndex++];
+   await readPages(()=>state.client.from('record_photos').select('entity_id,photo_path,is_cover,crop_position,created_at').eq('entity',entity).in('entity_id',batch).order('created_at',{ascending:true}),(photo)=>byId.get(String(photo.entity_id))?.push(photo));
+   const legacyTable=entity==='people'?'person_photos':'vehicle_photos',foreignKey=entity==='people'?'person_id':'vehicle_id';let legacyLoaded=false,lastError=null;
+   for(const [columns,sort] of [['photo_path,created_at,sort_order',['sort_order','created_at']],['photo_path,created_at',['created_at']],['photo_path',[]]]){
+    const collected=[];
+    try{
+     await readPages(()=>{let query=state.client.from(legacyTable).select(columns).in(foreignKey,batch);for(const column of sort)query=query.order(column,{ascending:true});return query},photo=>collected.push(photo));
+     for(const photo of collected)byId.get(String(photo[foreignKey]))?.push(photo);
+     legacyLoaded=true;break
+    }catch(error){lastError=error;if(/permission denied|not allowed|row-level security|rls/i.test(error?.message||''))throw error}
+   }
+   if(!legacyLoaded&&lastError&&!/does not exist|schema cache|could not find the table|pgrst205|42p01/i.test((lastError.code||'')+' '+(lastError.message||'')))throw lastError;
   }
-  if(!legacyLoaded&&lastError&&!/does not exist|schema cache|could not find the table|pgrst205|42p01/i.test((lastError.code||'')+' '+(lastError.message||'')))throw lastError;
- }
+ }));
  const photosByRecord=new Map(),uniquePaths=new Set();
  for(const record of records){
   const sources=[...(byId.get(String(record.id))||[])];if(record.photo_path)sources.push({photo_path:record.photo_path,is_cover:true,crop_position:record.photo_position||''});
@@ -1374,7 +1375,7 @@ async function exportRecords(entity,button){
  const fields=isPeople?'id,full_name,cpf_digits,rg,registration,alias,birthday,address_primary,address_secondary,additional_addresses,notes,occurrence_notes,occurrence_reference,characteristics,photo_path,created_at,updated_at':'id,plate,make,model,color,notes,photo_path,created_at,updated_at';
  const safeCity=cityName.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()||'cidade';
  const downloadName=(isPeople?'individuos':'veiculos')+'-'+safeCity+'-'+new Date().toISOString().slice(0,10)+'.xlsx';
- const pageSize=500,rows=[];let offset=0,oldText=button?.textContent;
+ const pageSize=1000,rows=[];let offset=0,oldText=button?.textContent;
  if(exportInProgress){toast('Já existe uma exportação em andamento. Aguarde a conclusão.');return}
  exportInProgress=true;showExportProgress();
  if(button){button.disabled=true;setExportProgress(button,'Carregando cadastros…')}
