@@ -143,7 +143,7 @@ export async function offerPhotoEnhancement(file) {
           button.disabled = false;
           button.textContent = 'Tentar novamente';
         }
-      }, { once: true });
+      });
     });
   } finally {
     if (!backdrop.isConnected) URL.revokeObjectURL(url);
