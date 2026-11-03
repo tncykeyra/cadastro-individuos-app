@@ -1324,10 +1324,10 @@ function exportImageData(url){
    const bitmap=typeof createImageBitmap==='function'?await createImageBitmap(blob):await new Promise((res,rej)=>{const image=new Image(),objectUrl=URL.createObjectURL(blob);image.onload=()=>{URL.revokeObjectURL(objectUrl);res(image)};image.onerror=()=>{URL.revokeObjectURL(objectUrl);rej(new Error('Uma foto vinculada está em formato não compatível.'))};image.src=objectUrl});
    try{
     const width=Number(bitmap.width||bitmap.naturalWidth),height=Number(bitmap.height||bitmap.naturalHeight);if(!width||!height)throw new Error('Uma foto vinculada não tem dimensões válidas.');
-    const scale=Math.min(1,240/width,300/height),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));
+    const scale=Math.min(1,160/width,200/height),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));
     const context=canvas.getContext('2d',{alpha:false});if(!context)throw new Error('Não foi possível preparar uma miniatura.');
     context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(bitmap,0,0,canvas.width,canvas.height);
-    const jpeg=await new Promise((res,rej)=>canvas.toBlob(value=>value?.size?res(value):rej(new Error('Não foi possível preparar uma miniatura.')),'image/jpeg',0.68));
+    const jpeg=await new Promise((res,rej)=>canvas.toBlob(value=>value?.size?res(value):rej(new Error('Não foi possível preparar uma miniatura.')),'image/jpeg',0.62));
     const base64=await new Promise((res,rej)=>{const reader=new FileReader();reader.onload=()=>res(String(reader.result));reader.onerror=()=>rej(new Error('Não foi possível ler uma foto.'));reader.readAsDataURL(jpeg)});
     resolve({base64,width:canvas.width,height:canvas.height})
    }finally{bitmap.close?.()}
@@ -1394,14 +1394,14 @@ async function exportRecords(entity,button){
   const columns=isPeople?peopleColumns:vehicleColumns;
   const title=isPeople?'CADASTRO DE INDIVÍDUOS':'CADASTRO DE VEÍCULOS';
   const photoList=record=>{const seen=new Set();return(photosByRecord.get(String(record.id))||[]).filter(photo=>{const path=String(photo.photo_path||'');if(!path||seen.has(path))return false;seen.add(path);return true})};
-  const imageIds=new Map(),imageData=new Map(),failedPhotoPaths=new Set(missingPaths),photos=rows.flatMap(record=>photoList(record).map((photo,index)=>({record,photo,index})));
-  for(let photoOffset=0;photoOffset<photos.length;photoOffset+=4){
-   const batch=photos.slice(photoOffset,photoOffset+4);
+  const imageIds=new Map(),imageData=new Map(),failedPhotoPaths=new Set(missingPaths),photos=rows.flatMap(record=>photoList(record).map((photo,index)=>({record,photo,index}))),uniquePhotoItems=[...new Map(photos.map(entry=>[String(entry.photo.photo_path),entry])).values()];
+  for(let photoOffset=0;photoOffset<uniquePhotoItems.length;photoOffset+=8){
+   const batch=uniquePhotoItems.slice(photoOffset,photoOffset+8);
    await Promise.all(batch.map(async entry=>{
     const path=String(entry.photo.photo_path);if(imageIds.has(path)||failedPhotoPaths.has(path))return;
     try{const image=await exportImageData(urls.get(path));const imageId=workbook.addImage({base64:image.base64,extension:'jpeg'});imageIds.set(path,imageId);imageData.set(path,image)}catch{failedPhotoPaths.add(path)}
    }));
-   setExportProgress(button,'Preparando fotos '+Math.min(photoOffset+batch.length,photos.length).toLocaleString('pt-BR')+' / '+photos.length.toLocaleString('pt-BR')+'…')
+   setExportProgress(button,'Preparando fotos '+Math.min(photoOffset+batch.length,uniquePhotoItems.length).toLocaleString('pt-BR')+' / '+uniquePhotoItems.length.toLocaleString('pt-BR')+'…')
   }
   const availablePhotos=new Map(rows.map(record=>{const list=photoList(record).filter(photo=>imageIds.has(String(photo.photo_path)));const cover=list.find(photo=>photo.is_cover)||list[0]||null;return[String(record.id),{cover,additional:list.filter(photo=>photo!==cover)}]}));
   const maxAdditional=Math.max(0,...[...availablePhotos.values()].map(value=>value.additional.length));
@@ -1423,7 +1423,7 @@ async function exportRecords(entity,button){
    const record=rows[index],photosForRecord=availablePhotos.get(String(record.id))||{cover:null,additional:[]},cover=photosForRecord.cover,base=isPeople?[
     '',record.full_name,formatCpf(record.cpf_digits),record.rg,record.registration,record.alias,exportBirthday(record.birthday),record.address_primary,record.address_secondary,Array.isArray(record.additional_addresses)?record.additional_addresses.join(' | '):record.additional_addresses,record.notes,record.occurrence_notes,record.occurrence_reference,record.characteristics,exportDate(record.created_at),exportDate(record.updated_at)
    ]:['',record.plate,record.make,record.model,record.color,record.notes,exportDate(record.created_at),exportDate(record.updated_at)];
-   const row=sheet.addRow([...base,...Array(maxAdditional).fill('')]);row.height=76;row.eachCell(cell=>{cell.alignment={vertical:'middle',wrapText:true};cell.border={bottom:{style:'hair',color:{argb:'FFD9DEDF'}}};if(index%2===1)cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF5F7F7'}}});
+   const row=sheet.addRow([...base,...Array(maxAdditional).fill('')]);row.height=76;
    if(isPeople){row.getCell(3).numFmt='@';row.getCell(4).numFmt='@'}else row.getCell(2).numFmt='@';
    if(cover){const path=String(cover.photo_path),image=imageData.get(path);if(image){const extent=exportImageExtent(image,64,68);sheet.addImage(imageIds.get(path),{tl:{col:0,row:index+4},ext:extent})}}else row.getCell(1).value='Sem foto';
    photosForRecord.additional.forEach((photo,photoIndex)=>{const path=String(photo.photo_path),image=imageData.get(path);if(!image)return;const column=columns.length+photoIndex,extent=exportImageExtent(image,64,68);sheet.addImage(imageIds.get(path),{tl:{col:column,row:index+4},ext:extent})});
