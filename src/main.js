@@ -69,7 +69,7 @@ async function loadCityContext(){
   }
 }
 function nav(){
-  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 1.82';
+  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 1.83';
   const allowed=!!state.session&&['operator','admin'].includes(state.profile?.role)&&!(state.cityContextReady&&!state.cities.length);
   const admin=isAdmin(),master=isMasterAdmin();
   const sideItems=allowed?[['dashboard','Painel da cidade'],['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados'],...(canUseFiscalization()?[['fiscalization','Fiscalização']]:[]),['smart','Cadastro Inteligente'],...(admin?[['review','Revisão Inteligente'],['maintenance','Manutenção Inteligente'],['history','Histórico']]:[]),...(admin?[['team','Usuários']]:[]),...(master?[['cities','Cidades e acessos']]:[])]:[];
@@ -1372,6 +1372,21 @@ async function exportPhotoSources(entity,records){
  const urls=await galleryPhotoUrls([...uniquePaths]),missingPaths=[...uniquePaths].filter(path=>!urls.get(path));
  return{photosByRecord,urls,paths:[...uniquePaths],missingPaths}
 }
+async function exportPhotoLinks(paths,expiresIn=604800){
+ const unique=[...new Set((paths||[]).filter(Boolean).map(String))],links=new Map(),privatePaths=[];
+ for(const path of unique){const external=externalPhotoUrl(path);if(external)links.set(path,external);else privatePaths.push(path)}
+ const batches=[];for(let offset=0;offset<privatePaths.length;offset+=100)batches.push(privatePaths.slice(offset,offset+100));
+ let batchIndex=0;
+ await Promise.all(Array.from({length:Math.min(4,batches.length)},async()=>{
+  while(batchIndex<batches.length){
+   const batch=batches[batchIndex++];
+   const {data,error}=await state.client.storage.from('people-photos').createSignedUrls(batch,expiresIn);
+   if(!error&&Array.isArray(data)){data.forEach((item,index)=>{const url=item?.signedUrl||item?.signedURL,path=String(item?.path||batch[index]||'');if(url&&path)links.set(path,url)});continue}
+   await Promise.all(batch.map(async path=>{try{const result=await state.client.storage.from('people-photos').createSignedUrl(path,expiresIn);const url=result.data?.signedUrl||result.data?.signedURL;if(!result.error&&url)links.set(path,url)}catch{}}))
+  }
+ }));
+ return links
+}
 async function exportRecords(entity,button){
  if(!state.activeCityId){toast('Selecione uma cidade antes de exportar.');return}
  const isPeople=entity==='people',cityId=state.activeCityId,cityName=state.cities.find(city=>city.id===cityId)?.name||'cidade';
@@ -1408,6 +1423,7 @@ async function exportRecords(entity,button){
    }));
    setExportProgress(button,'Preparando fotos '+Math.min(photoOffset+batch.length,uniquePhotoItems.length).toLocaleString('pt-BR')+' / '+uniquePhotoItems.length.toLocaleString('pt-BR')+'…')
   }
+  const photoLinks=await exportPhotoLinks([...imageIds.keys()]);
   const availablePhotos=new Map(rows.map(record=>{const list=photoList(record).filter(photo=>imageIds.has(String(photo.photo_path)));const cover=list.find(photo=>photo.is_cover)||list[0]||null;return[String(record.id),{cover,additional:list.filter(photo=>photo!==cover)}]}));
   const maxAdditional=Math.max(0,...[...availablePhotos.values()].map(value=>value.additional.length));
   const photoHeaders=Array.from({length:maxAdditional},(_,index)=>'Foto adicional '+(index+2));
@@ -1416,7 +1432,7 @@ async function exportRecords(entity,button){
   const applyHeading=(headers,info)=>{
    sheet.mergeCells(1,1,1,headers.length);sheet.getCell(1,1).value=title;sheet.getCell(1,1).font={name:'Aptos Display',size:18,bold:true,color:{argb:'FFFFFFFF'}};sheet.getCell(1,1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF303A3F'}};sheet.getCell(1,1).alignment={vertical:'middle'};sheet.getRow(1).height=36;
    sheet.mergeCells(2,1,2,headers.length);sheet.getCell(2,1).value=info;sheet.getCell(2,1).font={name:'Aptos',size:10,color:{argb:'FF4B555A'}};sheet.getCell(2,1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF0F3F4'}};sheet.getRow(2).height=24;
-   sheet.mergeCells(3,1,3,headers.length);sheet.getCell(3,1).value='Cada cadastro ocupa uma única linha; a capa e as demais fotos ficam nesta mesma aba. Dados limitados à cidade selecionada.';sheet.getCell(3,1).font={name:'Aptos',size:9,italic:true,color:{argb:'FF687378'}};sheet.getRow(3).height=20;
+   sheet.mergeCells(3,1,3,headers.length);sheet.getCell(3,1).value='Cada cadastro ocupa uma única linha; todas as fotos ficam nesta aba. Clique em uma foto para abrir o original privado (link válido por 7 dias). Dados limitados à cidade selecionada.';sheet.getCell(3,1).font={name:'Aptos',size:9,italic:true,color:{argb:'FF687378'}};sheet.getRow(3).height=20;
    const heading=sheet.getRow(4);heading.values=headers;heading.height=30;heading.eachCell(cell=>{cell.font={name:'Aptos',size:10,bold:true,color:{argb:'FFFFFFFF'}};cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF50595E'}};cell.alignment={vertical:'middle',horizontal:'left',wrapText:true};cell.border={bottom:{style:'medium',color:{argb:'FF21865A'}}}});
   };
   const created=new Date().toLocaleString('pt-BR'),info='Cidade: '+cityName+'  •  Registros: '+rows.length.toLocaleString('pt-BR')+'  •  Exportado em: '+created;
@@ -1430,15 +1446,16 @@ async function exportRecords(entity,button){
    ]:['',record.plate,record.make,record.model,record.color,record.notes,exportDate(record.created_at),exportDate(record.updated_at)];
    const row=sheet.addRow([...base,...Array(maxAdditional).fill('')]);row.height=76;
    if(isPeople){row.getCell(3).numFmt='@';row.getCell(4).numFmt='@'}else row.getCell(2).numFmt='@';
-   if(cover){const path=String(cover.photo_path),image=imageData.get(path);if(image){const extent=exportImageExtent(image,64,68);sheet.addImage(imageIds.get(path),{tl:{col:0,row:index+4},ext:extent})}}else row.getCell(1).value='Sem foto';
-   photosForRecord.additional.forEach((photo,photoIndex)=>{const path=String(photo.photo_path),image=imageData.get(path);if(!image)return;const column=columns.length+photoIndex,extent=exportImageExtent(image,64,68);sheet.addImage(imageIds.get(path),{tl:{col:column,row:index+4},ext:extent})});
+   const addPhotoImage=(rawPath,column,rowIndex)=>{const path=String(rawPath),image=imageData.get(path);if(!image)return;const options={tl:{col:column,row:rowIndex},ext:exportImageExtent(image,64,68)},hyperlink=photoLinks.get(path);if(hyperlink)options.hyperlinks={hyperlink,tooltip:'Abrir foto original · link privado válido por 7 dias'};sheet.addImage(imageIds.get(path),options)};
+   if(cover)addPhotoImage(cover.photo_path,0,index+4);else row.getCell(1).value='Sem foto';
+   photosForRecord.additional.forEach((photo,photoIndex)=>addPhotoImage(photo.photo_path,columns.length+photoIndex,index+4));
   }
   const includedPhotoCount=photos.filter(entry=>imageIds.has(String(entry.photo.photo_path))).length,skippedPhotoCount=photos.length-includedPhotoCount;
   sheet.autoFilter='A4:'+sheet.getColumn(allHeaders.length).letter+Math.max(4,sheet.rowCount);
-  sheet.getCell(1,1).note='Exportação gerada pelo Cadastro Criminal. A capa e todas as fotos adicionais estão na mesma linha do cadastro, nesta aba.';
+  sheet.getCell(1,1).note='Exportação gerada pelo Cadastro Criminal. A capa e as fotos adicionais estão na mesma linha. Clique em uma imagem para abrir o original privado; o link vale por 7 dias.';
   setExportProgress(button,'Gerando arquivo Excel…');
   const buffer=await workbook.xlsx.writeBuffer({zip:{compression:'STORE',streamFiles:true}}),blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
-  showExportDownload(blob,downloadName,rows.length.toLocaleString('pt-BR')+' cadastro(s) · '+includedPhotoCount.toLocaleString('pt-BR')+' foto(s) incluídas · '+skippedPhotoCount.toLocaleString('pt-BR')+' não carregadas');
+  showExportDownload(blob,downloadName,rows.length.toLocaleString('pt-BR')+' cadastro(s) · '+includedPhotoCount.toLocaleString('pt-BR')+' foto(s) incluídas · '+photoLinks.size.toLocaleString('pt-BR')+' com link para original (7 dias) · '+skippedPhotoCount.toLocaleString('pt-BR')+' não carregadas');
   toast('Planilha pronta. Toque em “Baixar planilha” para salvar sem sair do aplicativo.');
  }catch(error){toast('Não foi possível concluir a exportação completa: '+msg(error))}
  finally{exportInProgress=false;document.querySelector('[data-export-progress]')?.remove();if(button?.isConnected){button.disabled=false;button.textContent=oldText||'⇩ Exportar planilha'}}
