@@ -1279,9 +1279,9 @@ async function hydrateWarrantCardBadges(records){
     }
   }catch(error){console.warn('Não foi possível carregar os avisos de mandado.',error)}
 }
-function csvCell(value){let text=String(value??'');if(/^[=+@\\-\\t\\r]/.test(text))text="'"+text;return '"'+text.replaceAll('"','""')+'"'}
+function csvCell(value){let text=String(value??'');if(/^\s*[=+\-@]/.test(text))text="'"+text;return '"'+text.replaceAll('"','""')+'"'}
 function exportDate(value){if(!value)return '';const date=new Date(value);return Number.isNaN(date.getTime())?String(value):date.toLocaleString('pt-BR')}
-function exportBirthday(value){if(!value)return '';const match=String(value).match(/^(\\d{4})-(\\d{2})-(\\d{2})/);return match?match[3]+'/'+match[2]+'/'+match[1]:String(value)}
+function exportBirthday(value){if(!value)return '';const match=String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);return match?match[3]+'/'+match[2]+'/'+match[1]:String(value)}
 async function exportRecords(entity,button){
  if(!state.activeCityId){toast('Selecione uma cidade antes de exportar.');return}
  const isPeople=entity==='people',cityId=state.activeCityId,cityName=state.cities.find(city=>city.id===cityId)?.name||'cidade';
@@ -1291,7 +1291,7 @@ async function exportRecords(entity,button){
  const oldText=button?.textContent;if(button){button.disabled=true;button.textContent='Preparando…'}
  try{
   while(true){
-   let query=state.client.from(entity).select(fields).eq('city_id',cityId).is('archived_at',null).order(isPeople?'full_name':'plate').order('id').range(offset,offset+pageSize-1);
+   const query=state.client.from(entity).select(fields).eq('city_id',cityId).is('archived_at',null).order(isPeople?'full_name':'plate').order('id').range(offset,offset+pageSize-1);
    const {data,error}=await query;if(error)throw error;
    const page=data||[];rows.push(...page);if(page.length<pageSize)break;offset+=page.length;
   }
@@ -1299,9 +1299,9 @@ async function exportRecords(entity,button){
   const csvRows=[columns,...rows.map(record=>isPeople?[
    record.full_name,formatCpf(record.cpf_digits),record.rg,record.registration,record.alias,exportBirthday(record.birthday),record.address_primary,record.address_secondary,Array.isArray(record.additional_addresses)?record.additional_addresses.join(' | '):record.additional_addresses,record.notes,record.occurrence_notes,record.occurrence_reference,record.characteristics,exportDate(record.created_at),exportDate(record.updated_at)
   ]:[record.plate,record.make,record.model,record.color,record.notes,exportDate(record.created_at),exportDate(record.updated_at)])];
-  const csv='\\uFEFF'+csvRows.map(row=>row.map(csvCell).join(';')).join('\\r\\n');
+  const csv='\uFEFF'+csvRows.map(row=>row.map(csvCell).join(';')).join('\r\n');
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');
-  const safeCity=cityName.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()||'cidade';
+  const safeCity=cityName.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()||'cidade';
   link.href=url;link.download=(isPeople?'individuos':'veiculos')+'-'+safeCity+'-'+new Date().toISOString().slice(0,10)+'.csv';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);
   toast(rows.length.toLocaleString('pt-BR')+' '+(isPeople?'indivíduo(s)':'veículo(s)')+' exportado(s) em CSV.');
  }catch(error){toast('Não foi possível exportar: '+msg(error))}
