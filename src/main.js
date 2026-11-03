@@ -69,7 +69,7 @@ async function loadCityContext(){
   }
 }
 function nav(){
-  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 1.81';
+  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 1.82';
   const allowed=!!state.session&&['operator','admin'].includes(state.profile?.role)&&!(state.cityContextReady&&!state.cities.length);
   const admin=isAdmin(),master=isMasterAdmin();
   const sideItems=allowed?[['dashboard','Painel da cidade'],['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados'],...(canUseFiscalization()?[['fiscalization','Fiscalização']]:[]),['smart','Cadastro Inteligente'],...(admin?[['review','Revisão Inteligente'],['maintenance','Manutenção Inteligente'],['history','Histórico']]:[]),...(admin?[['team','Usuários']]:[]),...(master?[['cities','Cidades e acessos']]:[])]:[];
@@ -1328,7 +1328,7 @@ function exportImageData(url){
    const bitmap=typeof createImageBitmap==='function'?await createImageBitmap(blob):await new Promise((res,rej)=>{const image=new Image(),objectUrl=URL.createObjectURL(blob);image.onload=()=>{URL.revokeObjectURL(objectUrl);res(image)};image.onerror=()=>{URL.revokeObjectURL(objectUrl);rej(new Error('Uma foto vinculada está em formato não compatível.'))};image.src=objectUrl});
    try{
     const width=Number(bitmap.width||bitmap.naturalWidth),height=Number(bitmap.height||bitmap.naturalHeight);if(!width||!height)throw new Error('Uma foto vinculada não tem dimensões válidas.');
-    const scale=Math.min(1,160/width,200/height),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));
+    const scale=Math.min(1,120/width,150/height),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));
     const context=canvas.getContext('2d',{alpha:false});if(!context)throw new Error('Não foi possível preparar uma miniatura.');
     context.fillStyle='#fff';context.fillRect(0,0,canvas.width,canvas.height);context.drawImage(bitmap,0,0,canvas.width,canvas.height);
     const jpeg=await new Promise((res,rej)=>canvas.toBlob(value=>value?.size?res(value):rej(new Error('Não foi possível preparar uma miniatura.')),'image/jpeg',0.62));
@@ -1437,7 +1437,7 @@ async function exportRecords(entity,button){
   sheet.autoFilter='A4:'+sheet.getColumn(allHeaders.length).letter+Math.max(4,sheet.rowCount);
   sheet.getCell(1,1).note='Exportação gerada pelo Cadastro Criminal. A capa e todas as fotos adicionais estão na mesma linha do cadastro, nesta aba.';
   setExportProgress(button,'Gerando arquivo Excel…');
-  const buffer=await workbook.xlsx.writeBuffer(),blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const buffer=await workbook.xlsx.writeBuffer({zip:{compression:'STORE',streamFiles:true}}),blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   showExportDownload(blob,downloadName,rows.length.toLocaleString('pt-BR')+' cadastro(s) · '+includedPhotoCount.toLocaleString('pt-BR')+' foto(s) incluídas · '+skippedPhotoCount.toLocaleString('pt-BR')+' não carregadas');
   toast('Planilha pronta. Toque em “Baixar planilha” para salvar sem sair do aplicativo.');
  }catch(error){toast('Não foi possível concluir a exportação completa: '+msg(error))}
