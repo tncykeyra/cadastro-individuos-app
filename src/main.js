@@ -164,15 +164,20 @@ async function galleryPhotoUrls(paths){
     if(cached){const objectUrl=URL.createObjectURL(cached);photoUrls.set(key,objectUrl);photoCachedKeys.add(key);urls.set(path,objectUrl);return}
     pending.push(path)
   }));
-  for(let offset=0;offset<pending.length;offset+=100){
-    const batch=pending.slice(offset,offset+100),{data,error}=await state.client.storage.from('people-photos').createSignedUrls(batch,3600);
-    if(error){
-      const fallback=await Promise.all(batch.map(path=>state.client.storage.from('people-photos').createSignedUrl(path,3600)));
-      fallback.forEach((result,index)=>{const path=batch[index],url=result.error?'':result.data?.signedUrl||'';if(url){const key=userId+':'+path;urls.set(path,url);photoUrls.set(key,url);photoUrlExpiresAt.set(key,Date.now()+3500*1000)}});
-      continue
-    }
-    const signedByPath=new Map((data||[]).map((item,index)=>[String(item.path||batch[index]),item.error?'':item.signedUrl||'']));
-    batch.forEach(path=>{const url=signedByPath.get(path)||'';if(url){const key=userId+':'+path;urls.set(path,url);photoUrls.set(key,url);photoUrlExpiresAt.set(key,Date.now()+3500*1000)}})
+  const batches=[];for(let offset=0;offset<pending.length;offset+=100)batches.push(pending.slice(offset,offset+100));
+  for(let offset=0;offset<batches.length;offset+=4){
+    await Promise.all(batches.slice(offset,offset+4).map(async batch=>{
+
+        const batch=pending.slice(offset,offset+100),{data,error}=await state.client.storage.from('people-photos').createSignedUrls(batch,3600);
+        if(error){
+          const fallback=await Promise.all(batch.map(path=>state.client.storage.from('people-photos').createSignedUrl(path,3600)));
+          fallback.forEach((result,index)=>{const path=batch[index],url=result.error?'':result.data?.signedUrl||'';if(url){const key=userId+':'+path;urls.set(path,url);photoUrls.set(key,url);photoUrlExpiresAt.set(key,Date.now()+3500*1000)}});
+          continue
+        }
+        const signedByPath=new Map((data||[]).map((item,index)=>[String(item.path||batch[index]),item.error?'':item.signedUrl||'']));
+        batch.forEach(path=>{const url=signedByPath.get(path)||'';if(url){const key=userId+':'+path;urls.set(path,url);photoUrls.set(key,url);photoUrlExpiresAt.set(key,Date.now()+3500*1000)}})
+      
+    }))
   }
   return urls
 }
