@@ -1352,8 +1352,8 @@ async function exportRecords(entity,button){
   const module=await import('exceljs'),Workbook=module.Workbook||module.default?.Workbook;if(!Workbook)throw new Error('O gerador de planilhas não ficou disponível.');
   const workbook=new Workbook();workbook.creator='Cadastro Criminal';workbook.subject='Exportação de cadastros por cidade';workbook.created=new Date();workbook.modified=new Date();
   workbook.views=[{x:0,y:0,width:18000,height:9000,firstSheet:0,activeTab:0}];
-  const recordsSheet=workbook.addWorksheet(isPeople?'Indivíduos':'Veículos',{properties:{tabColor:{argb:'FF50595E'},defaultRowHeight:34},views:[{state:'frozen',ySplit:4,xSplit:1,topLeftCell:'B5',activeCell:'B5'}],pageSetup:{orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9}});
-  const gallerySheet=workbook.addWorksheet('Galeria de fotos',{properties:{tabColor:{argb:'FF21865A'},defaultRowHeight:34},views:[{state:'frozen',ySplit:4,xSplit:1,topLeftCell:'B5',activeCell:'B5'}],pageSetup:{orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9}});
+  const recordsSheet=workbook.addWorksheet(isPeople?'Indivíduos':'Veículos',{properties:{tabColor:{argb:'FF50595E'},defaultRowHeight:34},views:[{state:'frozen',ySplit:4,xSplit:1,topLeftCell:'B5',activeCell:'B5',showGridLines:false}],pageSetup:{orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9}});
+  const gallerySheet=workbook.addWorksheet('Galeria de fotos',{properties:{tabColor:{argb:'FF21865A'},defaultRowHeight:34},views:[{state:'frozen',ySplit:4,xSplit:1,topLeftCell:'B5',activeCell:'B5',showGridLines:false}],pageSetup:{orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9}});
   const peopleColumns=['Foto de capa','Nome completo','CPF','RG','Registro CNH','Apelido','Nascimento','Endereço principal','Endereço secundário','Outros endereços','Anotações','Crimes','Referência da ocorrência','Características','Criado em','Atualizado em'];
   const vehicleColumns=['Foto de capa','Placa','Marca','Modelo','Cor','Anotações','Criado em','Atualizado em'];
   const columns=isPeople?peopleColumns:vehicleColumns;
@@ -1382,7 +1382,6 @@ async function exportRecords(entity,button){
    }));
    setExportProgress(button,'Preparando fotos '+Math.min(offset+batch.length,photos.length).toLocaleString('pt-BR')+' / '+photos.length.toLocaleString('pt-BR')+'…')
   }
-  const recordPhotoPositions=new Map();
   for(let index=0;index<rows.length;index++){
    const record=rows[index],list=photosByRecord.get(String(record.id))||[],cover=list.find(photo=>photo.is_cover)||list[0],coverPath=cover?String(cover.photo_path):'',base=isPeople?[
     '',record.full_name,formatCpf(record.cpf_digits),record.rg,record.registration,record.alias,exportBirthday(record.birthday),record.address_primary,record.address_secondary,Array.isArray(record.additional_addresses)?record.additional_addresses.join(' | '):record.additional_addresses,record.notes,record.occurrence_notes,record.occurrence_reference,record.characteristics,exportDate(record.created_at),exportDate(record.updated_at)
@@ -1394,12 +1393,10 @@ async function exportRecords(entity,button){
     const photoPath=String(photo.photo_path),photoRow=gallerySheet.addRow(isPeople?['',record.full_name,formatCpf(record.cpf_digits),record.rg,'Foto '+(photoIndex+1),photo.is_cover?'Sim':'Não']:['',record.plate,record.make,record.model,record.color,'Foto '+(photoIndex+1),photo.is_cover?'Sim':'Não']);
     photoRow.height=88;photoRow.eachCell(cell=>{cell.alignment={vertical:'middle',wrapText:true};cell.border={bottom:{style:'hair',color:{argb:'FFD9DEDF'}}};if(photoIndex%2===1)cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF5F7F7'}}});
     const excelRow=photoRow.number;if(imageIds.has(photoPath)){const image=imageData.get(photoPath),extent=exportImageExtent(image,112,94);gallerySheet.addImage(imageIds.get(photoPath),{tl:{col:0,row:excelRow-1},ext:extent})}else photoRow.getCell(1).value='Foto indisponível';
-    recordPhotoPositions.set(String(record.id),(recordPhotoPositions.get(String(record.id))||0)+1)
    })
   }
   recordsSheet.autoFilter='A4:'+recordsSheet.getColumn(columns.length).letter+Math.max(4,recordsSheet.rowCount);
   gallerySheet.autoFilter='A4:'+gallerySheet.getColumn(galleryHeaders.length).letter+Math.max(4,gallerySheet.rowCount);
-  recordsSheet.sheetViews[0].showGridLines=false;gallerySheet.sheetViews[0].showGridLines=false;
   recordsSheet.getCell(1,1).note='Exportação gerada pelo Cadastro Criminal. A foto de capa também está na aba Galeria de fotos.';
   setExportProgress(button,'Gerando arquivo Excel…');
   const buffer=await workbook.xlsx.writeBuffer(),blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),url=URL.createObjectURL(blob),link=document.createElement('a');
