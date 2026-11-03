@@ -1428,7 +1428,7 @@ async function exportRecords(entity,button){
    if(cover){const path=String(cover.photo_path),image=imageData.get(path);if(image){const extent=exportImageExtent(image,64,68);sheet.addImage(imageIds.get(path),{tl:{col:0,row:index+4},ext:extent})}}else row.getCell(1).value='Sem foto';
    photosForRecord.additional.forEach((photo,photoIndex)=>{const path=String(photo.photo_path),image=imageData.get(path);if(!image)return;const column=columns.length+photoIndex,extent=exportImageExtent(image,64,68);sheet.addImage(imageIds.get(path),{tl:{col:column,row:index+4},ext:extent})});
   }
-  const includedPhotoCount=[...imageIds.keys()].length,skippedPhotoCount=photos.length-includedPhotoCount;
+  const includedPhotoCount=photos.filter(entry=>imageIds.has(String(entry.photo.photo_path))).length,skippedPhotoCount=photos.length-includedPhotoCount;
   sheet.autoFilter='A4:'+sheet.getColumn(allHeaders.length).letter+Math.max(4,sheet.rowCount);
   sheet.getCell(1,1).note='Exportação gerada pelo Cadastro Criminal. A capa e todas as fotos adicionais estão na mesma linha do cadastro, nesta aba.';
   setExportProgress(button,'Gerando arquivo Excel…');
