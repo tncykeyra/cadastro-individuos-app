@@ -1,7 +1,7 @@
 {
   "name": "cadastro-individuos-pwa",
   "private": true,
-  "version": "0.1.74",
+  "version": "0.1.75",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
@@ -12,7 +12,8 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.0.0",
     "pdfjs-dist": "^6.4.299",
-    "tesseract.js": "^7.0.0"
+    "tesseract.js": "^7.0.0",
+    "exceljs": "4.4.0"
   },
   "devDependencies": {
     "vite": "^6.0.0"
