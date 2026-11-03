@@ -69,7 +69,7 @@ async function loadCityContext(){
   }
 }
 function nav(){
-  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 0.1.78';
+  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 0.1.79';
   const allowed=!!state.session&&['operator','admin'].includes(state.profile?.role)&&!(state.cityContextReady&&!state.cities.length);
   const admin=isAdmin(),master=isMasterAdmin();
   const sideItems=allowed?[['dashboard','Painel da cidade'],['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados'],...(canUseFiscalization()?[['fiscalization','Fiscalização']]:[]),['smart','Cadastro Inteligente'],...(admin?[['review','Revisão Inteligente'],['maintenance','Manutenção Inteligente'],['history','Histórico']]:[]),...(admin?[['team','Usuários']]:[]),...(master?[['cities','Cidades e acessos']]:[])]:[];
@@ -1381,7 +1381,7 @@ async function exportRecords(entity,button){
   while(true){
    const query=state.client.from(entity).select(fields).eq('city_id',cityId).is('archived_at',null).order(isPeople?'full_name':'plate').order('id').range(offset,offset+pageSize-1);
    const {data,error}=await query;if(error)throw error;
-   const page=data||[];rows.push(...page);if(page.length<pageSize)break;offset+=page.length
+   const page=data||[];rows.push(...page);if(page.length<pageSize)break;offset+=pageSize
   }
   if(!rows.length){toast('Não há cadastros ativos para exportar nesta cidade.');return}
   setExportProgress(button,'Localizando fotos…');
@@ -1389,54 +1389,48 @@ async function exportRecords(entity,button){
   const module=await import('exceljs'),Workbook=module.Workbook||module.default?.Workbook;if(!Workbook)throw new Error('O gerador de planilhas não ficou disponível.');
   const workbook=new Workbook();workbook.creator='Cadastro Criminal';workbook.subject='Exportação de cadastros por cidade';workbook.created=new Date();workbook.modified=new Date();
   workbook.views=[{x:0,y:0,width:18000,height:9000,firstSheet:0,activeTab:0}];
-  const recordsSheet=workbook.addWorksheet(isPeople?'Indivíduos':'Veículos',{properties:{tabColor:{argb:'FF50595E'},defaultRowHeight:34},views:[{state:'frozen',ySplit:4,xSplit:1,topLeftCell:'B5',activeCell:'B5',showGridLines:false}],pageSetup:{orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9}});
-  const gallerySheet=workbook.addWorksheet('Galeria de fotos',{properties:{tabColor:{argb:'FF21865A'},defaultRowHeight:34},views:[{state:'frozen',ySplit:4,xSplit:1,topLeftCell:'B5',activeCell:'B5',showGridLines:false}],pageSetup:{orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9}});
   const peopleColumns=['Foto de capa','Nome completo','CPF','RG','Registro CNH','Apelido','Nascimento','Endereço principal','Endereço secundário','Outros endereços','Anotações','Crimes','Referência da ocorrência','Características','Criado em','Atualizado em'];
   const vehicleColumns=['Foto de capa','Placa','Marca','Modelo','Cor','Anotações','Criado em','Atualizado em'];
   const columns=isPeople?peopleColumns:vehicleColumns;
   const title=isPeople?'CADASTRO DE INDIVÍDUOS':'CADASTRO DE VEÍCULOS';
-  const applyHeading=(sheet,headers,info)=>{
-   sheet.mergeCells(1,1,1,headers.length);sheet.getCell(1,1).value=title;sheet.getCell(1,1).font={name:'Aptos Display',size:18,bold:true,color:{argb:'FFFFFFFF'}};sheet.getCell(1,1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF303A3F'}};sheet.getCell(1,1).alignment={vertical:'middle'};sheet.getRow(1).height=36;
-   sheet.mergeCells(2,1,2,headers.length);sheet.getCell(2,1).value=info;sheet.getCell(2,1).font={name:'Aptos',size:10,color:{argb:'FF4B555A'}};sheet.getCell(2,1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF0F3F4'}};sheet.getRow(2).height=24;
-   sheet.mergeCells(3,1,3,headers.length);sheet.getCell(3,1).value='Fotos incorporadas no arquivo em miniaturas proporcionais. Dados limitados à cidade selecionada.';sheet.getCell(3,1).font={name:'Aptos',size:9,italic:true,color:{argb:'FF687378'}};sheet.getRow(3).height=20;
-   const row=sheet.getRow(4);row.values=[...headers];row.height=30;row.eachCell(cell=>{cell.font={name:'Aptos',size:10,bold:true,color:{argb:'FFFFFFFF'}};cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF50595E'}};cell.alignment={vertical:'middle',horizontal:'left',wrapText:true};cell.border={bottom:{style:'medium',color:{argb:'FF21865A'}}}});
-  };
-  const created=new Date().toLocaleString('pt-BR'),info='Cidade: '+cityName+'  •  Registros: '+rows.length.toLocaleString('pt-BR')+'  •  Exportado em: '+created;
-  applyHeading(recordsSheet,columns,info);
-  const galleryHeaders=isPeople?['Foto','Nome completo','CPF','RG','Imagem','Capa']:['Foto','Placa','Marca','Modelo','Cor','Imagem','Capa'];
-  applyHeading(gallerySheet,galleryHeaders,'Cidade: '+cityName+'  •  Fotografias vinculadas: '+[...photosByRecord.values()].reduce((sum,list)=>sum+list.length,0).toLocaleString('pt-BR')+'  •  Exportado em: '+created);
-  const recordWidths=isPeople?[13,30,19,20,18,22,16,36,36,36,48,36,28,36,22,22]:[13,16,24,30,20,50,22,22];
-  recordsSheet.columns=columns.map((header,index)=>({header,key:'c'+index,width:recordWidths[index]||20,style:{font:{name:'Aptos',size:10,color:{argb:'FF1D2529'}},alignment:{vertical:'middle',wrapText:true}}}));
-  const galleryWidths=isPeople?[18,32,19,20,14,12]:[18,18,25,30,20,14,12];
-  gallerySheet.columns=galleryHeaders.map((header,index)=>({header,key:'g'+index,width:galleryWidths[index]||18,style:{font:{name:'Aptos',size:10,color:{argb:'FF1D2529'}},alignment:{vertical:'middle',wrapText:true}}}));
-  recordsSheet.getColumn(1).numFmt='@';gallerySheet.getColumn(1).numFmt='@';
-  const imageIds=new Map(),imageData=new Map(),failedPhotoPaths=new Set(missingPaths),photos=rows.flatMap(record=>(photosByRecord.get(String(record.id))||[]).map((photo,index)=>({record,photo,index})));
-  for(let offset=0;offset<photos.length;offset+=4){
-   const batch=photos.slice(offset,offset+4);
+  const photoList=record=>{const seen=new Set();return(photosByRecord.get(String(record.id))||[]).filter(photo=>{const path=String(photo.photo_path||'');if(!path||seen.has(path))return false;seen.add(path);return true})};
+  const imageIds=new Map(),imageData=new Map(),failedPhotoPaths=new Set(missingPaths),photos=rows.flatMap(record=>photoList(record).map((photo,index)=>({record,photo,index})));
+  for(let photoOffset=0;photoOffset<photos.length;photoOffset+=4){
+   const batch=photos.slice(photoOffset,photoOffset+4);
    await Promise.all(batch.map(async entry=>{
     const path=String(entry.photo.photo_path);if(imageIds.has(path)||failedPhotoPaths.has(path))return;
     try{const image=await exportImageData(urls.get(path));const imageId=workbook.addImage({base64:image.base64,extension:'jpeg'});imageIds.set(path,imageId);imageData.set(path,image)}catch{failedPhotoPaths.add(path)}
    }));
-   setExportProgress(button,'Preparando fotos '+Math.min(offset+batch.length,photos.length).toLocaleString('pt-BR')+' / '+photos.length.toLocaleString('pt-BR')+'…')
+   setExportProgress(button,'Preparando fotos '+Math.min(photoOffset+batch.length,photos.length).toLocaleString('pt-BR')+' / '+photos.length.toLocaleString('pt-BR')+'…')
   }
+  const availablePhotos=new Map(rows.map(record=>{const list=photoList(record).filter(photo=>imageIds.has(String(photo.photo_path)));const cover=list.find(photo=>photo.is_cover)||list[0]||null;return[String(record.id),{cover,additional:list.filter(photo=>photo!==cover)}]}));
+  const maxAdditional=Math.max(0,...[...availablePhotos.values()].map(value=>value.additional.length));
+  const photoHeaders=Array.from({length:maxAdditional},(_,index)=>'Foto adicional '+(index+2));
+  const allHeaders=[...columns,...photoHeaders];
+  const sheet=workbook.addWorksheet(isPeople?'Indivíduos':'Veículos',{properties:{tabColor:{argb:'FF50595E'},defaultRowHeight:76},views:[{state:'frozen',ySplit:4,xSplit:1,topLeftCell:'B5',activeCell:'B5',showGridLines:false}],pageSetup:{orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0,paperSize:9}});
+  const applyHeading=(headers,info)=>{
+   sheet.mergeCells(1,1,1,headers.length);sheet.getCell(1,1).value=title;sheet.getCell(1,1).font={name:'Aptos Display',size:18,bold:true,color:{argb:'FFFFFFFF'}};sheet.getCell(1,1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF303A3F'}};sheet.getCell(1,1).alignment={vertical:'middle'};sheet.getRow(1).height=36;
+   sheet.mergeCells(2,1,2,headers.length);sheet.getCell(2,1).value=info;sheet.getCell(2,1).font={name:'Aptos',size:10,color:{argb:'FF4B555A'}};sheet.getCell(2,1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF0F3F4'}};sheet.getRow(2).height=24;
+   sheet.mergeCells(3,1,3,headers.length);sheet.getCell(3,1).value='Cada cadastro ocupa uma única linha; a capa e as demais fotos ficam nesta mesma aba. Dados limitados à cidade selecionada.';sheet.getCell(3,1).font={name:'Aptos',size:9,italic:true,color:{argb:'FF687378'}};sheet.getRow(3).height=20;
+   const heading=sheet.getRow(4);heading.values=headers;heading.height=30;heading.eachCell(cell=>{cell.font={name:'Aptos',size:10,bold:true,color:{argb:'FFFFFFFF'}};cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF50595E'}};cell.alignment={vertical:'middle',horizontal:'left',wrapText:true};cell.border={bottom:{style:'medium',color:{argb:'FF21865A'}}}});
+  };
+  const created=new Date().toLocaleString('pt-BR'),info='Cidade: '+cityName+'  •  Registros: '+rows.length.toLocaleString('pt-BR')+'  •  Exportado em: '+created;
+  applyHeading(allHeaders,info);
+  const recordWidths=isPeople?[13,30,19,20,18,22,16,36,36,36,48,36,28,36,22,22]:[13,16,24,30,20,50,22,22];
+  sheet.columns=allHeaders.map((header,index)=>({header,key:'c'+index,width:index<recordWidths.length?(recordWidths[index]||20):14,style:{font:{name:'Aptos',size:10,color:{argb:'FF1D2529'}},alignment:{vertical:'middle',wrapText:true}}}));
+  sheet.getColumn(1).numFmt='@';
   for(let index=0;index<rows.length;index++){
-   const record=rows[index],list=photosByRecord.get(String(record.id))||[],availableList=list.filter(photo=>imageIds.has(String(photo.photo_path))),cover=availableList.find(photo=>photo.is_cover)||availableList[0],coverPath=cover?String(cover.photo_path):'',base=isPeople?[
+   const record=rows[index],photosForRecord=availablePhotos.get(String(record.id))||{cover:null,additional:[]},cover=photosForRecord.cover,base=isPeople?[
     '',record.full_name,formatCpf(record.cpf_digits),record.rg,record.registration,record.alias,exportBirthday(record.birthday),record.address_primary,record.address_secondary,Array.isArray(record.additional_addresses)?record.additional_addresses.join(' | '):record.additional_addresses,record.notes,record.occurrence_notes,record.occurrence_reference,record.characteristics,exportDate(record.created_at),exportDate(record.updated_at)
    ]:['',record.plate,record.make,record.model,record.color,record.notes,exportDate(record.created_at),exportDate(record.updated_at)];
-   const row=recordsSheet.addRow(base);row.height=52;row.eachCell(cell=>{cell.alignment={vertical:'middle',wrapText:true};cell.border={bottom:{style:'hair',color:{argb:'FFD9DEDF'}}};if(index%2===1)cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF5F7F7'}}});
+   const row=sheet.addRow([...base,...Array(maxAdditional).fill('')]);row.height=76;row.eachCell(cell=>{cell.alignment={vertical:'middle',wrapText:true};cell.border={bottom:{style:'hair',color:{argb:'FFD9DEDF'}}};if(index%2===1)cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF5F7F7'}}});
    if(isPeople){row.getCell(3).numFmt='@';row.getCell(4).numFmt='@'}else row.getCell(2).numFmt='@';
-   if(coverPath&&imageIds.has(coverPath)){const id=imageIds.get(coverPath),image=imageData.get(coverPath),extent=exportImageExtent(image,52,56);recordsSheet.addImage(id,{tl:{col:0,row:index+4},ext:extent})}else row.getCell(1).value='Sem foto';
-   availableList.forEach((photo,photoIndex)=>{
-    const photoPath=String(photo.photo_path),photoRow=gallerySheet.addRow(isPeople?['',record.full_name,formatCpf(record.cpf_digits),record.rg,'Foto '+(photoIndex+1),photo.is_cover?'Sim':'Não']:['',record.plate,record.make,record.model,record.color,'Foto '+(photoIndex+1),photo.is_cover?'Sim':'Não']);
-    photoRow.height=88;photoRow.eachCell(cell=>{cell.alignment={vertical:'middle',wrapText:true};cell.border={bottom:{style:'hair',color:{argb:'FFD9DEDF'}}};if(photoIndex%2===1)cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFF5F7F7'}}});
-    const excelRow=photoRow.number;if(imageIds.has(photoPath)){const image=imageData.get(photoPath),extent=exportImageExtent(image,112,94);gallerySheet.addImage(imageIds.get(photoPath),{tl:{col:0,row:excelRow-1},ext:extent})}else photoRow.getCell(1).value='Foto indisponível';
-   })
+   if(cover){const path=String(cover.photo_path),image=imageData.get(path);if(image){const extent=exportImageExtent(image,64,68);sheet.addImage(imageIds.get(path),{tl:{col:0,row:index+4},ext:extent})}}else row.getCell(1).value='Sem foto';
+   photosForRecord.additional.forEach((photo,photoIndex)=>{const path=String(photo.photo_path),image=imageData.get(path);if(!image)return;const column=columns.length+photoIndex,extent=exportImageExtent(image,64,68);sheet.addImage(imageIds.get(path),{tl:{col:column,row:index+4},ext:extent})});
   }
-  const includedPhotoCount=[...photosByRecord.values()].reduce((sum,list)=>sum+list.filter(photo=>imageIds.has(String(photo.photo_path))).length,0),skippedPhotoCount=photos.length-includedPhotoCount;
-  gallerySheet.getCell(2,1).value='Cidade: '+cityName+'  •  Fotos incluídas: '+includedPhotoCount.toLocaleString('pt-BR')+'  •  Não carregadas: '+skippedPhotoCount.toLocaleString('pt-BR')+'  •  Exportado em: '+created;
-  recordsSheet.autoFilter='A4:'+recordsSheet.getColumn(columns.length).letter+Math.max(4,recordsSheet.rowCount);
-  gallerySheet.autoFilter='A4:'+gallerySheet.getColumn(galleryHeaders.length).letter+Math.max(4,gallerySheet.rowCount);
-  recordsSheet.getCell(1,1).note='Exportação gerada pelo Cadastro Criminal. A foto de capa também está na aba Galeria de fotos.';
+  const includedPhotoCount=photos.filter(entry=>imageIds.has(String(entry.photo.photo_path))).length,skippedPhotoCount=photos.length-includedPhotoCount;
+  sheet.autoFilter='A4:'+sheet.getColumn(allHeaders.length).letter+Math.max(4,sheet.rowCount);
+  sheet.getCell(1,1).note='Exportação gerada pelo Cadastro Criminal. A capa e todas as fotos adicionais estão na mesma linha do cadastro, nesta aba.';
   setExportProgress(button,'Gerando arquivo Excel…');
   const buffer=await workbook.xlsx.writeBuffer(),blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   showExportDownload(blob,downloadName,rows.length.toLocaleString('pt-BR')+' cadastro(s) · '+includedPhotoCount.toLocaleString('pt-BR')+' foto(s) incluídas · '+skippedPhotoCount.toLocaleString('pt-BR')+' não carregadas');
