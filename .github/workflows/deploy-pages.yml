@@ -1,4 +1,5 @@
 name: Publicar aplicativo PWA
+run-name: Publicação ${{ github.run_number }} — Cadastro Criminal
 on:
   push:
     branches: [main]
