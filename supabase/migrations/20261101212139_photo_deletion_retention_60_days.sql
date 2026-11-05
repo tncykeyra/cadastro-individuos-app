@@ -237,7 +237,7 @@ begin
 
   return v_paths;
 end;
-$function$
+$function$;
 
 
 do $setup$
