@@ -1,7 +1,7 @@
 {
   "name": "cadastro-individuos-pwa",
   "private": true,
-  "version": "1.87.0",
+  "version": "1.88.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
@@ -19,3 +19,4 @@
     "vite": "^6.0.0"
   }
 }
+

@@ -1,3 +1,14 @@
+-- Shared normalization used by the trigram indexes and compact search RPCs.
+CREATE OR REPLACE FUNCTION public.search_normalize(value text)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+PARALLEL SAFE
+SET search_path TO ''
+AS $function$
+  SELECT extensions.unaccent('extensions.unaccent', lower(coalesce(value, '')));
+$function$;
+
 -- Optimize list searches by returning only fields used by result cards.
 -- Trigram indexes support the normalized contains predicates; archived records stay excluded.
 CREATE INDEX IF NOT EXISTS people_search_text_trgm_idx ON public.people USING gin (
