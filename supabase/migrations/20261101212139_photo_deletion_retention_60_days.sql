@@ -43,7 +43,7 @@ AS $function$
     union all
     select 1 from public.vehicle_photos vp where vp.photo_path = p_path
   );
-$function$
+$function$;
 
 
 revoke all on function private.photo_path_is_referenced(text) from public, anon, authenticated;
