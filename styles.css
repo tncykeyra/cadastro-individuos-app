@@ -1603,3 +1603,12 @@ button.carousel-control-icon[data-carousel-toggle][aria-pressed="true"]:hover{ba
 @media(max-width:380px){.page-intro .page-actions{grid-template-columns:1fr}.page-intro .page-actions .button{width:100%}}
 
 .export-download-notice{position:fixed;z-index:1200;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(560px,calc(100vw - 28px));display:flex;flex-direction:column;gap:8px;padding:16px;background:var(--surface,#fff);color:var(--text,#202528);border:1px solid var(--border,#dfe3e4);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.22)}.export-download-notice strong{font-size:16px}.export-download-notice>span{font-size:14px;line-height:1.4;color:var(--muted,#626b70)}.export-download-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}.export-download-actions .button{min-height:44px}.export-progress-notice{bottom:calc(88px + env(safe-area-inset-bottom))}.export-progress-notice>span{display:block}@media(max-width:520px){.export-download-notice{bottom:calc(80px + env(safe-area-inset-bottom));width:calc(100vw - 20px);padding:13px;border-radius:14px}.export-download-actions{display:grid;grid-template-columns:1fr 96px}.export-download-actions .button{padding:10px 12px}}
+
+/* Restringe o conteúdo à largura disponível no desktop e permite a quebra dos filhos de grid/flex. */
+html,body,.app-shell{min-width:0;max-width:100%}
+main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
+#mainContent>:where(*),#mainContent :where(.page-intro,.page-intro>*,.page-section,.page-section>*,.detail-hero,.detail-hero>*,.detail-sections,.detail-sections>*,.cards,.cards>*,.dashboard-cards,.dashboard-cards>*,.form-grid,.form-grid>*,.form-section,.form-section>*,.list,.list>*,.list-row,.list-row>*,.warrants-page,.warrant-section-title,.warrant-section-title>*,.warrant-pdf-file-actions,.warrant-pdf-batch-fields,.history-filters,.history-filters>*,.table-scroll,.photo-gallery-wrap,.carousel-stage,.record-gallery,.association-search-results){min-width:0}
+#mainContent :where(img,video,canvas,iframe,svg){max-width:100%}
+#mainContent :where(pre,code,.info-value,.card-meta,.form-help,.error-message,.success-message){overflow-wrap:anywhere}
+.table-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain}
+@media(min-width:900px){main{width:min(1250px,100%);min-width:0;max-width:1250px;margin:0 auto}}
