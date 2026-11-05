@@ -35,9 +35,9 @@ AS $function$
   select exists (
     select 1 from public.record_photos rp where rp.photo_path = p_path
     union all
-    select 1 from public.people p where p.photo_path = p_path or p_path = any(coalesce(p.photo_paths, array[]::text[]))
+    select 1 from public.people p where p.photo_path = p_path
     union all
-    select 1 from public.vehicles v where v.photo_path = p_path or p_path = any(coalesce(v.photo_paths, array[]::text[]))
+    select 1 from public.vehicles v where v.photo_path = p_path
     union all
     select 1 from public.person_photos pp where pp.photo_path = p_path
     union all
@@ -58,7 +58,7 @@ AS $function$
     select 1 from vault.decrypted_secrets
     where name = 'photo_retention_cron_token' and decrypted_secret = p_token
   ), false);
-$function$
+$function$;
 
 
 revoke all on function public.check_photo_retention_token(text) from public, anon, authenticated;
@@ -97,7 +97,7 @@ begin
      where q.queue_id = due.queue_id
     returning q.queue_id, q.bucket_id, q.object_path;
 end;
-$function$
+$function$;
 
 
 revoke all on function public.claim_due_photo_retention(integer) from public, anon, authenticated;
@@ -122,7 +122,7 @@ begin
   get diagnostics v_count = row_count;
   return v_count;
 end;
-$function$
+$function$;
 
 
 revoke all on function public.finish_photo_retention(bigint[], boolean, text) from public, anon, authenticated;
@@ -212,13 +212,11 @@ begin
 
   if p_entity = 'people' then
     update public.people
-       set photo_path = v_cover_path,
-           photo_paths = array(select item from unnest(coalesce(photo_paths, array[]::text[])) item where not (item = any(v_paths)))
+       set photo_path = v_cover_path
      where id = p_entity_id;
   else
     update public.vehicles
-       set photo_path = v_cover_path,
-           photo_paths = array(select item from unnest(coalesce(photo_paths, array[]::text[])) item where not (item = any(v_paths)))
+       set photo_path = v_cover_path
      where id = p_entity_id;
   end if;
 
