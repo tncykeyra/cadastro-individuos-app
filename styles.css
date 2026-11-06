@@ -1621,3 +1621,15 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 /* No navegador desktop, o painel lateral também inicia recolhido e abre pelo logotipo. */
 .drawer-backdrop{position:fixed;z-index:7;inset:66px 0 0;border:0;padding:0;background:rgba(10,15,18,.34);cursor:pointer;touch-action:manipulation}.drawer-backdrop[hidden]{display:none!important}.menu-toggle-mark{pointer-events:none}
 @media(min-width:900px){.menu-toggle{display:grid}.drawer{top:72px;bottom:0;width:min(280px,calc(100vw - 24px));max-width:calc(100vw - 24px);transform:translateX(-105%);box-shadow:var(--shadow);border-right:0}.drawer.open{transform:translateX(0)}.drawer-backdrop{top:72px}main{width:min(1400px,calc(100% - 48px));min-width:0;max-width:1400px;margin:0 auto}.app-shell:after{display:none}}
+
+
+/* Carregamento de fotos dos minicards sem deslocar o layout. */
+.card-photo-cover,.card-photo-thumbnail{position:relative}
+.card-photo-loading{position:absolute;inset:0;z-index:1;display:grid;place-items:center;background:rgba(20,28,32,.28);color:#fff;pointer-events:none;transition:opacity .18s ease}
+.card-photo-spinner{width:24px;height:24px;border:3px solid rgba(255,255,255,.55);border-top-color:#fff;border-radius:50%;animation:card-photo-spin .75s linear infinite;filter:drop-shadow(0 1px 2px #0008)}
+.card-photo-thumbnail .card-photo-spinner{width:17px;height:17px;border-width:2px}
+.card-photo-cover.is-photo-error .card-photo-loading,.card-photo-thumbnail.is-photo-error .card-photo-loading{background:rgba(20,28,32,.72)}
+.card-photo-cover.is-photo-error .card-photo-loading:after{content:'Foto indisponível';font-size:.82rem;font-weight:600;text-align:center;padding:6px}
+.card-photo-cover.is-photo-error .card-photo-spinner,.card-photo-thumbnail.is-photo-error .card-photo-spinner{display:none}
+@keyframes card-photo-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.card-photo-spinner{animation-duration:1.8s}}
