@@ -650,6 +650,51 @@ async function copyWarrantPdf(admin: ReturnType<typeof clients>["admin"], access
       if (ALLOWED_ORIGINS.has(origin)) { headers.set("Access-Control-Allow-Origin", origin); headers.set("Vary", "Origin"); }
       return new Response(bytes, { status: 200, headers });
     }
+    if (route === "cross-city-person-photo" && request.method === "GET") {
+      const actor = await userClient(request);
+      const sourceId = url.searchParams.get("source") || "";
+      const targetId = url.searchParams.get("target") || "";
+      if (!actor || !/^[0-9a-f-]{36}$/i.test(sourceId) || !/^[0-9a-f-]{36}$/i.test(targetId)) return response({ error: "Acesso não autorizado." }, 401, origin);
+      const { data: matches, error: matchError } = await actor.client.rpc("person_other_city_match_cards_v1", { p_person_id: sourceId });
+      if (matchError || !Array.isArray(matches) || !matches.some((match: any) => String(match.matched_person_id) === targetId)) return response({ error: "Foto não disponível para esta correspondência." }, 403, origin);
+      const [{ data: source, error: sourceError }, { data: target, error: targetError }] = await Promise.all([
+        actor.admin.from("people").select("id,city_id,archived_at").eq("id", sourceId).maybeSingle(),
+        actor.admin.from("people").select("id,city_id,archived_at,photo_path,photo_paths").eq("id", targetId).maybeSingle(),
+      ]);
+      if (sourceError || targetError || !source || !target || source.archived_at || target.archived_at || source.city_id === target.city_id) return response({ error: "Foto não disponível para esta correspondência." }, 403, origin);
+      const { data: coverRows, error: coverError } = await actor.admin.from("record_photos").select("photo_path,is_cover,created_at").eq("entity", "people").eq("entity_id", targetId).order("is_cover", { ascending: false }).order("created_at", { ascending: true }).limit(20);
+      if (coverError) return response({ error: "Foto não disponível para esta correspondência." }, 404, origin);
+      const candidates = [...new Set([target.photo_path, ...(coverRows || []).filter((item: any) => item.is_cover).map((item: any) => item.photo_path), ...(target.photo_paths || []), ...(coverRows || []).map((item: any) => item.photo_path)].filter((path: unknown): path is string => typeof path === "string" && path.length > 0))];
+      for (const path of candidates) {
+        let bytes: Uint8Array | null = null;
+        let contentType = "";
+        if (path.startsWith("drive:")) {
+          const fileId = path.slice(6);
+          if (!/^[A-Za-z0-9_-]{10,200}$/.test(fileId)) continue;
+          const { accessToken } = await driveCredentials(actor.admin);
+          const file = await driveFetch("https://www.googleapis.com/drive/v3/files/" + encodeURIComponent(fileId) + "?alt=media", accessToken);
+          if (!file.ok) continue;
+          contentType = (file.headers.get("Content-Type") || "").split(";")[0].toLowerCase();
+          if (!contentType.startsWith("image/") || contentType === "image/svg+xml") continue;
+          const length = Number(file.headers.get("Content-Length") || 0);
+          if (length > 20 * 1024 * 1024) continue;
+          const buffer = await file.arrayBuffer();
+          if (!buffer.byteLength || buffer.byteLength > 20 * 1024 * 1024) continue;
+          bytes = new Uint8Array(buffer);
+        } else {
+          const { data: file, error: fileError } = await actor.admin.storage.from("people-photos").download(path);
+          if (fileError || !file || !file.size || file.size > 20 * 1024 * 1024) continue;
+          contentType = (file.type || "").split(";")[0].toLowerCase();
+          if (!contentType.startsWith("image/") || contentType === "image/svg+xml") continue;
+          bytes = new Uint8Array(await file.arrayBuffer());
+        }
+        if (!bytes?.length) continue;
+        const headers = new Headers({ "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff", "Content-Type": contentType, "Content-Length": String(bytes.length), "Vary": "Origin" });
+        if (ALLOWED_ORIGINS.has(origin)) { headers.set("Access-Control-Allow-Origin", origin); headers.set("Access-Control-Allow-Headers", "authorization, apikey, content-type"); }
+        return new Response(bytes, { status: 200, headers });
+      }
+      return response({ error: "A foto de capa ainda não está disponível." }, 404, origin);
+    }
     if (route === "photo" && request.method === "GET") {
       const actor = await userClient(request);
       const fileId = url.searchParams.get("id") || "";
