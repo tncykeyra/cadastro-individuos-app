@@ -820,9 +820,9 @@ main :where(pre,code,.info-value,.card-meta,.form-help,.error-message,.success-m
 
 
 /* Optional torch controls for device cameras that expose the browser torch capability. */
-.camera-flash-controls{display:flex;align-items:center;justify-content:center;gap:.5rem;flex-wrap:wrap;margin:.75rem 0;padding:.65rem;border:1px solid var(--border-color,#d8dddf);border-radius:12px;background:var(--surface-muted,#f4f6f6)}
+.camera-flash-controls{display:flex;align-items:center;justify-content:center;gap:.5rem;flex-wrap:wrap;margin:.75rem 0;padding:.65rem;border:1px solid var(--line,#d8dddf);border-radius:12px;background:var(--soft,#f4f6f6)}
 .camera-flash-controls[hidden]{display:none!important}
-.camera-flash-controls [aria-pressed="true"]{outline:2px solid var(--accent,#50595e);outline-offset:1px}
-.drive-pdf-progress{margin-top:1.25rem;padding:1rem;border:1px solid var(--border-color,#d8dddf);border-radius:14px;background:var(--surface-muted,#f7f8f8)}
+.camera-flash-controls [aria-pressed="true"]{outline:2px solid var(--brand,#50595e);outline-offset:1px}
+.drive-pdf-progress{margin-top:1.25rem;padding:1rem;border:1px solid var(--line,#d8dddf);border-radius:14px;background:var(--soft,#f7f8f8)}
 .drive-pdf-progress h3{margin:.1rem 0 .65rem}
 @media(max-width:600px){.camera-flash-controls{justify-content:stretch}.camera-flash-controls .button{flex:1;min-width:8rem}.drive-pdf-progress .button-row{display:grid;grid-template-columns:1fr}}
