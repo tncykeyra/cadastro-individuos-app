@@ -134,7 +134,7 @@ as $function$
     target.notes,
     target.occurrence_notes,
     target.occurrence_reference,
-    target.characteristics,
+    to_jsonb(target)->>'characteristics',
     target.created_at,
     target.updated_at
   from source_person as source
