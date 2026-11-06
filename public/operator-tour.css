@@ -25,3 +25,5 @@
 @media(min-width:621px){.install-button{right:190px!important}}
 
 @media(min-width:621px){.install-button{display:none!important}}
+
+.menu-hint-dialog{width:min(440px,calc(100vw - 28px));max-width:calc(100vw - 28px);padding:0;border:1px solid var(--line);border-radius:22px;background:var(--surface);color:var(--ink);box-shadow:0 24px 80px #10191e45;overflow:auto}.menu-hint-dialog::backdrop{background:#11191d9c;backdrop-filter:blur(3px)}.menu-hint-card{padding:clamp(20px,5vw,28px)}.menu-hint-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.menu-hint-mark{width:44px;height:44px;display:grid;place-items:center;border-radius:14px;background:var(--soft);color:var(--brand);font-size:1.7rem;font-weight:800}.menu-hint-card h2{margin:8px 0 10px;font-size:clamp(1.3rem,5vw,1.65rem);letter-spacing:-.03em}.menu-hint-card .operator-tour-description{line-height:1.55}.menu-hint-actions{display:flex;justify-content:flex-end;margin-top:20px}.menu-hint-actions .button{min-height:46px;min-width:120px}.menu-hint-dialog:modal{margin:auto}
