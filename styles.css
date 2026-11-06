@@ -1617,3 +1617,7 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 .menu-toggle{display:grid;place-items:center;width:44px;height:44px;padding:5px;border-radius:12px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .menu-toggle-mark{display:block;width:32px;height:32px;max-width:32px;max-height:32px;object-fit:contain}
 .menu-toggle:focus-visible{outline:3px solid #fff;outline-offset:3px}
+
+/* No navegador desktop, o painel lateral também inicia recolhido e abre pelo logotipo. */
+.drawer-backdrop{position:fixed;z-index:7;inset:66px 0 0;border:0;padding:0;background:rgba(10,15,18,.34);cursor:pointer;touch-action:manipulation}.drawer-backdrop[hidden]{display:none!important}.menu-toggle-mark{pointer-events:none}
+@media(min-width:900px){.menu-toggle{display:grid}.drawer{top:72px;bottom:0;width:min(280px,calc(100vw - 24px));max-width:calc(100vw - 24px);transform:translateX(-105%);box-shadow:var(--shadow);border-right:0}.drawer.open{transform:translateX(0)}.drawer-backdrop{top:72px}main{width:min(1400px,calc(100% - 48px));min-width:0;max-width:1400px;margin:0 auto}.app-shell:after{display:none}}
