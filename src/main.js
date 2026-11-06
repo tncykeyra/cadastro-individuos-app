@@ -2323,7 +2323,7 @@ async function loadCrossCityAlert(sourceId){
     if(error)throw error;
     if(!slot.isConnected||String(state.selected)!==String(sourceId))return;
     const markup=renderCrossCityMatches(data,sourceId);
-    if(markup)slot.outerHTML=markup;else{slot.classList.remove('cross-city-checking');slot.classList.add('cross-city-no-match');slot.innerHTML='<strong>Verificação em outras cidades concluída</strong><span>Nenhum cadastro coincidente por CPF ou nome completo foi localizado.</span>';}
+    if(markup){slot.outerHTML=markup;void loadCrossCityMatchPhotos(document.querySelector('.cross-city-person-alert'),sourceId)}else{slot.classList.remove('cross-city-checking');slot.classList.add('cross-city-no-match');slot.innerHTML='<strong>Verificação em outras cidades concluída</strong><span>Nenhum cadastro coincidente por CPF ou nome completo foi localizado.</span>';}
   }catch(error){
     console.warn('Não foi possível verificar cadastros em outras cidades.',error);
     if(!slot.isConnected||String(state.selected)!==String(sourceId))return;
@@ -2331,11 +2331,29 @@ async function loadCrossCityAlert(sourceId){
     slot.innerHTML='<strong>Não foi possível verificar cadastros em outras cidades.</strong><button class="button secondary small" type="button" data-cross-city-retry="'+esc(sourceId)+'">Tentar novamente</button>';
   }
 }
+async function loadCrossCityMatchPhotos(section,sourceId){
+  if(!section||!state.session?.access_token)return;
+  const cards=[...section.querySelectorAll('[data-cross-city-view]')];
+  await Promise.all(cards.map(async card=>{
+    const targetId=card.dataset.crossCityView,img=card.querySelector('[data-cross-city-photo]'),fallback=card.querySelector('[data-cross-city-fallback]');
+    if(!targetId||!img)return;
+    try{
+      const response=await fetch(DRIVE_FUNCTION_URL+'/cross-city-person-photo?source='+encodeURIComponent(sourceId)+'&target='+encodeURIComponent(targetId),{headers:{Authorization:'Bearer '+state.session.access_token,apikey:config.key},cache:'no-store'});
+      if(!response.ok)return;
+      const blob=await response.blob();
+      if(!blob.size||!blob.type.startsWith('image/')||blob.type==='image/svg+xml')return;
+      const objectUrl=URL.createObjectURL(blob);
+      img.onload=()=>URL.revokeObjectURL(objectUrl);
+      img.onerror=()=>{URL.revokeObjectURL(objectUrl);img.hidden=true;if(fallback)fallback.hidden=false};
+      img.alt='Foto de capa do cadastro correspondente em outra cidade';img.src=objectUrl;img.hidden=false;if(fallback)fallback.hidden=true;
+    }catch{}
+  }));
+}
 function renderCrossCityMatches(matches,sourceId){
   const rows=Array.isArray(matches)?matches:[];
   if(!rows.length)return '';
   const hasCpf=rows.some(match=>match.match_type==='cpf');
-  return '<section class="cross-city-person-alert'+(!hasCpf?' name-only':'')+'" role="status"><strong>'+(hasCpf?'⚠️ Indivíduo já cadastrado em outra cidade':'⚠️ Possível abordagem em outra cidade')+'</strong><span>'+rows.length+' cadastro(s) correspondente(s) localizado(s) em outra cidade.</span>'+(hasCpf?'':'<small>Correspondência exata pelo nome. Confira os dados antes de considerar que é a mesma pessoa.</small>')+'<div class="cross-city-match-list">'+rows.map(match=>'<button class="cross-city-match-card" type="button" data-cross-city-view="'+esc(match.matched_person_id)+'" data-cross-city-source="'+esc(sourceId)+'"><span class="cross-city-match-avatar" aria-hidden="true">👤</span><span class="cross-city-match-copy"><strong>'+esc(formatPersonName(match.full_name||'Indivíduo sem nome'))+'</strong><small>'+esc(match.city_name||'Outra cidade')+' · '+(match.match_type==='cpf'?'CPF coincidente':'nome coincidente')+'</small><small>CPF: '+esc(match.cpf_digits?formatCpf(match.cpf_digits):'—')+(match.rg?' · RG: '+esc(match.rg):'')+'</small></span><span class="cross-city-match-action">Ver cadastro →</span></button>').join('')+'</div></section>'
+  return '<section class="cross-city-person-alert'+(!hasCpf?' name-only':'')+'" role="status"><strong>'+(hasCpf?'⚠️ Indivíduo já cadastrado em outra cidade':'⚠️ Possível abordagem em outra cidade')+'</strong><span>'+rows.length+' cadastro(s) correspondente(s) localizado(s) em outra cidade.</span>'+(hasCpf?'':'<small>Correspondência exata pelo nome. Confira os dados antes de considerar que é a mesma pessoa.</small>')+'<div class="cross-city-match-list">'+rows.map(match=>'<button class="cross-city-match-card" type="button" data-cross-city-view="'+esc(match.matched_person_id)+'" data-cross-city-source="'+esc(sourceId)+'"><span class="cross-city-match-avatar" aria-hidden="true"><img data-cross-city-photo alt="" hidden><span data-cross-city-fallback>👤</span></span><span class="cross-city-match-copy"><strong>'+esc(formatPersonName(match.full_name||'Indivíduo sem nome'))+'</strong><small>'+esc(match.city_name||'Outra cidade')+' · '+(match.match_type==='cpf'?'CPF coincidente':'nome coincidente')+'</small><small>CPF: '+esc(match.cpf_digits?formatCpf(match.cpf_digits):'—')+(match.rg?' · RG: '+esc(match.rg):'')+'</small></span><span class="cross-city-match-action">Ver cadastro →</span></button>').join('')+'</div></section>'
 }
 
 async function openCrossCityPerson(sourceId,targetId,button){
