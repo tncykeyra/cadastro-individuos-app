@@ -1290,16 +1290,35 @@ async function hydrateCardGalleries(entity,records){
     if(!pending.length)return;
     for(const card of pending)card.dataset.galleryLoading='true';
     const selected=pending.map(card=>byId.get(card.dataset[key])).filter(Boolean);
-    try{
-      await galleryPhotosForRecords(entity,selected);
-      for(const card of pending){
-        if(!card.isConnected)continue;
-        const record=byId.get(card.dataset[key]);if(!record)continue;
+    const renderCards=(selectedRecords,complete)=>{
+      for(const record of selectedRecords){
+        const current=[...document.querySelectorAll(selector)].find(card=>card.dataset[key]===String(record.id));
+        if(!current)continue;
         const template=document.createElement('template');template.innerHTML=render(record);
         const replacement=template.content.firstElementChild;
-        if(replacement){replacement.dataset.galleryLoaded='true';card.replaceWith(replacement)}
+        if(!replacement)continue;
+        if(complete){replacement.dataset.galleryLoaded='true';delete replacement.dataset.galleryLoading}
+        else{replacement.dataset.galleryLoading='true';const cover=replacement.querySelector('.card-photo-cover img');if(cover){cover.loading='eager';cover.fetchPriority='high'}}
+        current.replaceWith(replacement)
       }
-    }catch(error){for(const card of pending)delete card.dataset.galleryLoading;console.warn('Não foi possível carregar as galerias visíveis.',error)}
+    };
+    try{
+      // Resolve a capa já vinculada ao cadastro em paralelo à consulta da galeria.
+      // Isso permite exibir a foto principal sem esperar todas as referências antigas e novas.
+      const coverPromise=Promise.all(selected.map(async record=>{
+        const path=String(record.photo_path||'').trim();
+        if(!path)return;
+        try{
+          const url=await galleryPhotoUrl(path);
+          if(url)record.photos=[{photo_path:path,url,is_cover:true,crop_position:record.photo_position||'50% 20%'}];
+        }catch{}
+      }));
+      const galleryPromise=galleryPhotosForRecords(entity,selected);
+      await coverPromise;
+      renderCards(selected,false);
+      await galleryPromise;
+      renderCards(selected,true);
+    }catch(error){for(const card of document.querySelectorAll(selector))if(byId.has(card.dataset[key]))delete card.dataset.galleryLoading;console.warn('Não foi possível carregar as galerias visíveis.',error)}
   };
   const cards=[...document.querySelectorAll(selector)].filter(card=>byId.has(card.dataset[key])&&card.dataset.galleryLoaded!=='true');
   if(!('IntersectionObserver'in window)){await flush(cards);return}
