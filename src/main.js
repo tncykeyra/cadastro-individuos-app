@@ -46,7 +46,7 @@ if(themeToggleButton)themeToggleButton.onclick=event=>{
   event.preventDefault();
   setAppearance(document.documentElement.dataset.theme==='dark'?'light':'dark');
 };
-function isMasterAdmin(){return state.cityContextReady?state.cityRole==='master':state.profile?.role==='admin'}
+function isMasterAdmin(){return state.profile?.role==='master'||(Array.isArray(state.cities)&&state.cities.some(city=>city?.role==='master'))}
 function isAdmin(){return state.cityContextReady?['admin','master'].includes(state.cityRole):state.profile?.role==='admin'}
 async function loadCityContext(){
   state.cities=[];state.activeCityId=null;state.cityRole=null;state.cityContextReady=false;state.cityAccessError='';
@@ -69,7 +69,7 @@ async function loadCityContext(){
   }
 }
 function nav(){
-  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 2.01';
+  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 2.02';
   const allowed=!!state.session&&['operator','admin'].includes(state.profile?.role)&&!(state.cityContextReady&&!state.cities.length);
   const admin=isAdmin(),master=isMasterAdmin();
   const sideItems=allowed?[['dashboard','Painel da cidade'],['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados'],...(canUseFiscalization()?[['fiscalization','Fiscalização']]:[]),['smart','Cadastro Inteligente'],...(admin?[['review','Revisão Inteligente'],['photoReview','Revisão de fotos'],['maintenance','Manutenção Inteligente'],['history','Histórico']]:[]),...(admin?[['team','Usuários']]:[]),...(master?[['cities','Cidades e acessos']]:[])]:[];
@@ -1075,8 +1075,26 @@ async function renderMaintenancePage(){
 const DRIVE_FUNCTION_URL='https://etvxrzjtnhuefxeirkxf.supabase.co/functions/v1/backup-drive';
 let driveStorageAvailability=null;
 async function driveRequest(route,method='GET',body=null){
-  const response=await fetch(DRIVE_FUNCTION_URL+'/'+route,{method,headers:{Authorization:'Bearer '+(state.session?.access_token||''),apikey:config.key,...(method==='POST'?{'Content-Type':'application/json'}:{})},...(method==='POST'&&body?{body:JSON.stringify(body)}:{})});
+  let session=state.session;
+  try{
+    const current=await state.client.auth.getSession();
+    if(current.error)throw current.error;
+    session=current.data?.session||null;
+    if(!session)throw new Error('Sua sessão terminou. Entre novamente com a conta Google autorizada.');
+    if(session.expires_at&&session.expires_at*1000<Date.now()+60_000){
+      const refreshed=await state.client.auth.refreshSession();
+      if(refreshed.error||!refreshed.data?.session)throw new Error('Não foi possível renovar sua sessão. Entre novamente com a conta Google autorizada.');
+      session=refreshed.data.session;
+    }
+    state.session=session;
+  }catch(error){
+    if(error instanceof Error&&error.message)throw error;
+    throw new Error('Não foi possível validar sua sessão. Entre novamente e tente de novo.');
+  }
+  const response=await fetch(DRIVE_FUNCTION_URL+'/'+route,{method,headers:{Authorization:'Bearer '+session.access_token,apikey:config.key,...(method==='POST'?{'Content-Type':'application/json'}:{})},...(method==='POST'&&body?{body:JSON.stringify(body)}:{})});
   let data={};try{data=await response.json()}catch{}
+  if(response.status===401)throw new Error(data.error||'Sua sessão terminou. Entre novamente com a conta Google autorizada.');
+  if(response.status===403&&route==='oauth/start')throw new Error(data.error||'A conta conectada não tem perfil de administrador master.');
   return {ok:response.ok,data};
 }
 let driveAlertTimer=null,driveAlertLastState=null;
