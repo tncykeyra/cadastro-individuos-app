@@ -1611,4 +1611,9 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 #mainContent :where(img,video,canvas,iframe,svg){max-width:100%}
 #mainContent :where(pre,code,.info-value,.card-meta,.form-help,.error-message,.success-message){overflow-wrap:anywhere}
 .table-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain}
-@media(min-width:900px){main{width:min(1250px,100%);min-width:0;max-width:1250px;margin:0 auto}}
+@media(min-width:900px){main{box-sizing:border-box;width:min(1400px,calc(100% - 230px));min-width:0;max-width:1400px;margin-left:max(230px,calc((100% - 1170px)/2))}}
+
+/* O símbolo do aplicativo também é o acionador acessível do menu lateral. */
+.menu-toggle{display:grid;place-items:center;width:44px;height:44px;padding:5px;border-radius:12px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.menu-toggle-mark{display:block;width:32px;height:32px;max-width:32px;max-height:32px;object-fit:contain}
+.menu-toggle:focus-visible{outline:3px solid #fff;outline-offset:3px}
