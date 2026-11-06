@@ -1663,3 +1663,10 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 .cross-city-check-spinner{width:18px;height:18px;border:2px solid rgba(112,70,7,.25);border-top-color:#704607;border-radius:50%;animation:card-photo-spin .75s linear infinite}
 :root[data-theme="dark"] .cross-city-check-spinner{border-color:rgba(255,212,123,.3);border-top-color:#ffd47b}
 .cross-city-checking .button{grid-column:2;justify-self:start}
+
+/* Os indicadores ocupam a própria miniatura e não dependem do card pai. */
+.card-photo-cover,.card-photo-thumbnail{position:relative;isolation:isolate}
+.cross-city-no-match{border-color:#d7e3e8;border-left-color:#71818a;background:#f3f7f8;color:#34434a}
+.cross-city-no-match strong{color:#34434a}
+:root[data-theme="dark"] .cross-city-no-match{border-color:#34434a;border-left-color:#8da0aa;background:#141a1e;color:#e2eaed}
+:root[data-theme="dark"] .cross-city-no-match strong{color:#e2eaed}
