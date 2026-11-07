@@ -1829,3 +1829,107 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 .interest-plate-fields{grid-template-columns:minmax(0,1fr) auto}
 .interest-plate-fields>.interest-full{grid-column:1/-1}
 @media(max-width:620px){.interest-toolbar{align-items:stretch;flex-direction:column}.interest-toolbar-actions{display:grid;grid-template-columns:minmax(0,1fr);justify-content:stretch}.interest-toolbar-actions .interest-format-setting,.interest-toolbar-actions .interest-pdf-button{width:100%}.interest-format-setting select{width:100%}.interest-plate-fields{grid-template-columns:minmax(0,1fr)}.interest-plate-lookup{width:100%}}
+
+/* Veículos de interesse: hierarquia visual e usabilidade em campo */
+.vehicle-interest-page{gap:18px}
+.interest-page-heading{position:relative;padding:clamp(16px,2.5vw,24px);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:18px;background:var(--surface);box-shadow:0 8px 28px #1721270a}
+.interest-page-heading>div{display:grid;gap:6px}
+.interest-page-heading .eyebrow{display:inline-flex;align-items:center;width:max-content;max-width:100%;padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--soft);font-size:.76rem;letter-spacing:.04em}
+.interest-page-heading h1{margin:0;font-size:clamp(1.45rem,2.8vw,2rem);letter-spacing:-.035em}
+.interest-page-heading .muted{max-width:68ch;line-height:1.5}
+.interest-page-heading>button{min-height:46px;box-shadow:0 5px 14px #17212718}
+.interest-toolbar{flex-wrap:wrap;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.interest-toolbar-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0;flex-wrap:wrap}
+.interest-status-tabs{padding:3px;border-radius:999px;background:var(--soft)}
+.interest-tab{min-height:42px;border-color:transparent}
+.interest-tab:not(.active):hover{background:var(--surface)}
+.interest-format-setting{display:grid;gap:4px;min-width:0;color:var(--muted);font-size:.76rem;font-weight:700}
+.interest-format-setting select{max-width:100%;min-height:42px;padding:8px 32px 8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;font-size:.86rem}
+.interest-pdf-button{min-height:44px}
+.interest-search{display:grid;gap:8px;padding:14px;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.interest-search>label{font-size:.95rem;font-weight:750}
+.interest-search-row{gap:9px}
+.interest-search-row input,.interest-entry input,.interest-entry select{min-height:48px;padding:11px 14px;border:1px solid var(--line);border-radius:13px;background:var(--soft);color:var(--ink);font:inherit;outline-color:var(--brand)}
+.interest-search-row input:focus,.interest-entry input:focus,.interest-entry select:focus{border-color:var(--brand);box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 15%,transparent)}
+.interest-search-row .button{flex-basis:52px;min-width:52px;border-radius:13px;font-size:1.25rem}
+.interest-list-caption{margin:0;padding:0 2px;font-size:.84rem}
+.interest-list{gap:9px}
+.interest-row-card{padding:14px 16px;border-radius:16px;transition:border-color .15s,box-shadow .15s}
+.interest-row-card:hover{border-color:color-mix(in srgb,var(--brand) 38%,var(--line));box-shadow:0 7px 20px #17212710}
+.interest-row-head{gap:12px}
+.interest-event-badge{width:38px;height:38px;flex-basis:38px;border-radius:12px}
+.interest-row-main strong{font-size:1.03rem;letter-spacing:.015em}
+.interest-status{padding:6px 10px}
+.interest-row-meta{gap:7px;margin:11px 0 0 50px}
+.interest-row-meta>span{padding:5px 9px;border:1px solid var(--line);border-radius:9px;background:var(--soft);font-size:.79rem}
+.interest-row-meta b{margin-right:3px}
+.interest-card-actions{gap:9px;margin:12px 0 0 50px}
+.interest-card-actions .button{min-height:40px}
+.interest-discharge-form{margin-left:50px}
+.interest-entry{padding:clamp(14px,2.2vw,22px);box-shadow:0 10px 28px #1721270b}
+.interest-entry-heading{align-items:center;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.interest-entry-heading h2{font-size:1.25rem}
+.interest-type-row p{line-height:1.45}
+.interest-plate-fields{grid-template-columns:minmax(0,1fr) auto;gap:10px}
+.interest-plate-fields>.interest-full{grid-column:1/-1}
+.interest-plate-fields label small{line-height:1.4}
+.interest-plate-lookup{min-height:48px}
+.interest-form-grid{gap:12px}
+.interest-form-actions{padding-top:12px;border-top:1px solid var(--line)}
+.interest-form-actions .button{min-height:44px}
+.interest-pagination{gap:12px;padding:8px 0}
+.interest-pagination>span{min-width:120px;text-align:center;font-size:.9rem}
+:root[data-theme="dark"] .interest-page-heading,
+:root[data-theme="dark"] .interest-toolbar,
+:root[data-theme="dark"] .interest-search{background:var(--surface);border-color:var(--line);color:var(--ink)}
+:root[data-theme="dark"] .interest-page-heading .eyebrow,
+:root[data-theme="dark"] .interest-status-tabs,
+:root[data-theme="dark"] .interest-row-meta>span{background:#1c2226;border-color:var(--line);color:var(--ink)}
+:root[data-theme="dark"] .interest-search-row input,
+:root[data-theme="dark"] .interest-entry input,
+:root[data-theme="dark"] .interest-entry select{background:#1c2226;border-color:#3a444a;color:var(--ink)}
+:root[data-theme="dark"] .interest-row-card:hover{border-color:#77858c;box-shadow:0 8px 24px #0004}
+@media(max-width:700px){
+ .vehicle-interest-page{gap:12px}
+ .interest-page-heading{align-items:stretch;flex-direction:column;padding:15px}
+ .interest-page-heading>button{width:100%}
+ .interest-toolbar{align-items:stretch;flex-direction:column;padding:10px}
+ .interest-status-tabs{width:100%}
+ .interest-tab{flex:1;justify-content:center;gap:5px;padding:8px 10px;font-size:.9rem}
+ .interest-toolbar-actions{display:grid;grid-template-columns:minmax(0,1fr);width:100%}
+ .interest-toolbar-actions .interest-format-setting,.interest-toolbar-actions .interest-pdf-button{width:100%}
+ .interest-format-setting select{width:100%}
+ .interest-search{padding:11px}
+ .interest-row-card{padding:11px}
+ .interest-row-head{gap:8px}
+ .interest-event-badge{width:34px;height:34px;flex-basis:34px}
+ .interest-row-main strong{font-size:.96rem}
+ .interest-status{font-size:.7rem;padding:5px 7px}
+ .interest-row-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:10px 0 0}
+ .interest-row-meta>span{min-width:0;overflow-wrap:anywhere;line-height:1.35}
+ .interest-card-actions{margin:10px 0 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .interest-card-actions .button{width:100%;white-space:normal}
+ .interest-discharge-note,.interest-discharge-form{margin-left:0}
+ .interest-discharge-form{grid-template-columns:minmax(0,1fr);padding:10px}
+ .interest-discharge-form>div{justify-content:flex-end;flex-wrap:wrap}
+ .interest-plate-fields{grid-template-columns:minmax(0,1fr)}
+ .interest-plate-lookup{width:100%}
+ .interest-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .interest-full{grid-column:1/-1}
+ .interest-form-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .interest-form-actions .button{width:100%;white-space:normal}
+}
+@media(max-width:380px){
+ .interest-row-meta{grid-template-columns:minmax(0,1fr)}
+ .interest-tab{font-size:.82rem;padding-inline:7px}
+ .interest-row-main>span{font-size:.78rem}
+ .interest-form-actions{grid-template-columns:minmax(0,1fr)}
+}
+
+/* Cadastro de veículos de interesse: dados sempre em maiúsculas e abas sem overflow. */
+.vehicle-interest-page .interest-status-tabs{flex-wrap:wrap;min-width:0}
+.vehicle-interest-page .interest-tab{min-width:0;white-space:normal;text-align:center;line-height:1.2;text-transform:uppercase}
+.vehicle-interest-page #interestForm input:not([type=hidden]),.vehicle-interest-page #interestForm textarea{text-transform:uppercase}
+.vehicle-interest-page .interest-page-heading h1,.vehicle-interest-page .interest-page-heading .muted,.vehicle-interest-page .interest-search>label,.vehicle-interest-page .interest-entry-heading h2,.vehicle-interest-page .interest-entry label{text-transform:uppercase}
+@media(max-width:700px){.vehicle-interest-page .interest-status-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-radius:14px}.vehicle-interest-page .interest-tab{min-height:44px;border-radius:11px}.vehicle-interest-page .interest-tab:last-child:nth-child(odd){grid-column:1/-1}}
+@media(max-width:380px){.vehicle-interest-page .interest-status-tabs{grid-template-columns:minmax(0,1fr)}.vehicle-interest-page .interest-tab:last-child:nth-child(odd){grid-column:auto}}
