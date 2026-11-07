@@ -2356,6 +2356,44 @@ function renderCrossCityMatches(matches,sourceId){
   return '<section class="cross-city-person-alert'+(!hasCpf?' name-only':'')+'" role="status"><strong>'+(hasCpf?'⚠️ Indivíduo já cadastrado em outra cidade':'⚠️ Possível abordagem em outra cidade')+'</strong><span>'+rows.length+' cadastro(s) correspondente(s) localizado(s) em outra cidade.</span>'+(hasCpf?'':'<small>Correspondência exata pelo nome. Confira os dados antes de considerar que é a mesma pessoa.</small>')+'<div class="cross-city-match-list">'+rows.map(match=>'<button class="cross-city-match-card" type="button" data-cross-city-view="'+esc(match.matched_person_id)+'" data-cross-city-source="'+esc(sourceId)+'"><span class="cross-city-match-avatar" aria-hidden="true"><img data-cross-city-photo alt="" hidden><span data-cross-city-fallback>👤</span></span><span class="cross-city-match-copy"><strong>'+esc(formatPersonName(match.full_name||'Indivíduo sem nome'))+'</strong><small>'+esc(match.city_name||'Outra cidade')+' · '+(match.match_type==='cpf'?'CPF coincidente':'nome coincidente')+'</small><small>CPF: '+esc(match.cpf_digits?formatCpf(match.cpf_digits):'—')+(match.rg?' · RG: '+esc(match.rg):'')+'</small></span><span class="cross-city-match-action">Ver cadastro →</span></button>').join('')+'</div></section>'
 }
 
+async function loadCrossCityDetailPhotos(sourceId,targetId,container,personName){
+  if(!container||!state.session?.access_token)return;
+  const authHeaders={Authorization:'Bearer '+state.session.access_token,apikey:config.key};
+  try{
+    const listResponse=await fetch(DRIVE_FUNCTION_URL+'/cross-city-person-photo-list?source='+encodeURIComponent(sourceId)+'&target='+encodeURIComponent(targetId),{headers:authHeaders,cache:'no-store'});
+    if(!listResponse.ok)throw new Error('Não foi possível carregar as fotos deste cadastro.');
+    const result=await listResponse.json();
+    const photos=Array.isArray(result.photos)?result.photos:[];
+    if(!photos.length){container.innerHTML='<p class="cross-city-photo-empty">Este cadastro não possui fotos disponíveis.</p>';return}
+    container.innerHTML='<div class="cross-city-photo-stage"><img class="cross-city-photo-image" alt=""/><span class="cross-city-photo-badge" data-photo-cover hidden>Capa</span><span class="cross-city-photo-count" data-photo-count></span></div><div class="cross-city-photo-controls"><button class="button secondary small" type="button" data-photo-prev aria-label="Foto anterior">‹</button><span class="cross-city-photo-label" data-photo-label></span><button class="button secondary small" type="button" data-photo-next aria-label="Próxima foto">›</button></div><p class="cross-city-photo-status" data-photo-status role="status" aria-live="polite"></p>';
+    const img=container.querySelector('.cross-city-photo-image'),prev=container.querySelector('[data-photo-prev]'),next=container.querySelector('[data-photo-next]'),count=container.querySelector('[data-photo-count]'),label=container.querySelector('[data-photo-label]'),status=container.querySelector('[data-photo-status]'),cover=container.querySelector('[data-photo-cover]');
+    let current=0,currentUrl='',request=0;
+    const cleanup=()=>{if(currentUrl){URL.revokeObjectURL(currentUrl);currentUrl=''}};
+    container.closest('dialog')?.addEventListener('close',cleanup,{once:true});
+    const show=async index=>{
+      current=Math.max(0,Math.min(photos.length-1,index));const requestId=++request;
+      prev.disabled=next.disabled=true;status.textContent='Carregando foto '+(current+1)+' de '+photos.length+'…';
+      count.textContent=(current+1)+' / '+photos.length;label.textContent=photos[current]?.is_cover?'Foto de capa':'Foto '+(current+1);
+      cover.hidden=!photos[current]?.is_cover;
+      try{
+        const response=await fetch(DRIVE_FUNCTION_URL+'/cross-city-person-photo?source='+encodeURIComponent(sourceId)+'&target='+encodeURIComponent(targetId)+'&index='+encodeURIComponent(String(photos[current].index)),{headers:authHeaders,cache:'no-store'});
+        if(!response.ok)throw new Error('Foto indisponível.');
+        const blob=await response.blob();if(!blob.size||!blob.type.startsWith('image/')||blob.type==='image/svg+xml')throw new Error('Arquivo de imagem inválido.');
+        if(requestId!==request)return;
+        const previous=currentUrl;currentUrl=URL.createObjectURL(blob);
+        img.onload=()=>{if(previous)URL.revokeObjectURL(previous)};img.onerror=()=>{status.textContent='Não foi possível exibir esta foto.';cleanup()};
+        img.alt='Foto '+(current+1)+' do cadastro coincidente de '+formatPersonName(personName||'indivíduo');img.src=currentUrl;status.textContent='';
+      }catch(error){if(requestId===request){img.removeAttribute('src');status.textContent=msg(error)}}
+      prev.disabled=photos.length<2;next.disabled=photos.length<2;
+    };
+    prev.addEventListener('click',()=>void show(current-1));next.addEventListener('click',()=>void show(current+1));
+    const stage=container.querySelector('.cross-city-photo-stage');let touchX=0;
+    stage.addEventListener('touchstart',event=>{touchX=event.changedTouches[0]?.clientX||0},{passive:true});
+    stage.addEventListener('touchend',event=>{const delta=(event.changedTouches[0]?.clientX||0)-touchX;if(Math.abs(delta)>48)void show(current+(delta<0?1:-1))},{passive:true});
+    await show(0);
+  }catch(error){container.innerHTML='<p class="cross-city-photo-empty">'+esc(msg(error))+'</p>'}
+}
+
 async function openCrossCityPerson(sourceId,targetId,button){
   if(button)button.disabled=true;
   try{
@@ -2364,9 +2402,10 @@ async function openCrossCityPerson(sourceId,targetId,button){
     const person=Array.isArray(data)?data[0]:data;
     if(!person?.person_id)throw new Error('Este cadastro não está mais disponível para consulta individual.');
     const dialog=$('#recordDialog');
-    dialog.innerHTML='<div class="dialog-inner cross-city-person-dialog"><div class="dialog-head"><div><p class="eyebrow">CONSULTA INDIVIDUAL</p><h2>'+esc(formatPersonName(person.full_name||'Indivíduo'))+'</h2></div><button class="close" type="button" data-close aria-label="Fechar">×</button></div><p class="cross-city-detail-city">Cadastro localizado em <strong>'+esc(person.city_name||'outra cidade')+'</strong> · correspondência por '+(person.match_type==='cpf'?'CPF':'nome completo')+'.</p><p class="cross-city-detail-scope">Acesso restrito a este cadastro. A lista, os veículos associados e os demais registros da cidade não ficam disponíveis nesta consulta.</p><div class="detail-sections">'+info('CPF',person.cpf_digits?formatCpf(person.cpf_digits):'—')+info('RG',person.rg)+info('Matrícula',person.registration)+info('Apelido/Vulgo',person.alias)+info('Aniversário',person.birthday?new Date(person.birthday+'T00:00:00').toLocaleDateString('pt-BR'):'')+personAddressInfo(person)+info('Anotações',person.notes,true)+info('Crimes',crimesDisplayText(person.occurrence_notes),true)+info('Referência da ocorrência',person.occurrence_reference,true)+info('Características',person.characteristics,true)+'</div><p class="muted cross-city-created">Cadastro criado em '+(person.created_at?new Date(person.created_at).toLocaleDateString('pt-BR'):'—')+'</p><div class="dialog-actions"><button class="button secondary" type="button" data-close>Fechar</button></div></div>';
+    dialog.innerHTML='<div class="dialog-inner cross-city-person-dialog"><div class="dialog-head"><div><p class="eyebrow">CONSULTA INDIVIDUAL</p><h2>'+esc(formatPersonName(person.full_name||'Indivíduo'))+'</h2></div><button class="close" type="button" data-close aria-label="Fechar">×</button></div><p class="cross-city-detail-city">Cadastro localizado em <strong>'+esc(person.city_name||'outra cidade')+'</strong> · correspondência por '+(person.match_type==='cpf'?'CPF':'nome completo')+'.</p><p class="cross-city-detail-scope">Acesso restrito a este cadastro. A lista, os veículos associados e os demais registros da cidade não ficam disponíveis nesta consulta.</p><section class="cross-city-photo-gallery" data-cross-city-detail-photos aria-label="Fotos do cadastro"><p class="cross-city-photo-status" role="status">Carregando fotos…</p></section><div class="detail-sections">'+info('CPF',person.cpf_digits?formatCpf(person.cpf_digits):'—')+info('RG',person.rg)+info('Matrícula',person.registration)+info('Apelido/Vulgo',person.alias)+info('Aniversário',person.birthday?new Date(person.birthday+'T00:00:00').toLocaleDateString('pt-BR'):'')+personAddressInfo(person)+info('Anotações',person.notes,true)+info('Crimes',crimesDisplayText(person.occurrence_notes),true)+info('Referência da ocorrência',person.occurrence_reference,true)+info('Características',person.characteristics,true)+'</div><p class="muted cross-city-created">Cadastro criado em '+(person.created_at?new Date(person.created_at).toLocaleDateString('pt-BR'):'—')+'</p><div class="dialog-actions"><button class="button secondary" type="button" data-close>Fechar</button></div></div>';
     dialog.querySelectorAll('[data-close]').forEach(control=>control.onclick=()=>dialog.close());
-    showTrackedDialog(dialog)
+    showTrackedDialog(dialog);
+    void loadCrossCityDetailPhotos(sourceId,targetId,dialog.querySelector('[data-cross-city-detail-photos]'),person.full_name);
   }catch(error){toast(msg(error))}finally{if(button?.isConnected)button.disabled=false}
 }
 
