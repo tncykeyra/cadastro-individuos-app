@@ -1933,3 +1933,8 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 .vehicle-interest-page .interest-page-heading h1,.vehicle-interest-page .interest-page-heading .muted,.vehicle-interest-page .interest-search>label,.vehicle-interest-page .interest-entry-heading h2,.vehicle-interest-page .interest-entry label{text-transform:uppercase}
 @media(max-width:700px){.vehicle-interest-page .interest-status-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-radius:14px}.vehicle-interest-page .interest-tab{min-height:44px;border-radius:11px}.vehicle-interest-page .interest-tab:last-child:nth-child(odd){grid-column:1/-1}}
 @media(max-width:380px){.vehicle-interest-page .interest-status-tabs{grid-template-columns:minmax(0,1fr)}.vehicle-interest-page .interest-tab:last-child:nth-child(odd){grid-column:auto}}
+
+/* Campo obrigatório de ocorrência: alerta inline claro no tema claro e escuro. */
+.vehicle-interest-page .interest-validation-note{margin:0;padding:10px 12px;border:1px solid #d33a45;border-radius:11px;background:#fff0f1;color:#8e2028;font-size:.9rem;font-weight:750;line-height:1.4}
+.vehicle-interest-page .interest-validation-note[hidden]{display:none!important}
+:root[data-theme="dark"] .vehicle-interest-page .interest-validation-note{background:#401f23;border-color:#a9434d;color:#ffd5d8}
