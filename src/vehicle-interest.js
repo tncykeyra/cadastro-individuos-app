@@ -19,7 +19,7 @@ function parseInterestPlate(value,format=currentPlateFormat){
  return /^[A-Z0-9]{4}$/.test(parts.numbers)&&/^[A-Z]{3}$/.test(parts.letters)?parts:null
 }
 function plateDisplay(numbers,letters,format=currentPlateFormat){const first=String(numbers||'').toUpperCase(),last=String(letters||'').toUpperCase();return format==='inverted'?[first,last].filter(Boolean).join(' '):fullPlate(first,last)}
-function formatSelector(){return '<label class="interest-format-setting">Formato da placa<select data-interest-format aria-label="Formato da placa"><option value="normal" '+(currentPlateFormat==='normal'?'selected':'')+'>Normal · ABC1D23</option><option value="inverted" '+(currentPlateFormat==='inverted'?'selected':'')+'>Invertida · 1D23 ABC</option></select></label>}
+function formatSelector(){return '<label class="interest-format-setting">Formato da placa<select data-interest-format aria-label="Formato da placa"><option value="normal" '+(currentPlateFormat==='normal'?'selected':'')+'>Normal · ABC1D23</option><option value="inverted" '+(currentPlateFormat==='inverted'?'selected':'')+'>Invertida · 1D23 ABC</option></select></label>'}
 function formatDate(value){if(!value)return'—';const date=new Date(value);return Number.isNaN(date.getTime())?'—':date.toLocaleDateString('pt-BR')}
 function place(value){return String(value||'').trim()||'—'}
 
