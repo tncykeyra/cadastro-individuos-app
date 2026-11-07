@@ -1694,3 +1694,21 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 :root[data-theme="dark"] .cross-city-person-dialog .cross-city-detail-scope{background:#20272b;color:#e3e9ec}
 :root[data-theme="dark"] .cross-city-person-dialog .cross-city-detail-city,:root[data-theme="dark"] .cross-city-person-dialog .cross-city-created{color:#c0c9cd}
 @media(max-width:520px){.cross-city-match-card{grid-template-columns:40px minmax(0,1fr);gap:8px}.cross-city-match-avatar{width:40px;height:40px;flex-basis:40px}.cross-city-person-alert{padding:12px}.cross-city-person-dialog{max-width:100%;overflow-wrap:anywhere}}
+
+
+/* Fotos da consulta individual entre cidades: carrossel privado e responsivo. */
+.cross-city-photo-gallery{display:grid;gap:10px;margin:14px 0 18px;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--soft)}
+.cross-city-photo-stage{position:relative;display:grid;place-items:center;min-height:180px;max-height:min(54dvh,520px);overflow:hidden;border-radius:12px;background:#e8ecee;touch-action:pan-y}
+.cross-city-photo-image{display:block;width:100%;height:min(54dvh,520px);max-height:520px;object-fit:contain}
+.cross-city-photo-badge,.cross-city-photo-count{position:absolute;bottom:10px;padding:5px 9px;border-radius:999px;background:#101416d9;color:#fff;font-size:.78rem;font-weight:700}
+.cross-city-photo-badge{left:10px}.cross-city-photo-count{right:10px}
+.cross-city-photo-controls{display:flex;align-items:center;justify-content:center;gap:12px}
+.cross-city-photo-controls .button{min-width:42px;min-height:40px;padding:5px 12px;font-size:1.25rem;line-height:1}
+.cross-city-photo-label{min-width:92px;text-align:center;color:var(--muted);font-size:.88rem;font-weight:650}
+.cross-city-photo-status,.cross-city-photo-empty{margin:0;text-align:center;color:var(--muted);font-size:.88rem;line-height:1.4}
+.cross-city-photo-controls button:disabled{opacity:.45;cursor:not-allowed}
+:root[data-theme="dark"] .cross-city-photo-gallery{background:#151a1d;border-color:#3b4449}
+:root[data-theme="dark"] .cross-city-photo-stage{background:#080a0b}
+:root[data-theme="dark"] .cross-city-photo-label,:root[data-theme="dark"] .cross-city-photo-status,:root[data-theme="dark"] .cross-city-photo-empty{color:#c0c9cd}
+:root[data-theme="dark"] .cross-city-photo-controls .button.secondary{background:#20262a;color:#edf2f4;border-color:#505b61}
+@media(max-width:520px){.cross-city-photo-gallery{padding:9px;gap:8px}.cross-city-photo-stage{min-height:140px}.cross-city-photo-image{height:min(48dvh,420px)}.cross-city-photo-controls{gap:16px}.cross-city-photo-controls .button{min-width:46px;min-height:44px}}
