@@ -104,7 +104,7 @@ function clearVehicleSelection(keepMessage=false){
 }
 function useVehicle(vehicle){
  selectedVehicle=vehicle;const form=document.querySelector('#interestForm');if(!form)return;
- const parts=plateParts(vehicle.plate);setFormValue(form,'plate_numbers',parts.numbers);setFormValue(form,'plate_letters',parts.letters);const plateInput=document.querySelector('#interestPlateInput');if(plateInput)plateInput.value=invertedPlateDisplay(parts.numbers,parts.letters);const plateInput=document.querySelector('#interestPlateInput');if(plateInput)plateInput.value=invertedPlateDisplay(parts.numbers,parts.letters);
+ const parts=plateParts(vehicle.plate);setFormValue(form,'plate_numbers',parts.numbers);setFormValue(form,'plate_letters',parts.letters);const plateInput=document.querySelector('#interestPlateInput');if(plateInput)plateInput.value=invertedPlateDisplay(parts.numbers,parts.letters);
  setFormValue(form,'model',[vehicle.make,vehicle.model].filter(Boolean).join(' ').trim());
  setFormValue(form,'color',vehicle.color||'');setFormValue(form,'vehicle_id',vehicle.id);
  const selected=document.querySelector('#interestSelectedVehicle');if(selected){selected.hidden=false;selected.innerHTML='Veículo vinculado: <strong>'+esc(vehicle.plate)+'</strong> · '+esc([vehicle.make,vehicle.model].filter(Boolean).join(' '))+' <button type="button" class="button secondary small" data-interest-clear-vehicle>Desvincular</button>'}
