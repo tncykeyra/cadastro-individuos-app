@@ -107,7 +107,6 @@ function beginEdit(row){
  const submit=form.querySelector('[type=submit]');if(submit)submit.textContent='Salvar alterações';
  entry.scrollIntoView({behavior:'smooth',block:'start'})
 }
-function selectedRows(){return [...document.querySelectorAll('[data-interest-pdf-select]:checked')].map(input=>rowsById.get(String(input.dataset.interestPdfSelect))).filter(row=>row&&row.status==='active')}
 async function shareActivePdf(client,cityName){
  const rows=await fetchRows(client,'active','',0,true);
  if(!rows.length){setFeedback('Não há veículos ativos para gerar o PDF.',true);return}
