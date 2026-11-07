@@ -60,12 +60,18 @@ create policy service_vehicle_interest_update_scope
   on public.service_vehicle_interest for update to authenticated
   using (
     public.can_use_app()
-    and created_by = (select auth.uid())
     and status = 'active'
+    and (
+      incident_type in ('furto','roubo')
+      or created_by = (select auth.uid())
+    )
   )
   with check (
     public.can_use_app()
-    and created_by = (select auth.uid())
+    and (
+      incident_type in ('furto','roubo')
+      or created_by = (select auth.uid())
+    )
   );
 
 create or replace function public.enforce_service_vehicle_interest_update()
