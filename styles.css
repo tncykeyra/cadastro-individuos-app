@@ -1822,3 +1822,10 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
  .interest-form-actions{flex-direction:column-reverse}
  .interest-form-actions .button{width:100%}
 }
+
+.interest-toolbar-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0}
+.interest-format-setting{display:grid;gap:4px;min-width:0;color:var(--muted);font-size:.78rem;font-weight:650}
+.interest-format-setting select{max-width:100%;min-height:42px;padding:8px 30px 8px 11px;border:1px solid var(--line);border-radius:11px;background:var(--surface);color:var(--ink);font:inherit;font-size:.86rem}
+.interest-plate-fields{grid-template-columns:minmax(0,1fr) auto}
+.interest-plate-fields>.interest-full{grid-column:1/-1}
+@media(max-width:620px){.interest-toolbar{align-items:stretch;flex-direction:column}.interest-toolbar-actions{display:grid;grid-template-columns:minmax(0,1fr);justify-content:stretch}.interest-toolbar-actions .interest-format-setting,.interest-toolbar-actions .interest-pdf-button{width:100%}.interest-format-setting select{width:100%}.interest-plate-fields{grid-template-columns:minmax(0,1fr)}.interest-plate-lookup{width:100%}}

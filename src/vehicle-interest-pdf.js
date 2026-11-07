@@ -6,7 +6,7 @@ function text(value,x,y,size=8,color='0.12 0.15 0.17'){return 'BT /F1 '+size+' T
 function streamObject(stream){return ascii('<< /Length '+stream.length+' >>\nstream\n'+stream+'endstream')}
 function wrap(value,max){const words=String(value??'').trim().split(/\s+/),lines=[];let line='';for(let word of words){if(!word)continue;while(word.length>max){if(line){lines.push(line);line=''}lines.push(word.slice(0,max));word=word.slice(max)}if(!line)line=word;else if((line+' '+word).length<=max)line+=' '+word;else{lines.push(line);line=word}}if(line)lines.push(line);return lines.length?lines:['—']}
 const TYPE_LABEL={furto:'F',roubo:'R',outra:'O'};
-const columns=[
+const baseColumns=[
  {key:'plate_numbers',label:'NÚMEROS',width:49},
  {key:'plate_letters',label:'LETRAS',width:42},
  {key:'model',label:'MODELO',width:89},
@@ -16,8 +16,9 @@ const columns=[
  {key:'plate_city',label:'CIDADE DA PLACA',width:110},
  {key:'occurrence_location',label:'LOCAL DA OCORRÊNCIA',width:115}
 ];
-const tableWidth=columns.reduce((sum,column)=>sum+column.width,0);
-function pdfPages(rows,cityName,generatedAt){
+const tableWidth=baseColumns.reduce((sum,column)=>sum+column.width,0);
+function pdfPages(rows,cityName,generatedAt,plateFormat='normal'){
+ const columns=plateFormat==='inverted'?baseColumns:[{...baseColumns[1],key:'plate_letters',label:'LETRAS'},{...baseColumns[0],key:'plate_numbers',label:'NÚMEROS'},...baseColumns.slice(2)];
  const chunks=[],input=rows.length?rows:[{plate_numbers:'—',plate_letters:'—',model:'Nenhum veículo ativo',year:'',color:'',incident_type:'',plate_city:'',occurrence_location:''}];
  let current=[],cursor=0;
  while(cursor<input.length){const pageRows=[];let top=744;const headerHeight=28;top-=headerHeight;let y=top;
@@ -42,8 +43,8 @@ function pdfPages(rows,cityName,generatedAt){
   return commands
  })
 }
-export function buildVehicleInterestPdf({rows=[],cityName='',generatedAt=new Date()}={}){
- const pages=pdfPages(rows,cityName,generatedAt),objects=[];objects[1]=ascii('<< /Type /Catalog /Pages 2 0 R >>');objects[2]=null;objects[3]=ascii('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
+export function buildVehicleInterestPdf({rows=[],cityName='',generatedAt=new Date(),plateFormat='normal'}={}){
+ const pages=pdfPages(rows,cityName,generatedAt,plateFormat),objects=[];objects[1]=ascii('<< /Type /Catalog /Pages 2 0 R >>');objects[2]=null;objects[3]=ascii('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
  const pageIds=[];
  for(const commands of pages){const pageId=objects.length;pageIds.push(pageId);objects.push(null);const contentId=objects.length;objects.push(streamObject(commands));objects[pageId]=ascii('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents '+contentId+' 0 R >>')}
  objects[2]=ascii('<< /Type /Pages /Kids ['+pageIds.map(id=>id+' 0 R').join(' ')+'] /Count '+pageIds.length+' >>');
