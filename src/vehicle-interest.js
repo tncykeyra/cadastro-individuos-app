@@ -12,6 +12,16 @@ let rowsById=new Map(),currentFilter='active',currentOffset=0,currentTerm='',edi
 
 function fullPlate(numbers,letters){return (String(letters||'').replace(/[^A-Z0-9]/gi,'')+String(numbers||'').replace(/[^A-Z0-9]/gi,'')).toUpperCase()}
 function plateParts(plate){const normalized=String(plate||'').toUpperCase().replace(/[^A-Z0-9]/g,'');return{numbers:normalized.slice(-4),letters:normalized.slice(0,3)}}
+function parseInterestPlate(value){
+ const normalized=String(value||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+ if(normalized.length!==7)return null;
+ // A lista usa a ordem invertida: os quatro caracteres finais da placa primeiro.
+ const reverse={numbers:normalized.slice(0,4),letters:normalized.slice(4)};
+ // Também aceita uma placa digitada na ordem convencional para reduzir erro de campo.
+ const conventional={numbers:normalized.slice(3),letters:normalized.slice(0,3)};
+ return /^[A-Z]{3}[A-Z0-9]{4}$/.test(normalized)?conventional:reverse
+}
+function invertedPlateDisplay(numbers,letters){return [String(numbers||'').toUpperCase(),String(letters||'').toUpperCase()].filter(Boolean).join(' ')}
 function formatDate(value){if(!value)return'—';const date=new Date(value);return Number.isNaN(date.getTime())?'—':date.toLocaleDateString('pt-BR')}
 function place(value){return String(value||'').trim()||'—'}
 
@@ -37,7 +47,7 @@ function rowCard(row,userId){
  return '<article class="interest-row-card"><div class="interest-row-head"><span class="interest-event-badge event-'+esc(row.incident_type)+'">'+eventLetter(row.incident_type)+'</span><div class="interest-row-main"><strong>'+esc(plate||'Placa não informada')+'</strong><span>'+esc(row.model||'Modelo não informado')+(row.year?' · '+esc(row.year):'')+(row.color?' · '+esc(row.color):'')+'</span></div><span class="interest-status '+(row.status==='active'?'is-active':'is-closed')+'">'+statusLabel(row.status)+'</span></div><div class="interest-row-meta"><span><b>Ocorrência:</b> '+esc(eventLabel(row.incident_type))+'</span><span><b>Placa:</b> '+esc(place(row.plate_city))+'</span><span><b>Local:</b> '+esc(place(row.occurrence_location))+'</span></div>'+actions+discharge+'</article>'
 }
 function formMarkup(cityName){
- return '<section class="interest-entry card" id="interestEntry" hidden><div class="interest-entry-heading"><div><h2 id="interestFormTitle">Adicionar veículo</h2><p class="muted">Preencha só o essencial. Cidade e local podem ficar em branco.</p></div><button type="button" class="close" data-interest-cancel aria-label="Fechar">×</button></div><form id="interestForm" class="interest-form"><div class="interest-type-row"><label>Ocorrência<select name="incident_type" required><option value="">Selecione</option><option value="furto">Furto</option><option value="roubo">Roubo</option><option value="outra">Outra ocorrência</option></select></label><p>Furto e roubo ficam disponíveis para as cidades autorizadas. “Outra ocorrência” fica visível somente para quem cadastrou.</p></div><div class="interest-vehicle-lookup"><label>Localizar veículo já cadastrado (opcional)</label><div class="interest-search-row"><input id="interestVehicleQuery" type="search" maxlength="30" placeholder="Digite a placa ou modelo"><button type="button" class="button secondary" data-interest-vehicle-search aria-label="Buscar veículo">⌕</button></div><div id="interestVehicleResults" class="interest-vehicle-results" aria-live="polite"></div></div><input type="hidden" name="vehicle_id" id="interestVehicleId"><div class="interest-plate-fields"><label>Números <small>(como aparece na tabela)</small><input name="plate_numbers" maxlength="4" required autocomplete="off" placeholder="0000" aria-label="Parte numérica da placa"></label><span class="interest-plate-separator" aria-hidden="true">—</span><label>Letras<input name="plate_letters" maxlength="3" required autocomplete="off" placeholder="XXX" aria-label="Parte de letras da placa"></label><button type="button" class="button secondary interest-plate-lookup" data-interest-plate-search>Buscar na frota</button></div><div class="interest-form-grid"><label>Modelo<input name="model" maxlength="100" placeholder="Ex.: CG 160"></label><label>Ano<input name="year" maxlength="4" inputmode="numeric" placeholder="Ex.: 25"></label><label>Cor<input name="color" maxlength="40" placeholder="Ex.: preta"></label><label>Cidade da placa<input name="plate_city" maxlength="100" placeholder="'+esc(cityName)+'"></label><label class="interest-full">Local da ocorrência<input name="occurrence_location" maxlength="160" placeholder="'+esc(cityName)+'"></label></div><p id="interestSelectedVehicle" class="interest-selected-vehicle" hidden></p><div class="interest-form-actions"><button type="button" class="button secondary" data-interest-cancel>Cancelar</button><button type="submit" class="button">Salvar veículo de interesse</button></div></form></section>'
+ return '<section class="interest-entry card" id="interestEntry" hidden><div class="interest-entry-heading"><div><h2 id="interestFormTitle">Adicionar veículo</h2><p class="muted">Preencha só o essencial. Cidade e local podem ficar em branco.</p></div><button type="button" class="close" data-interest-cancel aria-label="Fechar">×</button></div><form id="interestForm" class="interest-form"><div class="interest-type-row"><label>Ocorrência<select name="incident_type" required><option value="">Selecione</option><option value="furto">Furto</option><option value="roubo">Roubo</option><option value="outra">Outra ocorrência</option></select></label><p>Furto e roubo ficam disponíveis para as cidades autorizadas. “Outra ocorrência” fica visível somente para quem cadastrou.</p></div><div class="interest-vehicle-lookup"><label>Localizar veículo já cadastrado (opcional)</label><div class="interest-search-row"><input id="interestVehicleQuery" type="search" maxlength="30" placeholder="Digite a placa ou modelo"><button type="button" class="button secondary" data-interest-vehicle-search aria-label="Buscar veículo">⌕</button></div><div id="interestVehicleResults" class="interest-vehicle-results" aria-live="polite"></div></div><input type="hidden" name="vehicle_id" id="interestVehicleId"><div class="interest-plate-fields"><label class="interest-full">Placa conforme a tabela <small>Digite primeiro os quatro caracteres finais e depois as três letras (ex.: 1D23 ABC ou 0000 ABC)</small><input id="interestPlateInput" maxlength="12" autocomplete="off" placeholder="0000 XXX ou 0X00 XXX" aria-label="Placa na ordem invertida da tabela"></label><input type="hidden" name="plate_numbers"><input type="hidden" name="plate_letters"><button type="button" class="button secondary interest-plate-lookup" data-interest-plate-search>Buscar na frota</button></div><div class="interest-form-grid"><label>Modelo<input name="model" maxlength="100" placeholder="Ex.: CG 160"></label><label>Ano<input name="year" maxlength="4" inputmode="numeric" placeholder="Ex.: 25"></label><label>Cor<input name="color" maxlength="40" placeholder="Ex.: preta"></label><label>Cidade da placa<input name="plate_city" maxlength="100" placeholder="'+esc(cityName)+'"></label><label class="interest-full">Local da ocorrência<input name="occurrence_location" maxlength="160" placeholder="'+esc(cityName)+'"></label></div><p id="interestSelectedVehicle" class="interest-selected-vehicle" hidden></p><div class="interest-form-actions"><button type="button" class="button secondary" data-interest-cancel>Cancelar</button><button type="submit" class="button">Salvar veículo de interesse</button></div></form></section>'
 }
 function vehicleMiniCard(vehicle){
  const detail=[vehicle.make,vehicle.model,vehicle.color].filter(Boolean).join(' · ')||'Dados complementares não informados';
@@ -76,10 +86,11 @@ async function searchVehicles(client,{term,cityId,resolvePhoto}){
 async function lookupPlate(client,{numbers,letters,cityId,resolvePhoto}){
  const plate=fullPlate(numbers,letters);
  if(String(numbers||'').trim().length<1||String(letters||'').trim().length<1)return{plate,vehicle:null};
- const result=await client.from('vehicles').select('id,plate,make,model,color,photo_path,city_id').is('archived_at',null).eq('city_id',cityId).eq('plate',plate).limit(1).maybeSingle();
+ const variants=[plate,plate.slice(0,3)+'-'+plate.slice(3),plate.slice(0,3)+' '+plate.slice(3)];
+ const result=await client.from('vehicles').select('id,plate,make,model,color,photo_path,photo_paths,city_id').is('archived_at',null).eq('city_id',cityId).in('plate',variants).limit(5);
  if(result.error)throw result.error;
- const vehicle=result.data;
- if(vehicle)try{vehicle.photo_url=vehicle.photo_path?await resolvePhoto?.(vehicle.photo_path):''}catch{vehicle.photo_url=''}
+ const vehicle=(result.data||[]).find(item=>String(item.plate||'').toUpperCase().replace(/[^A-Z0-9]/g,'')===plate)||null;
+ if(vehicle)try{const photoPath=vehicle.photo_path||(Array.isArray(vehicle.photo_paths)?vehicle.photo_paths[0]:'');vehicle.photo_url=photoPath?await resolvePhoto?.(photoPath):''}catch{vehicle.photo_url=''}
  return{plate,vehicle}
 }
 function showVehicleResults(items,message=''){
@@ -93,7 +104,7 @@ function clearVehicleSelection(keepMessage=false){
 }
 function useVehicle(vehicle){
  selectedVehicle=vehicle;const form=document.querySelector('#interestForm');if(!form)return;
- const parts=plateParts(vehicle.plate);setFormValue(form,'plate_numbers',parts.numbers);setFormValue(form,'plate_letters',parts.letters);
+ const parts=plateParts(vehicle.plate);setFormValue(form,'plate_numbers',parts.numbers);setFormValue(form,'plate_letters',parts.letters);const plateInput=document.querySelector('#interestPlateInput');if(plateInput)plateInput.value=invertedPlateDisplay(parts.numbers,parts.letters);const plateInput=document.querySelector('#interestPlateInput');if(plateInput)plateInput.value=invertedPlateDisplay(parts.numbers,parts.letters);
  setFormValue(form,'model',[vehicle.make,vehicle.model].filter(Boolean).join(' ').trim());
  setFormValue(form,'color',vehicle.color||'');setFormValue(form,'vehicle_id',vehicle.id);
  const selected=document.querySelector('#interestSelectedVehicle');if(selected){selected.hidden=false;selected.innerHTML='Veículo vinculado: <strong>'+esc(vehicle.plate)+'</strong> · '+esc([vehicle.make,vehicle.model].filter(Boolean).join(' '))+' <button type="button" class="button secondary small" data-interest-clear-vehicle>Desvincular</button>'}
@@ -101,7 +112,7 @@ function useVehicle(vehicle){
 function beginEdit(row){
  const entry=document.querySelector('#interestEntry'),form=document.querySelector('#interestForm');if(!row||!entry||!form)return;
  entry.hidden=false;editingId=String(row.id);selectedVehicle=row.vehicle_id?{id:row.vehicle_id,plate:fullPlate(row.plate_numbers,row.plate_letters),make:'',model:row.model,color:row.color}:null;
- setFormValue(form,'incident_type',row.incident_type);setFormValue(form,'plate_numbers',row.plate_numbers);setFormValue(form,'plate_letters',row.plate_letters);
+ setFormValue(form,'incident_type',row.incident_type);setFormValue(form,'plate_numbers',row.plate_numbers);setFormValue(form,'plate_letters',row.plate_letters);const plateInput=document.querySelector('#interestPlateInput');if(plateInput)plateInput.value=invertedPlateDisplay(row.plate_numbers,row.plate_letters);
  setFormValue(form,'model',row.model);setFormValue(form,'year',row.year);setFormValue(form,'color',row.color);setFormValue(form,'plate_city',row.plate_city);setFormValue(form,'occurrence_location',row.occurrence_location);setFormValue(form,'vehicle_id',row.vehicle_id||'');
  const title=document.querySelector('#interestFormTitle');if(title)title.textContent='Editar veículo ativo';
  const submit=form.querySelector('[type=submit]');if(submit)submit.textContent='Salvar alterações';
@@ -135,7 +146,7 @@ export function wireVehicleInterestActions(client,{cityId,cityName,userId,resolv
    }
    if(target.hasAttribute('data-interest-plate-search')){
     if(lookupBusy)return;lookupBusy=true;target.disabled=true;const form=root.querySelector('#interestForm');
-    try{const result=await lookupPlate(client,{numbers:formValue(form,'plate_numbers'),letters:formValue(form,'plate_letters'),cityId,resolvePhoto});if(result.vehicle){vehicleMatches=[result.vehicle];showVehicleResults(vehicleMatches);setFeedback('Veículo correspondente localizado na frota.');}else{clearVehicleSelection();showVehicleResults([],'Não encontramos essa placa na frota desta cidade. Confira os caracteres ou continue com o registro manual.')} }finally{lookupBusy=false;target.disabled=false}return
+    try{const parsed=parseInterestPlate(root.querySelector('#interestPlateInput')?.value);if(parsed){setFormValue(form,'plate_numbers',parsed.numbers);setFormValue(form,'plate_letters',parsed.letters)}const result=await lookupPlate(client,{numbers:formValue(form,'plate_numbers'),letters:formValue(form,'plate_letters'),cityId,resolvePhoto});if(result.vehicle){vehicleMatches=[result.vehicle];showVehicleResults(vehicleMatches);setFeedback('Veículo correspondente localizado na frota.');}else{clearVehicleSelection();showVehicleResults([],'Não encontramos essa placa na frota desta cidade. Confira os caracteres ou continue com o registro manual.')} }finally{lookupBusy=false;target.disabled=false}return
    }
    if(target.hasAttribute('data-interest-use-vehicle')){const vehicle=vehicleMatches.find(item=>String(item.id)===String(target.dataset.interestUseVehicle))||vehicleMatches[0];if(vehicle){useVehicle(vehicle);setFeedback('Cadastro do veículo vinculado.');}return}
    if(target.hasAttribute('data-interest-clear-vehicle')){clearVehicleSelection();setFormValue(root.querySelector('#interestForm'),'vehicle_id','');return}
@@ -148,7 +159,7 @@ export function wireVehicleInterestActions(client,{cityId,cityName,userId,resolv
    event.preventDefault();if(operationBusy)return;operationBusy=true;
    const submit=form.querySelector('[type=submit]');if(submit){submit.disabled=true;submit.textContent='Salvando…'}
    try{
-    const payload={plate_numbers:normalizePart(formValue(form,'plate_numbers')),plate_letters:String(formValue(form,'plate_letters')).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,3),model:formValue(form,'model'),year:formValue(form,'year'),color:formValue(form,'color'),incident_type:formValue(form,'incident_type'),plate_city:formValue(form,'plate_city'),occurrence_location:formValue(form,'occurrence_location'),vehicle_id:formValue(form,'vehicle_id')||null};
+    const parsedPlate=parseInterestPlate(root.querySelector('#interestPlateInput')?.value);if(parsedPlate){setFormValue(form,'plate_numbers',parsedPlate.numbers);setFormValue(form,'plate_letters',parsedPlate.letters)}const payload={plate_numbers:normalizePart(formValue(form,'plate_numbers')),plate_letters:String(formValue(form,'plate_letters')).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,3),model:formValue(form,'model'),year:formValue(form,'year'),color:formValue(form,'color'),incident_type:formValue(form,'incident_type'),plate_city:formValue(form,'plate_city'),occurrence_location:formValue(form,'occurrence_location'),vehicle_id:formValue(form,'vehicle_id')||null};
     if(!payload.plate_numbers||!payload.plate_letters||!payload.incident_type)throw new Error('Informe os quatro caracteres da primeira parte da placa, os três da segunda parte e o tipo da ocorrência.');
     if(editingId){const result=await client.from(TABLE).update(payload).eq('id',editingId).select('id').maybeSingle();if(result.error)throw result.error;if(!result.data)throw new Error('Não foi possível confirmar a alteração. Atualize a lista e tente novamente.');setFeedback('Veículo atualizado.')}
     else{const result=await client.from(TABLE).insert({...payload,city_id:cityId,created_by:userId}).select('id').single();if(result.error)throw result.error;setFeedback('Veículo adicionado à lista.')}
@@ -165,6 +176,15 @@ export function wireVehicleInterestActions(client,{cityId,cityName,userId,resolv
   }
  },options);
  const search=root.querySelector('#interestVehicleQuery');search?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();root.querySelector('[data-interest-vehicle-search]')?.click()}},options);
- const plateSearchForm=root.querySelector('#interestForm');plateSearchForm?.querySelectorAll('[name=plate_numbers],[name=plate_letters]').forEach(input=>input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();root.querySelector('[data-interest-plate-search]')?.click()}},options));
+ const plateSearchForm=root.querySelector('#interestForm');let plateLookupTimer=0,plateLookupValue='';
+ const plateInput=root.querySelector('#interestPlateInput');
+ plateInput?.addEventListener('input',()=>{
+  const parsed=parseInterestPlate(plateInput.value);
+  if(!parsed){setFormValue(plateSearchForm,'plate_numbers','');setFormValue(plateSearchForm,'plate_letters','');clearVehicleSelection();return}
+  setFormValue(plateSearchForm,'plate_numbers',parsed.numbers);setFormValue(plateSearchForm,'plate_letters',parsed.letters);
+  const key=fullPlate(parsed.numbers,parsed.letters);if(key===plateLookupValue)return;
+  clearTimeout(plateLookupTimer);plateLookupTimer=setTimeout(()=>{plateLookupValue=key;root.querySelector('[data-interest-plate-search]')?.click()},450)
+ },options);
+ plateInput?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();clearTimeout(plateLookupTimer);plateLookupValue='';root.querySelector('[data-interest-plate-search]')?.click()}},options);
  root.querySelector('#interestSearch')?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();root.querySelector('[data-interest-search]')?.click()}},options);
 }
