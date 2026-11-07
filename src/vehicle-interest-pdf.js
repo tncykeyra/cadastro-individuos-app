@@ -22,7 +22,7 @@ function pdfPages(rows,cityName,generatedAt,plateFormat='normal'){
  const chunks=[],input=rows.length?rows:[{plate_numbers:'—',plate_letters:'—',model:'Nenhum veículo ativo',year:'',color:'',incident_type:'',plate_city:'',occurrence_location:''}];
  let current=[],cursor=0;
  while(cursor<input.length){const pageRows=[];let top=744;const headerHeight=28;top-=headerHeight;let y=top;
-  while(cursor<input.length){const row=input[cursor],cells=columns.map(column=>column.key==='incident_type'?TYPE_LABEL[row.incident_type]||'':row[column.key]||'—'),wrapped=cells.map((value,index)=>wrap(value,Math.max(4,Math.floor((columns[index].width-8)/4.1)))),lineCount=Math.max(1,...wrapped.map(lines=>lines.length)),height=Math.max(22,Math.min(70,lineCount*8.5+7));if(y-height<430&&pageRows.length)break;
+  while(cursor<input.length){const row=input[cursor],cells=columns.map(column=>(column.key==='incident_type'?TYPE_LABEL[row.incident_type]||'':row[column.key]||'—').toLocaleUpperCase('pt-BR')),wrapped=cells.map((value,index)=>wrap(value,Math.max(4,Math.floor((columns[index].width-8)/4.1)))),lineCount=Math.max(1,...wrapped.map(lines=>lines.length)),height=Math.max(22,Math.min(70,lineCount*8.5+7));if(y-height<430&&pageRows.length)break;
    pageRows.push({wrapped,height});y-=height;cursor++
   }
   chunks.push(pageRows)
