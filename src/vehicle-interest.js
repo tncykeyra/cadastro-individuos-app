@@ -11,7 +11,7 @@ const safeTerm=value=>String(value||'').trim().slice(0,70).replace(/[,%()]/g,' '
 let rowsById=new Map(),currentFilter='active',currentOffset=0,currentTerm='',editingId='',selectedVehicle=null,vehicleMatches=[],lookupBusy=false,operationBusy=false;
 
 function fullPlate(numbers,letters){return (String(letters||'').replace(/[^A-Z0-9]/gi,'')+String(numbers||'').replace(/[^A-Z0-9]/gi,'')).toUpperCase()}
-function plateParts(plate){const normalized=String(plate||'').toUpperCase().replace(/[^A-Z0-9]/g,'');return{numbers:normalized.slice(0,4),letters:normalized.slice(4,7)}}
+function plateParts(plate){const normalized=String(plate||'').toUpperCase().replace(/[^A-Z0-9]/g,'');return{numbers:normalized.slice(-4),letters:normalized.slice(0,3)}}
 function formatDate(value){if(!value)return'—';const date=new Date(value);return Number.isNaN(date.getTime())?'—':date.toLocaleDateString('pt-BR')}
 function place(value){return String(value||'').trim()||'—'}
 
