@@ -5,48 +5,45 @@ function hex(value){return [...String(value??'').normalize('NFC')].map(char=>{co
 function text(value,x,y,size=8,color='0.12 0.15 0.17'){return 'BT /F1 '+size+' Tf '+color+' rg 1 0 0 1 '+x.toFixed(2)+' '+y.toFixed(2)+' Tm <'+hex(value)+'> Tj ET\n'}
 function streamObject(stream){return ascii('<< /Length '+stream.length+' >>\nstream\n'+stream+'endstream')}
 function wrap(value,max){const words=String(value??'').trim().split(/\s+/),lines=[];let line='';for(let word of words){if(!word)continue;while(word.length>max){if(line){lines.push(line);line=''}lines.push(word.slice(0,max));word=word.slice(max)}if(!line)line=word;else if((line+' '+word).length<=max)line+=' '+word;else{lines.push(line);line=word}}if(line)lines.push(line);return lines.length?lines:['—']}
-const TYPE_LABEL={furto:'F',roubo:'R',outra:'O'};
-const baseColumns=[
- {key:'plate_numbers',label:'NÚMEROS',width:49},
- {key:'plate_letters',label:'LETRAS',width:42},
- {key:'model',label:'MODELO',width:89},
- {key:'year',label:'ANO',width:38},
- {key:'color',label:'COR',width:50},
- {key:'incident_type',label:'F/R',width:34},
- {key:'plate_city',label:'CIDADE DA PLACA',width:110},
- {key:'occurrence_location',label:'LOCAL DA OCORRÊNCIA',width:115}
-];
-const tableWidth=baseColumns.reduce((sum,column)=>sum+column.width,0);
+const TYPE_LABEL={furto:'FURTO',roubo:'ROUBO',outra:'OUTRA'};
+const PAGE_WIDTH=283.46, PAGE_HEIGHT=396.85, MARGIN=12, CONTENT_WIDTH=PAGE_WIDTH-MARGIN*2, BOTTOM=14;
+function plateValue(row,plateFormat){const letters=String(row.plate_letters||'').toLocaleUpperCase('pt-BR'),numbers=String(row.plate_numbers||'').toLocaleUpperCase('pt-BR');return plateFormat==='inverted'?[numbers,letters].filter(Boolean).join(' '):letters+numbers}
+function prepareCard(row,plateFormat){
+ const modelBits=[row.model,row.year?'ANO '+row.year:'',row.color?'COR '+row.color:''].filter(Boolean).join(' · ').toLocaleUpperCase('pt-BR');
+ return {plate:plateValue(row,plateFormat)||'PLACA NÃO INFORMADA',type:TYPE_LABEL[row.incident_type]||'OCORRÊNCIA',model:wrap(modelBits||'MODELO NÃO INFORMADO',42),city:wrap('CIDADE DA PLACA: '+(row.plate_city||'—').toLocaleUpperCase('pt-BR'),52),place:wrap('LOCAL: '+(row.occurrence_location||'—').toLocaleUpperCase('pt-BR'),52)}
+}
+function cardHeight(card){return 12+25+card.model.length*12+card.city.length*9+card.place.length*9+9}
 function pdfPages(rows,cityName,generatedAt,plateFormat='normal'){
- const columns=plateFormat==='inverted'?baseColumns:[{...baseColumns[1],key:'plate_letters',label:'LETRAS'},{...baseColumns[0],key:'plate_numbers',label:'NÚMEROS'},...baseColumns.slice(2)];
- const chunks=[],input=rows.length?rows:[{plate_numbers:'—',plate_letters:'—',model:'Nenhum veículo ativo',year:'',color:'',incident_type:'',plate_city:'',occurrence_location:''}];
- let current=[],cursor=0;
- while(cursor<input.length){const pageRows=[];let top=744;const headerHeight=28;top-=headerHeight;let y=top;
-  while(cursor<input.length){const row=input[cursor],cells=columns.map(column=>(column.key==='incident_type'?TYPE_LABEL[row.incident_type]||'':row[column.key]||'—').toLocaleUpperCase('pt-BR')),wrapped=cells.map((value,index)=>wrap(value,Math.max(4,Math.floor((columns[index].width-8)/4.1)))),lineCount=Math.max(1,...wrapped.map(lines=>lines.length)),height=Math.max(22,Math.min(70,lineCount*8.5+7));if(y-height<430&&pageRows.length)break;
-   pageRows.push({wrapped,height});y-=height;cursor++
+ const input=rows.length?rows:[{plate_numbers:'—',plate_letters:'—',model:'NENHUM VEÍCULO ATIVO',year:'',color:'',incident_type:'outra',plate_city:'',occurrence_location:''}];
+ const cards=input.map(row=>prepareCard(row,plateFormat)),headerBottom=PAGE_HEIGHT-52;
+ const pages=[];let page=[],used=0,available=headerBottom-BOTTOM;
+ for(const card of cards){const height=cardHeight(card);if(page.length&&used+height>available){pages.push(page);page=[];used=0}page.push(card);used+=height}
+ if(page.length)pages.push(page);
+ return pages.map((pageCards,pageIndex)=>{let commands='';commands+='0.23 0.28 0.31 rg 0 '+(PAGE_HEIGHT-4).toFixed(2)+' '+PAGE_WIDTH+' 4 re f\n';
+  commands+=text('VEÍCULOS DE INTERESSE',MARGIN,PAGE_HEIGHT-20,11,'0.10 0.13 0.15');
+  commands+=text((cityName||'CIDADE NÃO INFORMADA').toLocaleUpperCase('pt-BR'),MARGIN,PAGE_HEIGHT-33,8,'0.30 0.34 0.36');
+  commands+=text(new Date(generatedAt).toLocaleDateString('pt-BR')+' · F FURTO  /  R ROUBO  /  O OUTRA',MARGIN,PAGE_HEIGHT-44,6.5,'0.34 0.38 0.40');
+  let y=headerBottom;
+  for(let index=0;index<pageCards.length;index++){const card=pageCards[index],height=cardHeight(card),top=y;
+   commands+='0.69 0.72 0.74 RG 0.7 w '+MARGIN.toFixed(2)+' '+(top-height).toFixed(2)+' '+CONTENT_WIDTH.toFixed(2)+' '+height.toFixed(2)+' re S\n';
+   commands+=text(card.plate,MARGIN+6,top-24,20,'0.08 0.10 0.11');
+   const badgeWidth=card.type.length*5+12,badgeX=PAGE_WIDTH-MARGIN-badgeWidth-5;
+   commands+='0.23 0.28 0.31 rg '+badgeX.toFixed(2)+' '+(top-21).toFixed(2)+' '+badgeWidth.toFixed(2)+' 16 re f\n';
+   commands+=text(card.type,badgeX+5,top-16,7,'1 1 1');
+   let lineY=top-39;
+   for(const line of card.model){commands+=text(line,MARGIN+6,lineY,9,'0.14 0.17 0.19');lineY-=11}
+   for(const line of card.city){commands+=text(line,MARGIN+6,lineY,7,'0.32 0.36 0.38');lineY-=8.5}
+   for(const line of card.place){commands+=text(line,MARGIN+6,lineY,7,'0.32 0.36 0.38');lineY-=8.5}
+   y-=height
   }
-  chunks.push(pageRows)
- }
- return chunks.map((pageRows,pageIndex)=>{let commands='';const left=(595-tableWidth)/2;
-  commands+='0.23 0.28 0.31 rg 34 807 527 3 re f\n';
-  commands+=text('CADASTRO CRIMINAL · VEÍCULOS DE INTERESSE',left,789,14,'0.12 0.15 0.17');
-  commands+=text((cityName||'Cidade não informada').toLocaleUpperCase('pt-BR')+' · '+new Date(generatedAt).toLocaleDateString('pt-BR'),left,770,8.5,'0.35 0.39 0.41');
-  commands+=text('ATIVOS · FURTO (F), ROUBO (R) E OUTRAS OCORRÊNCIAS (O)',left,755,8,'0.25 0.29 0.31');
-  let x=left,y=744;
-  for(let i=0;i<columns.length;i++){const col=columns[i];commands+='0.24 0.29 0.31 rg '+x.toFixed(2)+' '+(y-28).toFixed(2)+' '+col.width+' 28 re f\n';const lines=wrap(col.label,Math.max(5,Math.floor((col.width-8)/4.1)));lines.forEach((line,index)=>{commands+=text(line,x+4,y-11-index*8,7.2,'1 1 1')});commands+='0.68 0.71 0.73 RG 0.6 w '+x.toFixed(2)+' '+(y-28).toFixed(2)+' '+col.width+' 28 re S\n';x+=col.width}
-  y-=28;
-  for(let rowIndex=0;rowIndex<pageRows.length;rowIndex++){const row=pageRows[rowIndex];x=left;if(rowIndex%2===1)commands+='0.94 0.95 0.95 rg '+left.toFixed(2)+' '+(y-row.height).toFixed(2)+' '+tableWidth+' '+row.height.toFixed(2)+' re f\n';
-   for(let columnIndex=0;columnIndex<columns.length;columnIndex++){const col=columns[columnIndex],lines=row.wrapped[columnIndex],lineHeight=8.5,firstY=y-8;lines.forEach((line,lineIndex)=>{commands+=text(line,x+4,firstY-lineIndex*lineHeight,7.7,'0.11 0.14 0.16')});commands+='0.68 0.71 0.73 RG 0.55 w '+x.toFixed(2)+' '+(y-row.height).toFixed(2)+' '+col.width+' '+row.height.toFixed(2)+' re S\n';x+=col.width}
-   y-=row.height
-  }
-  commands+=text('Página '+(pageIndex+1)+' de '+chunks.length,left,415,8,'0.42 0.45 0.47');
+  commands+=text(String(pageIndex+1)+'/'+String(pages.length),PAGE_WIDTH-MARGIN-18,BOTTOM/2,6,'0.42 0.45 0.47');
   return commands
  })
 }
 export function buildVehicleInterestPdf({rows=[],cityName='',generatedAt=new Date(),plateFormat='normal'}={}){
  const pages=pdfPages(rows,cityName,generatedAt,plateFormat),objects=[];objects[1]=ascii('<< /Type /Catalog /Pages 2 0 R >>');objects[2]=null;objects[3]=ascii('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
  const pageIds=[];
- for(const commands of pages){const pageId=objects.length;pageIds.push(pageId);objects.push(null);const contentId=objects.length;objects.push(streamObject(commands));objects[pageId]=ascii('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents '+contentId+' 0 R >>')}
+ for(const commands of pages){const pageId=objects.length;pageIds.push(pageId);objects.push(null);const contentId=objects.length;objects.push(streamObject(commands));objects[pageId]=ascii('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+PAGE_WIDTH+' '+PAGE_HEIGHT+'] /Resources << /Font << /F1 3 0 R >> >> /Contents '+contentId+' 0 R >>')}
  objects[2]=ascii('<< /Type /Pages /Kids ['+pageIds.map(id=>id+' 0 R').join(' ')+'] /Count '+pageIds.length+' >>');
  const parts=[ascii('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n')],offsets=[0];let offset=parts[0].length;
  for(let id=1;id<objects.length;id++){const object=joinBytes([ascii(id+' 0 obj\n'),objects[id],ascii('\nendobj\n')]);offsets[id]=offset;parts.push(object);offset+=object.length}
