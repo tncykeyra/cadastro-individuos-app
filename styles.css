@@ -1956,3 +1956,13 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 :root[data-theme="dark"] .interest-pdf-menu small{color:#b9c1c5}
 .camera-choice-icon{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 @media(max-width:620px){.interest-toolbar-actions .interest-pdf-menu{width:100%}.interest-pdf-options{grid-template-columns:minmax(0,1fr)}.interest-pdf-menu small{text-align:left}}
+
+/* Controles de flash integrados à prévia da câmera */
+.camera-preview-stage .camera-flash-controls{position:absolute;z-index:3;top:12px;right:12px;display:flex;align-items:center;gap:8px;padding:0;border:0;background:transparent}
+.camera-preview-stage .camera-flash-controls[hidden]{display:none}
+.camera-preview-stage .camera-flash-choice{display:grid;place-items:center;width:44px;height:44px;min-width:44px;padding:0;border:1px solid #ffffffaa;border-radius:50%;background:#172024b8;color:#fff;box-shadow:0 2px 9px #0006;cursor:pointer;touch-action:manipulation}
+.camera-preview-stage .camera-flash-icon{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.camera-preview-stage .camera-flash-choice[aria-pressed="true"]{background:#fff;color:#273035;border-color:#fff}
+.camera-preview-stage .camera-flash-choice:disabled{opacity:.38;cursor:not-allowed}
+.camera-preview-stage .camera-flash-choice:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.camera-preview-stage .camera-shutter{bottom:16px}
