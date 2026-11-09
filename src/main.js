@@ -19,12 +19,12 @@ const config={url:import.meta.env.VITE_SUPABASE_URL,key:import.meta.env.VITE_SUP
 const appIconUrl=import.meta.env.BASE_URL+'icon.svg?v=10';
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 if(!document.querySelector('[data-operator-ui-css]')){const styleLink=document.createElement('link');styleLink.rel='stylesheet';styleLink.href=import.meta.env.BASE_URL+'operator-tour.css?v=5';styleLink.dataset.operatorUiCss='';document.head.append(styleLink)}
-const state={client:null,session:null,profile:null,cities:[],activeCityId:null,cityRole:null,cityContextReady:false,cityAccessError:'',page:'dashboard',selected:null,query:'',searchInput:'',people:[],vehicles:[],profiles:[],revisions:[],loading:false,searchTimer:null,searchRequest:0,lastSearchKey:'',searchLoading:false,install:null,passwordSetup:false,smartInitialKind:'person',smartExactMatch:false,smartMatchesCount:0,teamTab:'google',teamPage:'authorize',teamCreatedUser:null,editingAuthorizedEmail:null,pendingIdentityCount:null,pendingWarrantReviewCount:null,pendingWarrantDuplicateCount:0,pendingVehiclePlateCount:null,warrantTab:'list',revisionOffset:0,revisionTotal:0,revisionFilters:{entity:'all',action:'all',actor:'all',from:'',to:''},historyProfiles:[],historyPeople:[],historyVehicles:[],letter:'all',listPage:0,listPageSize:30,listTotal:0,serverPaged:false,routeStack:[],modalHistory:false,drawerHistory:false,ignoreNavigationPop:false,closingModalFromBack:false,warrantPdfPickerActive:false,warrantPdfPickerTimer:null ,warrantQuery:'',photoReviewPeople:[],photoReviewLoadedCityId:null,photoReviewDrafts:[],photoReviewSuggestions:{}};
-const icon={dashboard:'▦',people:'♙',vehicles:'⌑',warrants:'⚖',vehicleInterest:'🚘',fiscalization:'🚦',team:'♧',history:'↺',smart:'✨',review:'🔎',maintenance:'🛠️',photoReview:'▧',cities:'⌖'};
+const state={client:null,session:null,profile:null,cities:[],activeCityId:null,cityRole:null,cityContextReady:false,cityAccessError:'',page:'dashboard',selected:null,query:'',searchInput:'',people:[],vehicles:[],profiles:[],revisions:[],loading:false,searchTimer:null,searchRequest:0,lastSearchKey:'',searchLoading:false,install:null,passwordSetup:false,smartInitialKind:'person',smartExactMatch:false,smartMatchesCount:0,teamTab:'google',teamPage:'authorize',teamCreatedUser:null,editingAuthorizedEmail:null,pendingIdentityCount:null,pendingWarrantReviewCount:null,pendingWarrantDuplicateCount:0,pendingVehiclePlateCount:null,warrantTab:'list',revisionOffset:0,revisionTotal:0,revisionFilters:{entity:'all',action:'all',actor:'all',from:'',to:''},historyProfiles:[],historyPeople:[],historyVehicles:[],letter:'all',listPage:0,listPageSize:30,listTotal:0,serverPaged:false,routeStack:[],modalHistory:false,drawerHistory:false,ignoreNavigationPop:false,closingModalFromBack:false,warrantPdfPickerActive:false,warrantPdfPickerTimer:null ,warrantQuery:''};
+const icon={dashboard:'▦',people:'♙',vehicles:'⌑',warrants:'⚖',vehicleInterest:'🚘',fiscalization:'🚦',team:'♧',history:'↺',smart:'✨',review:'🔎',maintenance:'🛠️',cities:'⌖'};
 const FISCALIZATION_CITY_ID='10000000-0000-4000-8000-000000000001';
 const canUseFiscalization=()=>state.activeCityId===FISCALIZATION_CITY_ID;
 const shareIcon=()=>'<svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.7 6.8-4.1M8.6 13.3l6.8 4.1"/></svg>';
-const label={dashboard:'Painel da cidade',people:'Indivíduos',vehicles:'Veículos',warrants:'Mandados',vehicleInterest:'Veículos de interesse',fiscalization:'Fiscalização',team:'Usuários',history:'Histórico',smart:'Cadastro Inteligente',review:'Revisão Inteligente',maintenance:'Manutenção Inteligente',photoReview:'Revisão de fotos',cities:'Cidades e acessos'};
+const label={dashboard:'Painel da cidade',people:'Indivíduos',vehicles:'Veículos',warrants:'Mandados',vehicleInterest:'Veículos de interesse',fiscalization:'Fiscalização',team:'Usuários',history:'Histórico',smart:'Cadastro Inteligente',review:'Revisão Inteligente',maintenance:'Manutenção Inteligente',cities:'Cidades e acessos'};
 const photoUrls=new Map(),photoUrlExpiresAt=new Map(),photoCachedKeys=new Set(),photoBlobInflight=new Map();let photoDbPromise=null;let warrantImportPreview=null;const MAX_WARRANT_PDF_BATCH=50,MAX_WARRANT_PDF_FILE_BYTES=20*1024*1024,MAX_WARRANT_PDF_BATCH_BYTES=40*1024*1024;let warrantPdfBatch=[];let warrantPdfBatchSaving=false;let warrantPdfBatchReading=false;const warrantQueueDbName='cadastro-criminal-warrant-queue-v1';let warrantQueueDbPromise=null;const warrantQueueSaveTimers=new Map();
 const msg=e=>e?.message||'Não foi possível concluir. Tente novamente.';
 function toast(text){const el=$('#toast');el.textContent=text;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600)}
@@ -70,7 +70,7 @@ async function loadCityContext(){
   }
 }
 function nav(){
-  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 2.11';
+  const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão 2.12';
   const allowed=!!state.session&&['operator','admin'].includes(state.profile?.role)&&!(state.cityContextReady&&!state.cities.length);
   const admin=isAdmin(),master=isMasterAdmin();
   const sideItems=allowed?[['dashboard','Painel da cidade'],['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados'],['vehicleInterest','Veículos de interesse'],...(canUseFiscalization()?[['fiscalization','Fiscalização']]:[]),['smart','Cadastro Inteligente'],...(admin?[['review','Revisão Inteligente'],['maintenance','Manutenção Inteligente'],['history','Histórico']]:[]),...(admin?[['team','Usuários']]:[]),...(master?[['cities','Cidades e acessos']]:[])]:[];
@@ -945,115 +945,6 @@ async function renderSmartReviewPage(){
   frame('<section class="page-intro"><div><h1>Revisão Inteligente</h1><p>Confira os dois registros antes de decidir. A junção preserva o secundário arquivado, suas fotos, vínculos e histórico.</p></div></section><div class="stats"><div class="stat"><strong>'+people.length.toLocaleString('pt-BR')+'</strong><span>Indivíduos analisados</span></div><div class="stat"><strong>'+vehicles.length.toLocaleString('pt-BR')+'</strong><span>Veículos analisados</span></div><div class="stat"><strong>'+openPairs.length.toLocaleString('pt-BR')+'</strong><span>Duplicidades pendentes</span></div></div><section class="smart-review-list"><h2>Possíveis duplicidades</h2>'+pairRows+(otherRows?'<h2>Outros itens para conferência</h2>'+otherRows:'')+'</section>');
 }
 
-const PHOTO_REVIEW_MAX_BYTES=15*1024*1024;
-function photoReviewNameKey(value){return normalizeSearchTerm(String(value||'').replace(/\.[a-z0-9]{2,5}$/i,'').replace(/[()_.,-]+/g,' '))}
-function photoReviewMatch(filename,people){const key=photoReviewNameKey(filename);if(!key)return[];return people.filter(person=>photoReviewNameKey(person.full_name)===key)}
-function maskPhotoReviewCpf(value){const digits=String(value||'').replace(/\D/g,'');return digits.length===11?'***.***.***-'+digits.slice(-2):digits?'***':'—'}
-function photoReviewImageType(file){const type=String(file.type||'').toLowerCase();if(['image/jpeg','image/png','image/webp'].includes(type))return type;const ext=String(file.name||'').split('.').pop().toLowerCase();return ext==='png'?'image/png':ext==='webp'?'image/webp':ext==='jpg'||ext==='jpeg'?'image/jpeg':''}
-async function loadPhotoReviewPeople(){
-  if(!isAdmin()||!state.activeCityId)throw new Error('Acesso exclusivo para administradores da cidade.');
-  if(state.photoReviewLoadedCityId===state.activeCityId&&state.photoReviewPeople.length)return state.photoReviewPeople;
-  const rows=[];
-  for(let offset=0;offset<50000;offset+=1000){
-    const {data,error}=await state.client.from('people').select('id,full_name,cpf_digits,birthday,photo_path').eq('city_id',state.activeCityId).is('archived_at',null).order('full_name').range(offset,offset+999);
-    if(error)throw error;rows.push(...(data||[]));if((data||[]).length<1000)break;
-  }
-  state.photoReviewPeople=rows;state.photoReviewLoadedCityId=state.activeCityId;return rows;
-}
-async function renderPhotoReviewPage(){
-  if(!isAdmin())throw new Error('Acesso exclusivo para administradores.');
-  const cityId=state.activeCityId,people=await loadPhotoReviewPeople();
-  const {data:reviews,error}=await state.client.from('photo_cover_reviews').select('id,city_id,person_id,storage_path,source_filename,match_method,created_at').eq('city_id',cityId).eq('status','pending').order('created_at',{ascending:false}).limit(200);
-  if(error)throw error;
-  const peopleById=new Map(people.map(person=>[person.id,person]));
-  const candidatePaths=(reviews||[]).map(review=>review.storage_path),oldPaths=(reviews||[]).map(review=>peopleById.get(review.person_id)?.photo_path).filter(Boolean);
-  const [candidateUrls,oldUrls]=await Promise.all([
-    Promise.all(candidatePaths.map(async path=>{const {data,error}=await state.client.storage.from('people-photos').createSignedUrl(path,3600);return [path,error?'':data?.signedUrl||'']})),
-    galleryPhotoUrls(oldPaths)
-  ]);
-  const candidateUrlMap=new Map(candidateUrls);
-  const reviewCards=(reviews||[]).map(review=>{
-    const person=peopleById.get(review.person_id),oldPath=person?.photo_path||'',current=oldPath?oldUrls.get(oldPath)||'':'';
-    return '<article class="photo-review-card"><div class="photo-review-images"><figure><img loading="lazy" src="'+esc(candidateUrlMap.get(review.storage_path)||'')+'" alt="Foto proposta"><figcaption>Foto proposta</figcaption></figure><figure>'+(current?'<img loading="lazy" src="'+esc(current)+'" alt="Capa atual">':'<div class="photo-review-empty">Sem capa</div>')+'<figcaption>Capa atual</figcaption></figure></div><div class="photo-review-copy"><strong>'+esc(person?.full_name||'Cadastro não disponível')+'</strong><small>'+esc(review.source_filename)+' · '+(review.match_method==='exact_filename'?'nome de arquivo coincidente':'vínculo manual')+'</small><small>CPF: '+esc(maskPhotoReviewCpf(person?.cpf_digits))+'</small><small>Enviada em '+esc(new Date(review.created_at).toLocaleString('pt-BR'))+'</small></div><div class="photo-review-actions"><button class="button" type="button" data-photo-review-decision="accept" data-review-id="'+esc(review.id)+'">Usar como capa</button><button class="button danger" type="button" data-photo-review-decision="reject" data-review-id="'+esc(review.id)+'">Rejeitar</button></div></article>';
-  }).join('');
-  const drafts=state.photoReviewDrafts||[];
-  const draftCards=drafts.map((draft,index)=>{
-    const matches=photoReviewMatch(draft.file.name,people),person=people.find(item=>item.id===draft.personId),query=state.photoReviewSuggestions[index]||'',suggestions=query?people.filter(item=>photoReviewNameKey(item.full_name).includes(photoReviewNameKey(query))).slice(0,8):matches.slice(0,8);
-    return '<article class="photo-review-draft"><img class="photo-review-draft-thumb" src="'+esc(draft.url)+'" alt="Prévia da foto"><div class="photo-review-draft-content"><strong>'+esc(draft.file.name)+'</strong><small>'+(draft.file.size/1024/1024).toFixed(2)+' MB'+(matches.length>1?' · mais de um registro com este nome':matches.length===1?' · nome coincide; confirme o cadastro':' · localize o cadastro')+'</small>'+(person?'<div class="photo-review-assigned"><span>Vincular a</span><b>'+esc(person.full_name)+'</b><small>A capa atual será preservada na galeria.</small></div>':'<label class="photo-review-search"><span>'+(matches.length?'Confirme o cadastro sugerido ou pesquise':'Localizar indivíduo em '+esc('cidade ativa'))+'</span><input type="search" autocomplete="off" value="'+esc(query)+'" data-photo-review-search="'+index+'" placeholder="Digite o nome do cadastro"><span class="photo-review-options">'+suggestions.map(item=>'<button type="button" class="photo-review-option" data-photo-review-person="'+esc(item.id)+'" data-draft-index="'+index+'"><b>'+esc(item.full_name)+'</b><small>CPF '+esc(maskPhotoReviewCpf(item.cpf_digits))+'</small></button>').join('')+'</span></label>')+'</div><button class="icon-button" type="button" data-photo-review-remove="'+index+'" aria-label="Remover da seleção">×</button></article>';
-  }).join('');
-  const pendingMarkup=reviewCards||'<div class="empty">Não há fotos aguardando revisão nesta cidade.</div>';
-  frame('<section class="page-intro"><div><h1>Revisão de fotos</h1><p>Associe fotos da pasta de Agudos aos cadastros correspondentes. A capa só muda depois da aprovação; a capa anterior permanece na galeria.</p></div></section><section class="photo-review-import card"><h2>Propor fotos para revisão</h2><p class="muted">Selecione fotos baixadas do Drive. O nome exato do arquivo sugere um cadastro, mas cada vínculo exige confirmação. As fotos são copiadas para o bucket privado do app.</p><label class="button photo-review-file-label" for="photoReviewFiles">＋ Selecionar fotos</label><input id="photoReviewFiles" type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple hidden><small class="muted">JPG, PNG ou WEBP · até 15 MB por foto · no máximo 100 por envio. O app não altera a pasta do Drive nem a fila de migração.</small>'+(drafts.length?'<div class="photo-review-drafts">'+draftCards+'</div><button class="button photo-review-submit" type="button" data-photo-review-save>Enviar '+drafts.length+' foto(s) para revisão</button><p class="muted" id="photoReviewUploadStatus" aria-live="polite"></p>':'')+'</section><section class="photo-review-pending"><div class="section-heading"><h2>Aguardando aprovação</h2><span class="count-badge">'+(reviews||[]).length+'</span></div>'+pendingMarkup+'</section>');
-}
-async function savePhotoReviewDrafts(button){
-  if(!isAdmin()||button.disabled)return;
-  const drafts=state.photoReviewDrafts||[];if(!drafts.length)return;
-  if(drafts.some(draft=>!draft.personId)){toast('Escolha o cadastro correspondente para cada foto.');return}
-  button.disabled=true;let saved=0;const status=$('#photoReviewUploadStatus');
-  try{
-    for(const [index,draft] of drafts.entries()){
-      if(state.activeCityId!==draft.cityId)throw new Error('A cidade ativa mudou. Confira novamente os vínculos.');
-      const type=photoReviewImageType(draft.file);if(!type||draft.file.size>PHOTO_REVIEW_MAX_BYTES)throw new Error('Cada foto deve ser JPG, PNG ou WEBP de até 15 MB.');
-      const ext=type==='image/png'?'png':type==='image/webp'?'webp':'jpg',path='photo-review/'+state.activeCityId+'/'+draft.personId+'/'+crypto.randomUUID()+'.'+ext;
-      if(status)status.textContent='Enviando '+(index+1)+' de '+drafts.length+'…';
-      const bucket=state.client.storage.from('people-photos'),{error:uploadError}=await bucket.upload(path,draft.file,{contentType:type,upsert:false});
-      if(uploadError)throw uploadError;
-      const {error:insertError}=await state.client.from('photo_cover_reviews').insert({city_id:state.activeCityId,person_id:draft.personId,storage_path:path,source_filename:draft.file.name,match_method:draft.matchMethod||'manual',created_by:state.session.user.id});
-      if(insertError){await bucket.remove([path]);throw insertError}
-      saved++;const draftIndex=state.photoReviewDrafts.indexOf(draft);if(draftIndex>=0)state.photoReviewDrafts.splice(draftIndex,1);URL.revokeObjectURL(draft.url);
-    }
-    state.photoReviewSuggestions={};toast(saved+' foto(s) enviadas para aprovação.');await renderPhotoReviewPage();
-  }catch(error){if(status)status.textContent='Falha no envio. As fotos já enviadas seguem na revisão.';toast(msg(error));await renderPhotoReviewPage()}
-  finally{if(button.isConnected)button.disabled=false}
-}
-async function decidePhotoCover(button){
-  if(!isAdmin()||button.disabled)return;
-  const decision=button.dataset.photoReviewDecision,reviewId=button.dataset.reviewId;
-  if(decision==='reject'&&!confirm('Rejeitar esta sugestão? A imagem não substituirá a capa atual.'))return;
-  button.disabled=true;
-  try{
-    const {data:review,error}=await state.client.from('photo_cover_reviews').select('id,person_id,storage_path,city_id,status').eq('id',reviewId).single();
-    if(error)throw error;if(review.city_id!==state.activeCityId||review.status!=='pending')throw new Error('Esta revisão não está mais pendente nesta cidade.');
-    if(decision==='reject'){
-      const {error:rejectError}=await state.client.rpc('admin_decide_photo_cover_review',{p_review_id:reviewId,p_decision:'reject',p_final_photo_path:null});
-      if(rejectError)throw rejectError;toast('Sugestão rejeitada. A capa atual não foi alterada.');
-    }else{
-      const finalPath='people/'+review.person_id+'/'+crypto.randomUUID()+'.'+(review.storage_path.split('.').pop()||'jpg'),bucket=state.client.storage.from('people-photos');
-      const {error:copyError}=await bucket.copy(review.storage_path,finalPath);if(copyError)throw copyError;
-      const {error:acceptError}=await state.client.rpc('admin_decide_photo_cover_review',{p_review_id:reviewId,p_decision:'accept',p_final_photo_path:finalPath});
-      if(acceptError){await bucket.remove([finalPath]);throw acceptError}
-      toast('Foto aprovada como capa. A capa anterior continua na galeria.');
-    }
-    dashboardPhotoStatsAt=0;await renderPhotoReviewPage();
-  }catch(error){toast(msg(error));await renderPhotoReviewPage()}
-  finally{if(button.isConnected)button.disabled=false}
-}
-document.addEventListener('change',event=>{
-  const input=event.target;if(!input.matches?.('#photoReviewFiles'))return;
-  const accepted=[];
-  for(const file of [...(input.files||[])]){
-    const type=photoReviewImageType(file);
-    if(!type||file.size>PHOTO_REVIEW_MAX_BYTES){toast(file.name+' foi ignorada: use JPG, PNG ou WEBP de até 15 MB.');continue}
-    if(accepted.length>=100){toast('Selecione no máximo 100 fotos por vez.');break}
-    accepted.push({file,url:URL.createObjectURL(file),personId:'',matchMethod:'manual',cityId:state.activeCityId});
-  }
-  state.photoReviewDrafts=[...(state.photoReviewDrafts||[]),...accepted];input.value='';void renderPhotoReviewPage();
-});
-document.addEventListener('input',event=>{
-  const input=event.target.closest?.('[data-photo-review-search]');if(!input)return;
-  const index=Number(input.dataset.photoReviewSearch),query=input.value;state.photoReviewSuggestions[index]=query;
-  const results=query?(state.photoReviewPeople||[]).filter(person=>photoReviewNameKey(person.full_name).includes(photoReviewNameKey(query))).slice(0,8):[];
-  const list=input.closest('.photo-review-search')?.querySelector('.photo-review-options');
-  if(list)list.innerHTML=results.map(item=>'<button type="button" class="photo-review-option" data-photo-review-person="'+esc(item.id)+'" data-draft-index="'+index+'"><b>'+esc(item.full_name)+'</b><small>CPF '+esc(maskPhotoReviewCpf(item.cpf_digits))+'</small></button>').join('');
-});
-document.addEventListener('click',async event=>{
-  const choose=event.target.closest?.('[data-photo-review-person]');
-  if(choose){const draft=state.photoReviewDrafts[Number(choose.dataset.draftIndex)];if(draft){draft.personId=choose.dataset.photoReviewPerson;const selectedPerson=state.photoReviewPeople.find(item=>item.id===choose.dataset.photoReviewPerson);draft.matchMethod=photoReviewMatch(draft.file.name,selectedPerson?[selectedPerson]:[]).length?'exact_filename':'manual';state.photoReviewSuggestions[Number(choose.dataset.draftIndex)]='';await renderPhotoReviewPage()}return}
-  const remove=event.target.closest?.('[data-photo-review-remove]');
-  if(remove){const index=Number(remove.dataset.photoReviewRemove),[draft]=state.photoReviewDrafts.splice(index,1);if(draft)URL.revokeObjectURL(draft.url);await renderPhotoReviewPage();return}
-  const save=event.target.closest?.('[data-photo-review-save]');if(save){await savePhotoReviewDrafts(save);return}
-  const decision=event.target.closest?.('[data-photo-review-decision]');if(decision)await decidePhotoCover(decision);
-});
-
 async function renderMaintenancePage(){
   if(!isAdmin())throw new Error('Acesso exclusivo para administradores.');
   const checks=[];
@@ -1300,7 +1191,7 @@ async function openSmartExisting(id,kind){
   if(kind==='person'){await openPerson(id);return}
   await openVehicle(id);
 }
-async function loadPage(){if(!state.session){authPage();return}if(state.page==='photoSearch')state.page='people';if(state.page==='team'&&!isAdmin())state.page='dashboard';if(state.page==='fiscalization'&&!canUseFiscalization()){state.page='dashboard';toast('A aba Fiscalização está disponível somente para Lençóis Paulista.')}if(state.page==='cities'&&!isMasterAdmin())state.page='dashboard';if(state.page==='history'&&!isAdmin())state.page='dashboard';if(['review','maintenance','photoReview'].includes(state.page)&&!isAdmin())state.page='dashboard';if(state.page==='warrants'&&!['operator','admin'].includes(state.profile?.role))state.page='people';state.selected=null;saveLastView();nav();loadingPage();try{if(state.page==='dashboard')await renderDashboard();else if(['people','vehicles'].includes(state.page)){await loadRecords();await renderRecords()}else if(state.page==='warrants')await renderWarrants();else if(state.page==='vehicleInterest'){const city=state.cities.find(item=>item.id===state.activeCityId);frame(await renderVehicleInterestPage(state.client,{cityId:state.activeCityId,cityName:city?.name||'',userId:state.session.user.id,resolvePhoto:signedPhoto}));wireVehicleInterestActions(state.client,{cityId:state.activeCityId,cityName:city?.name||'',userId:state.session.user.id,resolvePhoto:signedPhoto,onRefresh:async()=>loadPage()})}else if(state.page==='fiscalization')frame(await renderFiscalizationPage(state.client,isAdmin()));else if(state.page==='team')await renderTeam();else if(state.page==='cities')await renderCities();else if(state.page==='history')await renderHistory();else if(state.page==='smart')frame(renderIntelligentEntry(state.smartInitialKind));else if(state.page==='review')await renderSmartReviewPage();else if(state.page==='photoReview')await renderPhotoReviewPage();else if(state.page==='maintenance')await renderMaintenancePage()}catch(e){frame('<div class="error-box">'+esc(msg(e))+'</div>')}}
+async function loadPage(){if(!state.session){authPage();return}if(state.page==='photoSearch')state.page='people';if(state.page==='team'&&!isAdmin())state.page='dashboard';if(state.page==='fiscalization'&&!canUseFiscalization()){state.page='dashboard';toast('A aba Fiscalização está disponível somente para Lençóis Paulista.')}if(state.page==='cities'&&!isMasterAdmin())state.page='dashboard';if(state.page==='history'&&!isAdmin())state.page='dashboard';if(['review','maintenance'].includes(state.page)&&!isAdmin())state.page='dashboard';if(state.page==='warrants'&&!['operator','admin'].includes(state.profile?.role))state.page='people';state.selected=null;saveLastView();nav();loadingPage();try{if(state.page==='dashboard')await renderDashboard();else if(['people','vehicles'].includes(state.page)){await loadRecords();await renderRecords()}else if(state.page==='warrants')await renderWarrants();else if(state.page==='vehicleInterest'){const city=state.cities.find(item=>item.id===state.activeCityId);frame(await renderVehicleInterestPage(state.client,{cityId:state.activeCityId,cityName:city?.name||'',userId:state.session.user.id,resolvePhoto:signedPhoto}));wireVehicleInterestActions(state.client,{cityId:state.activeCityId,cityName:city?.name||'',userId:state.session.user.id,resolvePhoto:signedPhoto,onRefresh:async()=>loadPage()})}else if(state.page==='fiscalization')frame(await renderFiscalizationPage(state.client,isAdmin()));else if(state.page==='team')await renderTeam();else if(state.page==='cities')await renderCities();else if(state.page==='history')await renderHistory();else if(state.page==='smart')frame(renderIntelligentEntry(state.smartInitialKind));else if(state.page==='review')await renderSmartReviewPage();else if(state.page==='maintenance')await renderMaintenancePage()}catch(e){frame('<div class="error-box">'+esc(msg(e))+'</div>')}}
 async function galleryPhotos(entity,record){
   const {data,error}=await state.client.from('record_photos').select('id,photo_path,is_cover,crop_position,created_at').eq('entity',entity).eq('entity_id',record.id).order('created_at',{ascending:true});
   if(error)console.warn('A galeria unificada não está disponível; vou tentar as fotos antigas.',error);
@@ -2195,7 +2086,7 @@ document.addEventListener('click',async e=>{const button=e.target.closest('[data
   window.addEventListener('focus',()=>{void checkForAppUpdate();applyAvailableUpdate()});
   document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('close',applyAvailableUpdate));
   new MutationObserver(applyAvailableUpdate).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
-  navigator.serviceWorker.register(import.meta.env.BASE_URL+'sw.js?v=99',{updateViaCache:'none'}).then(registration=>registration.update()).catch(()=>{});
+  navigator.serviceWorker.register(import.meta.env.BASE_URL+'sw.js?v=100',{updateViaCache:'none'}).then(registration=>registration.update()).catch(()=>{});
 }
 async function initialize(){if(!config.url||!config.key){frame('<div class="auth-wrap"><section class="auth-card"><div class="brand-mark auth-mark"><img src="'+appIconUrl+'" alt=""></div><h1>Cadastro Criminal</h1><p class="auth-caption">A interface está pronta para conectar ao banco em nuvem. Para ativar login e dados compartilhados, configure o projeto Supabase e as variáveis de ambiente seguindo o README.</p><div class="notice">Nenhum dado está sendo salvo neste aparelho. A conexão ao banco ainda não foi configurada.</div></section></div>')}else{state.client=createClient(config.url,config.key,{auth:{storage:window.localStorage,persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});wireFiscalizationActions(state.client,isAdmin,async()=>{if(state.page==='fiscalization')await loadPage()},toast);state.passwordSetup=/#.*type=(invite|recovery)/.test(location.hash);const {data:{session}}=await state.client.auth.getSession();state.session=session;state.client.auth.onAuthStateChange((event,newSession)=>{if(event==='INITIAL_SESSION')return;if(event==='TOKEN_REFRESHED'){if(newSession)state.session=newSession;return}const sameLoadedUser=!!newSession&&newSession.user?.id===state.session?.user?.id&&state.profile?.id===newSession.user.id&&state.cityContextReady;if(event==='SIGNED_IN'&&sameLoadedUser){state.session=newSession;return}if(event==='PASSWORD_RECOVERY')state.passwordSetup=true;setTimeout(()=>loadUser(newSession),0)});await loadUser(session);setTimeout(()=>void refreshDriveConnectionAlert(),1500)}}
 
