@@ -1938,3 +1938,11 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 .vehicle-interest-page .interest-validation-note{margin:0;padding:10px 12px;border:1px solid #d33a45;border-radius:11px;background:#fff0f1;color:#8e2028;font-size:.9rem;font-weight:750;line-height:1.4}
 .vehicle-interest-page .interest-validation-note[hidden]{display:none!important}
 :root[data-theme="dark"] .vehicle-interest-page .interest-validation-note{background:#401f23;border-color:#a9434d;color:#ffd5d8}
+
+/* Ficha de campo 10 x 14 cm e ações explícitas do PDF */
+.interest-pdf-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-width:0}
+.interest-pdf-actions .button{width:100%;min-width:0;min-height:44px;padding:9px 12px;white-space:normal}
+.interest-pdf-actions small{grid-column:1/-1;color:var(--muted);font-size:.76rem;text-align:right}
+:root[data-theme="dark"] .interest-pdf-actions small{color:#b9c1c5}
+.camera-choice-icon{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:620px){.interest-toolbar-actions .interest-pdf-actions{width:100%;grid-template-columns:minmax(0,1fr)}.interest-pdf-actions small{text-align:left}}
