@@ -10,35 +10,33 @@ const PAGE_WIDTH=283.46, PAGE_HEIGHT=396.85, MARGIN=12, CONTENT_WIDTH=PAGE_WIDTH
 function plateValue(row,plateFormat){const letters=String(row.plate_letters||'').toLocaleUpperCase('pt-BR'),numbers=String(row.plate_numbers||'').toLocaleUpperCase('pt-BR');return plateFormat==='inverted'?[numbers,letters].filter(Boolean).join(' '):letters+numbers}
 function prepareCard(row,plateFormat){
  const modelBits=[row.model,row.year?'ANO '+row.year:'',row.color?'COR '+row.color:''].filter(Boolean).join(' · ').toLocaleUpperCase('pt-BR');
- return {plate:plateValue(row,plateFormat)||'PLACA NÃO INFORMADA',type:TYPE_LABEL[row.incident_type]||'OCORRÊNCIA',model:wrap(modelBits||'MODELO NÃO INFORMADO',42),city:wrap('CIDADE DA PLACA: '+(row.plate_city||'—').toLocaleUpperCase('pt-BR'),52),place:wrap('LOCAL: '+(row.occurrence_location||'—').toLocaleUpperCase('pt-BR'),52)}
+ return {plate:plateValue(row,plateFormat)||'PLACA NÃO INFORMADA',type:TYPE_LABEL[row.incident_type]||'OCORRÊNCIA',details:[wrap(modelBits||'MODELO NÃO INFORMADO',34),wrap('CIDADE: '+(row.plate_city||'—').toLocaleUpperCase('pt-BR'),34),wrap('LOCAL: '+(row.occurrence_location||'—').toLocaleUpperCase('pt-BR'),34)]}
 }
-function cardHeight(card){return 12+25+card.model.length*12+card.city.length*9+card.place.length*9+9}
+function cardHeight(card){return Math.max(48,18+Math.max(...card.details.map(lines=>lines.length))*8.5+14)}
 function pdfPages(rows,cityName,generatedAt,plateFormat='normal'){
  const input=rows.length?rows:[{plate_numbers:'—',plate_letters:'—',model:'NENHUM VEÍCULO ATIVO',year:'',color:'',incident_type:'outra',plate_city:'',occurrence_location:''}];
  const cards=input.map(row=>prepareCard(row,plateFormat)),headerBottom=PAGE_HEIGHT-52;
  const pages=[];let page=[],used=0,available=headerBottom-BOTTOM;
  for(const card of cards){const height=cardHeight(card);if(page.length&&used+height>available){pages.push(page);page=[];used=0}page.push(card);used+=height}
  if(page.length)pages.push(page);
- return pages.map((pageCards,pageIndex)=>{let commands='';commands+='0.23 0.28 0.31 rg 0 '+(PAGE_HEIGHT-4).toFixed(2)+' '+PAGE_WIDTH+' 4 re f\n';
+ return pages.map((pageCards,pageIndex)=>{let commands='';commands+='0.23 0.28 0.31 rg 0 '+(PAGE_HEIGHT-4).toFixed(2)+' '+PAGE_WIDTH+' 4 re f\\n';
   commands+=text('VEÍCULOS DE INTERESSE',MARGIN,PAGE_HEIGHT-20,11,'0.10 0.13 0.15');
   commands+=text((cityName||'CIDADE NÃO INFORMADA').toLocaleUpperCase('pt-BR'),MARGIN,PAGE_HEIGHT-33,8,'0.30 0.34 0.36');
   commands+=text(new Date(generatedAt).toLocaleDateString('pt-BR')+' · F FURTO  /  R ROUBO  /  O OUTRA',MARGIN,PAGE_HEIGHT-44,6.5,'0.34 0.38 0.40');
   let y=headerBottom;
   for(let index=0;index<pageCards.length;index++){const card=pageCards[index],height=cardHeight(card),top=y;
-   commands+='0.69 0.72 0.74 RG 0.7 w '+MARGIN.toFixed(2)+' '+(top-height).toFixed(2)+' '+CONTENT_WIDTH.toFixed(2)+' '+height.toFixed(2)+' re S\n';
-   commands+=text(card.plate,MARGIN+6,top-24,20,'0.08 0.10 0.11');
-   const badgeWidth=card.type.length*5+12,badgeX=PAGE_WIDTH-MARGIN-badgeWidth-5;
-   commands+='0.23 0.28 0.31 rg '+badgeX.toFixed(2)+' '+(top-21).toFixed(2)+' '+badgeWidth.toFixed(2)+' 16 re f\n';
-   commands+=text(card.type,badgeX+5,top-16,7,'1 1 1');
-   let lineY=top-39;
-   for(const line of card.model){commands+=text(line,MARGIN+6,lineY,9,'0.14 0.17 0.19');lineY-=11}
-   for(const line of card.city){commands+=text(line,MARGIN+6,lineY,7,'0.32 0.36 0.38');lineY-=8.5}
-   for(const line of card.place){commands+=text(line,MARGIN+6,lineY,7,'0.32 0.36 0.38');lineY-=8.5}
+   commands+='0.69 0.72 0.74 RG 0.7 w '+MARGIN.toFixed(2)+' '+(top-height).toFixed(2)+' '+CONTENT_WIDTH.toFixed(2)+' '+height.toFixed(2)+' re S\\n';
+   commands+=text(card.plate,MARGIN+6,top-25,20,'0.08 0.10 0.11');
+   const badgeWidth=card.type.length*5+12,badgeX=MARGIN+6;
+   commands+='0.23 0.28 0.31 rg '+badgeX.toFixed(2)+' '+(top-height+5).toFixed(2)+' '+badgeWidth.toFixed(2)+' 12 re f\\n';
+   commands+=text(card.type,badgeX+5,top-height+9,6,'1 1 1');
+   const detailsX=MARGIN+111;let lineY=top-13;
+   for(const group of card.details)for(const line of group){commands+=text(line,detailsX,lineY,6.8,'0.14 0.17 0.19');lineY-=8}
    y-=height
   }
   commands+=text(String(pageIndex+1)+'/'+String(pages.length),PAGE_WIDTH-MARGIN-18,BOTTOM/2,6,'0.42 0.45 0.47');
   return commands
- })
+})
 }
 export function buildVehicleInterestPdf({rows=[],cityName='',generatedAt=new Date(),plateFormat='normal'}={}){
  const pages=pdfPages(rows,cityName,generatedAt,plateFormat),objects=[];objects[1]=ascii('<< /Type /Catalog /Pages 2 0 R >>');objects[2]=null;objects[3]=ascii('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
