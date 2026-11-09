@@ -8,30 +8,34 @@ function wrap(value,max){const words=String(value??'').trim().split(/\s+/),lines
 const TYPE_LABEL={furto:'FURTO',roubo:'ROUBO',outra:'OUTRA'};
 const PAGE_WIDTH=283.46, PAGE_HEIGHT=396.85, MARGIN=12, CONTENT_WIDTH=PAGE_WIDTH-MARGIN*2, BOTTOM=14;
 function plateValue(row,plateFormat){const letters=String(row.plate_letters||'').toLocaleUpperCase('pt-BR'),numbers=String(row.plate_numbers||'').toLocaleUpperCase('pt-BR');return plateFormat==='inverted'?[numbers,letters].filter(Boolean).join(' '):letters+numbers}
+const TYPE_SHORT={furto:'F',roubo:'R',outra:'O'};
 function prepareCard(row,plateFormat){
  const modelBits=[row.model,row.year?'ANO '+row.year:'',row.color?'COR '+row.color:''].filter(Boolean).join(' · ').toLocaleUpperCase('pt-BR');
- return {plate:plateValue(row,plateFormat)||'PLACA NÃO INFORMADA',type:TYPE_LABEL[row.incident_type]||'OCORRÊNCIA',details:[wrap(modelBits||'MODELO NÃO INFORMADO',34),wrap('CIDADE: '+(row.plate_city||'—').toLocaleUpperCase('pt-BR'),34),wrap('LOCAL: '+(row.occurrence_location||'—').toLocaleUpperCase('pt-BR'),34)]}
+ const facts=['F/R: '+(TYPE_SHORT[row.incident_type]||'O'),'CIDADE: '+(row.plate_city||'—').toLocaleUpperCase('pt-BR'),'LOCAL: '+(row.occurrence_location||'—').toLocaleUpperCase('pt-BR')].join(' · ');
+ return {plate:plateValue(row,plateFormat)||'PLACA NÃO INFORMADA',details:[...wrap(modelBits||'MODELO NÃO INFORMADO',52),...wrap(facts,52)]}
 }
-function cardHeight(card){return Math.max(48,18+Math.max(...card.details.map(lines=>lines.length))*8.5+14)}
+function cardHeight(card){return Math.max(24.5,8+card.details.length*7)}
 function pdfPages(rows,cityName,generatedAt,plateFormat='normal'){
  const input=rows.length?rows:[{plate_numbers:'—',plate_letters:'—',model:'NENHUM VEÍCULO ATIVO',year:'',color:'',incident_type:'outra',plate_city:'',occurrence_location:''}];
- const cards=input.map(row=>prepareCard(row,plateFormat)),headerBottom=PAGE_HEIGHT-52;
- const pages=[];let page=[],used=0,available=headerBottom-BOTTOM;
+ const cards=input.map(row=>prepareCard(row,plateFormat)),headerBottom=PAGE_HEIGHT-52,tableHeaderHeight=16,tableStart=headerBottom-tableHeaderHeight;
+ const pages=[];let page=[],used=0,available=tableStart-tableHeaderHeight-BOTTOM;
  for(const card of cards){const height=cardHeight(card);if(page.length&&used+height>available){pages.push(page);page=[];used=0}page.push(card);used+=height}
  if(page.length)pages.push(page);
  return pages.map((pageCards,pageIndex)=>{let commands='';commands+='0.23 0.28 0.31 rg 0 '+(PAGE_HEIGHT-4).toFixed(2)+' '+PAGE_WIDTH+' 4 re f\\n';
   commands+=text('VEÍCULOS DE INTERESSE',MARGIN,PAGE_HEIGHT-20,11,'0.10 0.13 0.15');
   commands+=text((cityName||'CIDADE NÃO INFORMADA').toLocaleUpperCase('pt-BR'),MARGIN,PAGE_HEIGHT-33,8,'0.30 0.34 0.36');
   commands+=text(new Date(generatedAt).toLocaleDateString('pt-BR')+' · F FURTO  /  R ROUBO  /  O OUTRA',MARGIN,PAGE_HEIGHT-44,6.5,'0.34 0.38 0.40');
-  let y=headerBottom;
-  for(let index=0;index<pageCards.length;index++){const card=pageCards[index],height=cardHeight(card),top=y;
-   commands+='0.69 0.72 0.74 RG 0.7 w '+MARGIN.toFixed(2)+' '+(top-height).toFixed(2)+' '+CONTENT_WIDTH.toFixed(2)+' '+height.toFixed(2)+' re S\\n';
-   commands+=text(card.plate,MARGIN+6,top-25,20,'0.08 0.10 0.11');
-   const badgeWidth=card.type.length*5+12,badgeX=MARGIN+6;
-   commands+='0.23 0.28 0.31 rg '+badgeX.toFixed(2)+' '+(top-height+5).toFixed(2)+' '+badgeWidth.toFixed(2)+' 12 re f\\n';
-   commands+=text(card.type,badgeX+5,top-height+9,6,'1 1 1');
-   const detailsX=MARGIN+111;let lineY=top-13;
-   for(const group of card.details)for(const line of group){commands+=text(line,detailsX,lineY,6.8,'0.14 0.17 0.19');lineY-=8}
+  commands+='0.23 0.28 0.31 rg '+MARGIN.toFixed(2)+' '+(tableStart-tableHeaderHeight).toFixed(2)+' '+CONTENT_WIDTH.toFixed(2)+' '+tableHeaderHeight.toFixed(2)+' re f\\n';
+  const plateColumn=MARGIN+74,detailsX=plateColumn+6;
+  commands+=text('PLACA',MARGIN+5,tableStart-11,6.5,'1 1 1');
+  commands+=text('MODELO · ANO · COR · F/R · CIDADE/LOCAL',detailsX,tableStart-11,6.5,'1 1 1');
+  let y=tableStart-tableHeaderHeight;
+  for(const card of pageCards){const height=cardHeight(card),top=y,bottom=top-height;
+   commands+='0.69 0.72 0.74 RG 0.6 w '+MARGIN.toFixed(2)+' '+bottom.toFixed(2)+' '+CONTENT_WIDTH.toFixed(2)+' '+height.toFixed(2)+' re S\\n';
+   commands+='0.69 0.72 0.74 RG 0.5 w '+plateColumn.toFixed(2)+' '+bottom.toFixed(2)+' m '+plateColumn.toFixed(2)+' '+top.toFixed(2)+' l S\\n';
+   commands+=text(card.plate,MARGIN+5,top-(height/2)-6,20,'0.08 0.10 0.11');
+   let lineY=top-8;
+   for(const line of card.details){commands+=text(line,detailsX,lineY,6.5,'0.14 0.17 0.19');lineY-=7}
    y-=height
   }
   commands+=text(String(pageIndex+1)+'/'+String(pages.length),PAGE_WIDTH-MARGIN-18,BOTTOM/2,6,'0.42 0.45 0.47');
