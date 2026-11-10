@@ -21,18 +21,18 @@ function pdfPages(rows,cityName,generatedAt,plateFormat='normal'){
  const pages=[];let page=[],used=0,available=tableStart-tableHeaderHeight-BOTTOM;
  for(const card of cards){const height=cardHeight(card);if(page.length&&used+height>available){pages.push(page);page=[];used=0}page.push(card);used+=height}
  if(page.length)pages.push(page);
- return pages.map((pageCards,pageIndex)=>{let commands='';commands+='0.23 0.28 0.31 rg 0 '+(PAGE_HEIGHT-4).toFixed(2)+' '+PAGE_WIDTH+' 4 re f\\n';
+ return pages.map((pageCards,pageIndex)=>{let commands='';commands+='0.23 0.28 0.31 rg 0 '+(PAGE_HEIGHT-4).toFixed(2)+' '+PAGE_WIDTH+' 4 re f\n';
   commands+=text('VEÍCULOS DE INTERESSE',MARGIN,PAGE_HEIGHT-20,11,'0.10 0.13 0.15');
   commands+=text((cityName||'CIDADE NÃO INFORMADA').toLocaleUpperCase('pt-BR'),MARGIN,PAGE_HEIGHT-33,8,'0.30 0.34 0.36');
   commands+=text(new Date(generatedAt).toLocaleDateString('pt-BR')+' · F FURTO  /  R ROUBO  /  O OUTRA',MARGIN,PAGE_HEIGHT-44,6.5,'0.34 0.38 0.40');
-  commands+='0.23 0.28 0.31 rg '+MARGIN.toFixed(2)+' '+(tableStart-tableHeaderHeight).toFixed(2)+' '+CONTENT_WIDTH.toFixed(2)+' '+tableHeaderHeight.toFixed(2)+' re f\\n';
+  commands+='0.23 0.28 0.31 rg '+MARGIN.toFixed(2)+' '+(tableStart-tableHeaderHeight).toFixed(2)+' '+CONTENT_WIDTH.toFixed(2)+' '+tableHeaderHeight.toFixed(2)+' re f\n';
   const plateColumn=MARGIN+74,detailsX=plateColumn+6;
   commands+=text('PLACA',MARGIN+5,tableStart-11,6.5,'1 1 1');
   commands+=text('MODELO · ANO · COR · F/R · CIDADE/LOCAL',detailsX,tableStart-11,6.5,'1 1 1');
   let y=tableStart-tableHeaderHeight;
   for(const card of pageCards){const height=cardHeight(card),top=y,bottom=top-height;
-   commands+='0.69 0.72 0.74 RG 0.6 w '+MARGIN.toFixed(2)+' '+bottom.toFixed(2)+' '+CONTENT_WIDTH.toFixed(2)+' '+height.toFixed(2)+' re S\\n';
-   commands+='0.69 0.72 0.74 RG 0.5 w '+plateColumn.toFixed(2)+' '+bottom.toFixed(2)+' m '+plateColumn.toFixed(2)+' '+top.toFixed(2)+' l S\\n';
+   commands+='0.69 0.72 0.74 RG 0.6 w '+MARGIN.toFixed(2)+' '+bottom.toFixed(2)+' '+CONTENT_WIDTH.toFixed(2)+' '+height.toFixed(2)+' re S\n';
+   commands+='0.69 0.72 0.74 RG 0.5 w '+plateColumn.toFixed(2)+' '+bottom.toFixed(2)+' m '+plateColumn.toFixed(2)+' '+top.toFixed(2)+' l S\n';
    commands+=text(card.plate,MARGIN+5,top-(height/2)-6,20,'0.08 0.10 0.11');
    let lineY=top-8;
    for(const line of card.details){commands+=text(line,detailsX,lineY,6.5,'0.14 0.17 0.19');lineY-=7}
