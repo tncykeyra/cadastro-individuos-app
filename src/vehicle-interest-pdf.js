@@ -9,12 +9,37 @@ const TYPE_LABEL={furto:'FURTO',roubo:'ROUBO',outra:'OUTRA'};
 const PAGE_WIDTH=283.46, PAGE_HEIGHT=396.85, MARGIN=12, CONTENT_WIDTH=PAGE_WIDTH-MARGIN*2, BOTTOM=14;
 function plateValue(row,plateFormat){const letters=String(row.plate_letters||'').toLocaleUpperCase('pt-BR'),numbers=String(row.plate_numbers||'').toLocaleUpperCase('pt-BR');return plateFormat==='inverted'?[numbers,letters].filter(Boolean).join(' '):letters+numbers}
 const TYPE_SHORT={furto:'F',roubo:'R',outra:'O'};
+const PLATE_COLUMN=MARGIN+90,DETAILS_X=PLATE_COLUMN+6,DETAILS_WIDTH=PAGE_WIDTH-MARGIN-DETAILS_X;
+function helveticaWidthUnits(value){
+ return [...String(value??'')].reduce((sum,char)=>{
+  if(char===' ')return sum+0.278;
+  if(/[MW]/.test(char))return sum+0.833;
+  if(/[il!.,:;|'’]/.test(char))return sum+0.278;
+  if(/[0-9]/.test(char))return sum+0.556;
+  if(/[-–/]/.test(char))return sum+0.333;
+  if(/[mw]/.test(char))return sum+0.778;
+  const upper=char.toLocaleUpperCase('pt-BR');
+  if(/[A-ZÁÉÍÓÚÂÊÔÃÕÇ]/.test(upper))return sum+0.667;
+  return sum+0.5
+ },0)
+}
+function plateFontSize(value){
+ const available=PLATE_COLUMN-(MARGIN+5)-7;
+ return Math.max(7,Math.min(20,available/Math.max(helveticaWidthUnits(value),0.5)))
+}
+function fittedDetailLines(value){
+ const baseSize=6.5,minimumSize=5.4,units=helveticaWidthUnits(value);
+ const fittingSize=units?Math.min(baseSize,DETAILS_WIDTH/units):baseSize;
+ if(fittingSize>=minimumSize)return [{text:value,size:fittingSize}];
+ const maxChars=Math.max(12,Math.floor(DETAILS_WIDTH/(minimumSize*0.7)));
+ return wrap(value,maxChars).map(line=>({text:line,size:minimumSize}))
+}
 function prepareCard(row,plateFormat){
  const modelBits=[row.model,row.year?'ANO '+row.year:'',row.color?'COR '+row.color:''].filter(Boolean).join(' · ').toLocaleUpperCase('pt-BR');
  const facts=['F/R: '+(TYPE_SHORT[row.incident_type]||'O'),'CIDADE: '+(row.plate_city||'—').toLocaleUpperCase('pt-BR'),'LOCAL: '+(row.occurrence_location||'—').toLocaleUpperCase('pt-BR')].join(' · ');
- return {plate:plateValue(row,plateFormat)||'PLACA NÃO INFORMADA',details:[...wrap(modelBits||'MODELO NÃO INFORMADO',52),...wrap(facts,52)]}
+ return {plate:plateValue(row,plateFormat)||'PLACA NÃO INFORMADA',details:[modelBits||'MODELO NÃO INFORMADO',facts]}
 }
-function cardHeight(card){return Math.max(24.5,8+card.details.length*7)}
+function cardHeight(card){const lines=card.details.flatMap(fittedDetailLines);return Math.max(24.5,8+lines.length*7)}
 function pdfPages(rows,cityName,generatedAt,plateFormat='normal'){
  const input=rows.length?rows:[{plate_numbers:'—',plate_letters:'—',model:'NENHUM VEÍCULO ATIVO',year:'',color:'',incident_type:'outra',plate_city:'',occurrence_location:''}];
  const cards=input.map(row=>prepareCard(row,plateFormat)),headerBottom=PAGE_HEIGHT-52,tableHeaderHeight=16,tableStart=headerBottom-tableHeaderHeight;
@@ -26,16 +51,16 @@ function pdfPages(rows,cityName,generatedAt,plateFormat='normal'){
   commands+=text((cityName||'CIDADE NÃO INFORMADA').toLocaleUpperCase('pt-BR'),MARGIN,PAGE_HEIGHT-33,8,'0.30 0.34 0.36');
   commands+=text(new Date(generatedAt).toLocaleDateString('pt-BR')+' · F FURTO  /  R ROUBO  /  O OUTRA',MARGIN,PAGE_HEIGHT-44,6.5,'0.34 0.38 0.40');
   commands+='0.23 0.28 0.31 rg '+MARGIN.toFixed(2)+' '+(tableStart-tableHeaderHeight).toFixed(2)+' '+CONTENT_WIDTH.toFixed(2)+' '+tableHeaderHeight.toFixed(2)+' re f\n';
-  const plateColumn=MARGIN+74,detailsX=plateColumn+6;
+  const plateColumn=PLATE_COLUMN,detailsX=DETAILS_X;
   commands+=text('PLACA',MARGIN+5,tableStart-11,6.5,'1 1 1');
   commands+=text('MODELO · ANO · COR · F/R · CIDADE/LOCAL',detailsX,tableStart-11,6.5,'1 1 1');
   let y=tableStart-tableHeaderHeight;
   for(const card of pageCards){const height=cardHeight(card),top=y,bottom=top-height;
    commands+='0.69 0.72 0.74 RG 0.6 w '+MARGIN.toFixed(2)+' '+bottom.toFixed(2)+' '+CONTENT_WIDTH.toFixed(2)+' '+height.toFixed(2)+' re S\n';
    commands+='0.69 0.72 0.74 RG 0.5 w '+plateColumn.toFixed(2)+' '+bottom.toFixed(2)+' m '+plateColumn.toFixed(2)+' '+top.toFixed(2)+' l S\n';
-   commands+=text(card.plate,MARGIN+5,top-(height/2)-6,20,'0.08 0.10 0.11');
+   commands+=text(card.plate,MARGIN+5,top-(height/2)-6,plateFontSize(card.plate),'0.08 0.10 0.11');
    let lineY=top-8;
-   for(const line of card.details){commands+=text(line,detailsX,lineY,6.5,'0.14 0.17 0.19');lineY-=7}
+   for(const line of card.details.flatMap(fittedDetailLines)){commands+=text(line.text,detailsX,lineY,line.size,'0.14 0.17 0.19');lineY-=7}
    y-=height
   }
   commands+=text(String(pageIndex+1)+'/'+String(pages.length),PAGE_WIDTH-MARGIN-18,BOTTOM/2,6,'0.42 0.45 0.47');
