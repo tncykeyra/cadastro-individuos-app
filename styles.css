@@ -2024,3 +2024,100 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 .identity-suggestion-alert-copy{margin:12px 0 0;color:var(--muted);font-size:.96rem;line-height:1.55}
 .identity-suggestion-alert-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:23px}
 @media(max-width:520px){.identity-suggestion-alert-card{padding:24px 20px}.identity-suggestion-alert-actions{display:grid;grid-template-columns:1fr}.identity-suggestion-alert-actions .button{width:100%;justify-content:center}}
+
+
+/* Aba Usuários: hierarquia clara sem alterar controles ou fluxos existentes. */
+#mainContent > .page-intro:has(+ .team-page-tabs){
+  align-items:flex-start;
+  margin:8px 0 18px;
+  padding:20px 22px;
+  border:1px solid var(--line);
+  border-radius:18px;
+  background:linear-gradient(135deg,var(--surface),color-mix(in srgb,var(--soft) 62%,var(--surface)));
+  box-shadow:0 8px 24px #1721270a;
+}
+#mainContent > .page-intro:has(+ .team-page-tabs) h1{font-size:clamp(1.55rem,3vw,2rem);letter-spacing:-.035em}
+#mainContent > .page-intro:has(+ .team-page-tabs) p{max-width:68ch;line-height:1.5}
+#mainContent .team-page-tabs{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,175px),1fr));
+  gap:9px;
+  margin:0 0 18px;
+  padding:0;
+}
+#mainContent .team-page-tabs .team-page-tab{
+  display:flex!important;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+  min-width:0;
+  min-height:48px;
+  padding:10px 12px;
+  border:1px solid var(--line);
+  border-radius:13px;
+  background:var(--surface);
+  color:var(--ink);
+  font-size:.88rem;
+  font-weight:650;
+  line-height:1.25;
+  text-align:center;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  box-shadow:0 2px 8px #17212708;
+}
+#mainContent .team-page-tabs .team-page-tab:hover{border-color:#aeb8bd;background:var(--soft);transform:translateY(-1px)}
+#mainContent .team-page-tabs .team-page-tab.active{border-color:var(--brand);background:var(--brand);color:#fff;box-shadow:0 5px 14px #1721271c}
+#mainContent .team-page-tabs .team-page-tab.has-pending:not(.active){border-color:#d88b90;background:#fff5f5;color:#852b32}
+#mainContent .team-page-count{flex:0 0 auto}
+#mainContent .team-panel{min-width:0;margin:14px 0;padding:clamp(14px,2vw,22px);border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:0 8px 24px #1721270a}
+#mainContent .team-panel > h2{margin:18px 0 10px;font-size:1.1rem;letter-spacing:-.015em}
+#mainContent .team-panel > .page-intro{margin:0 0 12px}
+#mainContent .team-panel > .page-intro h2{margin:0;font-size:1.12rem}
+#mainContent .team-panel > .page-intro p{line-height:1.5}
+#mainContent .team-tabs{gap:8px;margin:14px 0;padding:5px;border:1px solid var(--line);border-radius:14px;background:var(--soft)}
+#mainContent .team-tabs .team-tab{min-height:42px;padding:9px 14px;border-radius:10px;background:transparent;color:var(--muted);font-size:.9rem}
+#mainContent .team-tabs .team-tab.active{background:var(--surface);color:var(--ink);border-color:var(--line);box-shadow:0 2px 8px #17212712}
+#mainContent .user-table.list{margin-top:12px;border-radius:16px;box-shadow:0 6px 20px #1721270a}
+#mainContent .user-account-row{min-height:76px;gap:12px;padding:13px 15px;cursor:default;transition:background .15s ease}
+#mainContent .user-account-row:hover{background:color-mix(in srgb,var(--soft) 58%,var(--surface))}
+#mainContent .user-account-row .vehicle-thumb{width:48px;height:48px;border:1px solid var(--line);border-radius:14px;background:var(--soft);color:var(--brand);font-size:1.1rem;font-weight:750}
+#mainContent .user-account-row .row-title{font-size:.96rem;line-height:1.35}
+#mainContent .user-account-row .row-subtitle{font-size:.82rem;line-height:1.45}
+#mainContent .user-account-row:has(.authorized-role-control){grid-template-columns:48px minmax(150px,1fr) minmax(130px,170px) auto auto}
+#mainContent .user-account-row .button{min-height:42px}
+#mainContent .user-account-row .button.small{padding:9px 12px;font-size:.84rem}
+#mainContent .user-account-row select.role-select{min-height:44px;padding:8px 11px;border-color:var(--line);background:var(--surface);color:var(--ink)}
+#mainContent .user-create-row .field label{font-weight:700}
+#mainContent .user-create-row .field small{max-width:72ch;line-height:1.5}
+#mainContent .city-access-fieldset{border-color:var(--line);background:color-mix(in srgb,var(--soft) 38%,var(--surface))}
+#mainContent .city-access-option{transition:border-color .15s ease,background .15s ease}
+#mainContent .city-access-option:hover{border-color:#aeb8bd}
+#mainContent :is(.user-account-row,.user-create-row,.team-panel,.team-page-tabs,.city-access-fieldset){min-width:0;max-width:100%}
+#mainContent .team-panel :is(.notice,.error-box,.empty){overflow-wrap:anywhere}
+#mainContent :is(.team-page-tab,.team-tab,.user-account-row .button,.user-create-row .button):focus-visible{outline:3px solid #4a90d9;outline-offset:3px}
+:root[data-theme="dark"] #mainContent > .page-intro:has(+ .team-page-tabs){background:linear-gradient(135deg,#111416,#080a0b);box-shadow:0 8px 24px #0005}
+:root[data-theme="dark"] #mainContent .team-page-tabs .team-page-tab.has-pending:not(.active){background:#351619;color:#ffdfe1;border-color:#8f3b42}
+:root[data-theme="dark"] #mainContent .team-tabs{background:#090b0c}
+:root[data-theme="dark"] #mainContent .team-tabs .team-tab.active{background:#252b2f;color:#f4f6f7;border-color:#566168}
+:root[data-theme="dark"] #mainContent .user-account-row:hover{background:#171b1e}
+:root[data-theme="dark"] #mainContent .user-account-row .vehicle-thumb{background:#1b2023;color:#e4e9eb}
+:root[data-theme="dark"] #mainContent .city-access-fieldset{background:#090b0c}
+@media(max-width:860px){
+  #mainContent .user-account-row:has(.authorized-role-control){grid-template-columns:42px minmax(0,1fr)}
+  #mainContent .user-account-row:has(.authorized-role-control) .authorized-role-control,
+  #mainContent .user-account-row:has(.authorized-role-control) > .button{grid-column:2;width:100%;justify-self:stretch}
+}
+@media(max-width:620px){
+  #mainContent > .page-intro:has(+ .team-page-tabs){padding:16px;border-radius:15px}
+  #mainContent .team-page-tabs{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px;margin-bottom:14px}
+  #mainContent .team-page-tabs .team-page-tab{min-height:46px;padding:9px 8px;border-radius:11px;font-size:.82rem}
+  #mainContent .team-page-tabs .team-page-tab[data-team-page="identity"]{grid-column:1/-1}
+  #mainContent .team-panel{padding:14px;border-radius:15px}
+  #mainContent .team-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  #mainContent .team-tabs .team-tab{padding:9px 7px;font-size:.83rem;white-space:normal}
+  #mainContent .user-account-row:has(.authorized-role-control){grid-template-columns:40px minmax(0,1fr);gap:8px;padding:11px}
+  #mainContent .user-account-row .vehicle-thumb{width:40px;height:40px;border-radius:12px}
+  #mainContent .user-account-row .button{white-space:normal}
+  #mainContent .user-create-row .button{white-space:normal}
+}
