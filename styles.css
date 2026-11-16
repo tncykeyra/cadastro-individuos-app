@@ -2011,3 +2011,16 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 /* Indicador de atividades pendentes do administrador master */
 .master-activity-alert{position:absolute;top:1px;right:0;z-index:3;display:grid;place-items:center;width:19px;height:19px;padding:0;border:2px solid #fff;border-radius:50%;background:#c62835;color:#fff;font-size:12px;font-weight:900;line-height:1;box-shadow:0 2px 6px #0004;pointer-events:none}
 .master-activity-alert[hidden]{display:none}
+
+
+
+.identity-suggestion-alert-dialog{width:min(460px,calc(100vw - 28px));max-width:calc(100vw - 28px);max-height:min(88dvh,620px);margin:auto;padding:0;overflow:auto;border:1px solid var(--line);border-radius:22px;background:var(--surface);color:var(--ink);box-shadow:0 24px 80px #0005}
+.identity-suggestion-alert-dialog::backdrop{background:#101719b8;backdrop-filter:blur(3px)}
+.identity-suggestion-alert-card{position:relative;padding:28px}
+.identity-suggestion-alert-close{position:absolute;top:14px;right:14px;width:38px;height:38px;border:0;border-radius:50%;background:var(--soft);color:var(--ink);font-size:1.6rem;line-height:1;cursor:pointer}
+.identity-suggestion-alert-icon{display:grid;place-items:center;width:46px;height:46px;margin:0 0 18px;border-radius:50%;background:#c62835;color:#fff;font-size:1.5rem;font-weight:900}
+.identity-suggestion-alert-eyebrow{margin:0 0 7px;color:var(--muted);font-size:.72rem;font-weight:800;letter-spacing:.1em}
+.identity-suggestion-alert-card h2{max-width:calc(100% - 24px);margin:0;color:var(--ink);font-size:1.35rem;line-height:1.25}
+.identity-suggestion-alert-copy{margin:12px 0 0;color:var(--muted);font-size:.96rem;line-height:1.55}
+.identity-suggestion-alert-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:23px}
+@media(max-width:520px){.identity-suggestion-alert-card{padding:24px 20px}.identity-suggestion-alert-actions{display:grid;grid-template-columns:1fr}.identity-suggestion-alert-actions .button{width:100%;justify-content:center}}
