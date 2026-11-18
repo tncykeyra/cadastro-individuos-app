@@ -487,7 +487,7 @@ async function runWarrantCrosscheck(files){
     if(error)throw error;
     people.push(...(data||[]));if((data||[]).length<500)break;offset+=500;
   }
-  const preliminary=findWarrantNameCandidates(rowsWithExisting,people,{maxCandidates:10000});
+  const preliminary=findWarrantNameCandidates(rowsWithExisting,people,{maxCandidates:10000,includeConflicts:true});
   const candidateIds=[...new Set(preliminary.flatMap(row=>row.candidates.map(person=>person.id)))];
   const peopleDetails=new Map(),confirmedLinksByPerson=new Map(),warrantsById=new Map(warrants.map(warrant=>[warrant.id,warrant]));
   for(let offset=0;offset<candidateIds.length;offset+=100){
