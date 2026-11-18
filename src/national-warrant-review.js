@@ -1,4 +1,4 @@
-import { normalizeWarrantName } from './warrants.js';
+import { normalizeWarrantName, normalizeWarrantProcessNumber } from './warrants.js';
 
 const MAX_CSV_CHARS = 50 * 1024 * 1024;
 const clean = (value, max = 240) => String(value ?? '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
@@ -117,7 +117,7 @@ export function parseNationwideWarrantCsv(text, fallbackState = '') {
     if (!uf) rowsMissingState++;
     const sourceReference = value(row, column.process);
     const numberValue = value(row, column.warrant);
-    const processNumber = sourceReference || (/^(?:\\d{7}\\s*-\\s*\\d{2}\\s*\\.\\s*\\d{4}\\s*\\.\\s*\\d\\s*\\.\\s*\\d{2}\\s*\\.\\s*\\d{4}|\\d{20})$/.test(numberValue) ? numberValue : '');
+    const processNumber = sourceReference || (/^(?:\d{7}\\s*-\\s*\d{2}\\s*\\.\\s*\d{4}\\s*\\.\\s*\d\\s*\\.\\s*\d{2}\\s*\\.\\s*\d{4}|\d{20})$/.test(numberValue) ? numberValue : '');
     records.push({
       full_name,
       alias: value(row, column.alias),
@@ -190,4 +190,67 @@ export function inferWarrantStateFromFilename(filename) {
     if (tokens.has(uf.toLowerCase()) || (' '+normalized+' ').includes(' '+name+' ')) return uf;
   }
   return '';
+}
+
+
+export function findExistingWarrantRows(rows, warrants) {
+  const processIndex = new Map();
+  const identityIndex = new Map();
+  const normalizeBirthDate = value => {
+    const text = String(value || '').trim();
+    let match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return match[1] + '-' + match[2] + '-' + match[3];
+    match = text.match(/^(\d{2})[\\/.-](\d{2})[\\/.-](\d{4})$/);
+    return match ? match[3] + '-' + match[2] + '-' + match[1] : '';
+  };
+  const identityKey = row => {
+    const name = normalizeWarrantName(row?.full_name);
+    const birth = normalizeBirthDate(row?.birth_date || row?.birthDate);
+    const mother = normalizeWarrantName(row?.mother_name);
+    const father = normalizeWarrantName(row?.father_name);
+    // Without a process number, only surface a cautious identity match when
+    // birth date and at least one parent are also available on both records.
+    if (!name || !birth || (!mother && !father)) return '';
+    return [name, birth, mother, father].join('|');
+  };
+  for (const warrant of warrants || []) {
+    const process = normalizeWarrantProcessNumber(warrant?.process_number_digits || warrant?.process_number || '');
+    if (process) {
+      const list = processIndex.get(process) || [];
+      list.push(warrant);
+      processIndex.set(process, list);
+    }
+    const identity = identityKey({
+      full_name: warrant?.full_name,
+      birth_date: warrant?.birth_date,
+      mother_name: warrant?.mother_name,
+      father_name: warrant?.father_name
+    });
+    if (identity) {
+      const list = identityIndex.get(identity) || [];
+      list.push(warrant);
+      identityIndex.set(identity, list);
+    }
+  }
+  return (rows || []).map(row => {
+    const process = normalizeWarrantProcessNumber(row?.process_number || '');
+    const exact = process ? processIndex.get(process) || [] : [];
+    const identity = identityKey(row);
+    const identityMatches = !exact.length && identity ? identityIndex.get(identity) || [] : [];
+    const matches = exact.length ? exact : identityMatches;
+    const matchType = exact.length ? 'process' : identityMatches.length ? 'identity' : '';
+    return {
+      ...row,
+      existing_warrant_match_type: matchType,
+      existing_warrant_count: matches.length,
+      existing_warrants: matches.slice(0, 5).map(warrant => ({
+        id: warrant.id,
+        full_name: warrant.full_name,
+        city_id: warrant.city_id || '',
+        status: warrant.status || '',
+        process_number_digits: warrant.process_number_digits || '',
+        warrant_number: warrant.warrant_number || ''
+      }))
+    };
+  });
 }
