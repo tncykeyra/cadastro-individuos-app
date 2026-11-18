@@ -1,4 +1,4 @@
-import { normalizeWarrantName, normalizeWarrantProcessNumber } from './warrants.js';
+import { normalizeWarrantName, normalizeWarrantProcessNumber, normalizeWarrantText } from './warrants.js';
 
 const MAX_CSV_CHARS = 50 * 1024 * 1024;
 const clean = (value, max = 240) => String(value ?? '').replace(/[\r\n\t]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
@@ -181,7 +181,7 @@ export function findWarrantNameCandidates(rows, people, { threshold = 1, maxCand
   const index = new Map();
   for (const person of people || []) {
     const name = String(person?.full_name || '').trim();
-    const normalized = normalizeWarrantName(name);
+    const normalized = normalizeWarrantText(name);
     if (!person?.id || !normalized) continue;
     const entry = { ...person, full_name: name, birthday: person.birthday || '', city_id: person.city_id || '' };
     const list = index.get(normalized) || [];
@@ -189,7 +189,7 @@ export function findWarrantNameCandidates(rows, people, { threshold = 1, maxCand
     index.set(normalized, list);
   }
   return (rows || []).map(row => {
-    const normalized = normalizeWarrantName(row?.full_name);
+    const normalized = normalizeWarrantText(row?.full_name);
     const candidates = [], excludedCandidates = [];
     for (const person of index.get(normalized) || []) {
       const notes = [person.notes, person.occurrence_notes].filter(Boolean).join('\\n');
@@ -289,7 +289,7 @@ export function findExistingWarrantRows(rows, warrants) {
     const process = normalizeWarrantProcessNumber(row?.process_number || '');
     const exact = process ? processIndex.get(process) || [] : [];
     const identity = identityKey(row);
-    const identityMatches = !exact.length && identity ? identityIndex.get(identity) || [] : [];
+    const identityMatches = !process && identity ? identityIndex.get(identity) || [] : [];
     const matches = exact.length ? exact : identityMatches;
     const matchType = exact.length ? 'process' : identityMatches.length ? 'identity' : '';
     return {
