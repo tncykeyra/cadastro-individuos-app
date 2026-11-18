@@ -53,3 +53,31 @@ test('recovers a row with an unmatched opening quote instead of aborting the CSV
   assert.equal(result.records[0].state,'SP');
   assert.equal(result.records[0].status,'Pendente');
 });
+
+
+test('identifica mandado já cadastrado pelo número de processo e preserva a informação do app', async () => {
+  const { findExistingWarrantRows } = await import('../src/national-warrant-review.js');
+  const rows = [
+    { full_name: 'João Silva', process_number: '0000001-12.2024.8.26.0001', birth_date: '1980-02-03', mother_name: 'Maria Silva', father_name: 'José Silva' },
+    { full_name: 'João Silva', process_number: '0000002-12.2024.8.26.0001', birth_date: '1980-02-03', mother_name: 'Maria Silva', father_name: 'José Silva' }
+  ];
+  const warrants = [
+    { id: 'w1', process_number_digits: '00000011220248260001', full_name: 'João Silva', birth_date: '1980-02-03', mother_name: 'Maria Silva', father_name: 'José Silva', city_id: 'c1', status: 'pending' }
+  ];
+  const result = findExistingWarrantRows(rows, warrants);
+  assert.equal(result[0].existing_warrant_match_type, 'process');
+  assert.equal(result[0].existing_warrants[0].id, 'w1');
+  assert.equal(result[1].existing_warrant_match_type, '');
+});
+
+test('sem processo, só sinaliza possível repetição quando nome, nascimento e filiação coincidem', async () => {
+  const { findExistingWarrantRows } = await import('../src/national-warrant-review.js');
+  const result = findExistingWarrantRows([
+    { full_name: 'João da Silva', birth_date: '03/02/1980', mother_name: 'Maria da Silva', father_name: 'José da Silva' },
+    { full_name: 'João da Silva', birth_date: '03/02/1980' }
+  ], [
+    { id: 'w1', full_name: 'João da Silva', birth_date: '1980-02-03', mother_name: 'Maria da Silva', father_name: 'José da Silva', status: 'pending' }
+  ]);
+  assert.equal(result[0].existing_warrant_match_type, 'identity');
+  assert.equal(result[1].existing_warrant_match_type, '');
+});
