@@ -2121,3 +2121,22 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
   #mainContent .user-account-row .button{white-space:normal}
   #mainContent .user-create-row .button{white-space:normal}
 }
+
+/* Nationwide warrant CSV review: compact, readable and responsive in both themes. */
+.warrant-crosscheck-card{display:grid;gap:14px;padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.warrant-crosscheck-card h2{margin:0;font-size:1.12rem}
+.warrant-crosscheck-card>p{margin:0;color:var(--muted);line-height:1.55}
+.warrant-crosscheck-controls{display:flex;align-items:end;gap:12px;flex-wrap:wrap}
+.warrant-crosscheck-state{display:grid;gap:6px;min-width:min(100%,250px);font-weight:650}
+.warrant-crosscheck-state select{min-height:44px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit}
+.warrant-crosscheck-progress{display:grid;grid-template-columns:minmax(120px,1fr) auto auto;align-items:center;gap:10px}
+.warrant-crosscheck-progress progress{width:100%;height:12px;accent-color:var(--brand)}
+.warrant-crosscheck-actions{display:flex;flex-wrap:wrap;gap:8px}
+.warrant-crosscheck-results{display:grid;gap:8px;max-height:70vh;overflow:auto;overscroll-behavior:contain}
+.warrant-crosscheck-result{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(220px,.8fr);gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--page);min-width:0}
+.warrant-crosscheck-data,.warrant-crosscheck-candidates{display:grid;align-content:start;gap:5px;min-width:0}
+.warrant-crosscheck-data>strong{font-size:.95rem}
+.warrant-crosscheck-data>span,.warrant-crosscheck-person>span{font-size:.82rem;line-height:1.4;color:var(--muted);overflow-wrap:anywhere}
+.warrant-crosscheck-person{display:grid;gap:3px;padding:8px 10px;border-radius:9px;background:var(--surface);border:1px solid var(--line);min-width:0}
+.warrant-crosscheck-person>strong{font-size:.86rem;overflow-wrap:anywhere}
+@media(max-width:700px){.warrant-crosscheck-card{padding:14px}.warrant-crosscheck-result{grid-template-columns:1fr}.warrant-crosscheck-progress{grid-template-columns:1fr auto}.warrant-crosscheck-progress progress{grid-column:1/-1;grid-row:1}.warrant-crosscheck-controls>*{width:100%}.warrant-crosscheck-controls .button{justify-content:center}}

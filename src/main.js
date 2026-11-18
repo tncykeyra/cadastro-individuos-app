@@ -3,6 +3,7 @@ import packageJson from '../package.json';
 import { isUsefulSearch, normalizePlate, isValidPlate, dedupePhotoSources, formatPersonName, normalizeRecordPhotos } from './domain.js';
 import { buildRecordPdf } from './pdf.js';
 import { isValidCpf, mergeFiliationIntoNotes } from './ocr-domain.js';
+import { parseNationwideWarrantCsv, findWarrantNameCandidates } from './national-warrant-review.js';
 import { parseWarrantCsv, normalizeWarrantProcessNumber, isSpecificWarrantNumber, extractWarrantSuggestions, extractWarrantPersonSuggestions, formatWarrantOcrProgress, resolveWarrantBatchValues } from './warrants.js';
 
 import { renderFiscalizationPage, wireFiscalizationActions } from './fiscalization.js';
@@ -21,7 +22,7 @@ const config={url:import.meta.env.VITE_SUPABASE_URL,key:import.meta.env.VITE_SUP
 const appIconUrl=import.meta.env.BASE_URL+'icon.svg?v=10';
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 if(!document.querySelector('[data-operator-ui-css]')){const styleLink=document.createElement('link');styleLink.rel='stylesheet';styleLink.href=import.meta.env.BASE_URL+'operator-tour.css?v=5';styleLink.dataset.operatorUiCss='';document.head.append(styleLink)}
-const state={client:null,session:null,profile:null,cities:[],activeCityId:null,cityRole:null,cityContextReady:false,cityAccessError:'',page:'dashboard',selected:null,query:'',searchInput:'',people:[],vehicles:[],profiles:[],revisions:[],loading:false,searchTimer:null,searchRequest:0,lastSearchKey:'',searchLoading:false,install:null,passwordSetup:false,smartInitialKind:'person',smartExactMatch:false,smartMatchesCount:0,teamTab:'google',teamPage:'authorize',teamCreatedUser:null,editingAuthorizedEmail:null,pendingIdentityCount:null,masterActivityPendingCount:null,masterActivityRefreshTimer:null,identitySuggestionPopupSeenIds:new Set(),pendingWarrantReviewCount:null,pendingWarrantDuplicateCount:0,pendingVehiclePlateCount:null,warrantTab:'list',revisionOffset:0,revisionTotal:0,revisionFilters:{entity:'all',action:'all',actor:'all',from:'',to:''},historyProfiles:[],historyPeople:[],historyVehicles:[],letter:'all',listPage:0,listPageSize:30,listTotal:0,serverPaged:false,routeStack:[],modalHistory:false,drawerHistory:false,ignoreNavigationPop:false,closingModalFromBack:false,warrantPdfPickerActive:false,warrantPdfPickerTimer:null ,warrantQuery:''};
+const state={client:null,session:null,profile:null,cities:[],activeCityId:null,cityRole:null,cityContextReady:false,cityAccessError:'',page:'dashboard',selected:null,query:'',searchInput:'',people:[],vehicles:[],profiles:[],revisions:[],loading:false,searchTimer:null,searchRequest:0,lastSearchKey:'',searchLoading:false,install:null,passwordSetup:false,smartInitialKind:'person',smartExactMatch:false,smartMatchesCount:0,teamTab:'google',teamPage:'authorize',teamCreatedUser:null,editingAuthorizedEmail:null,pendingIdentityCount:null,masterActivityPendingCount:null,masterActivityRefreshTimer:null,identitySuggestionPopupSeenIds:new Set(),pendingWarrantReviewCount:null,pendingWarrantDuplicateCount:0,pendingVehiclePlateCount:null,warrantTab:'list',revisionOffset:0,revisionTotal:0,revisionFilters:{entity:'all',action:'all',actor:'all',from:'',to:''},historyProfiles:[],historyPeople:[],historyVehicles:[],letter:'all',listPage:0,listPageSize:30,listTotal:0,serverPaged:false,routeStack:[],modalHistory:false,drawerHistory:false,ignoreNavigationPop:false,closingModalFromBack:false,warrantPdfPickerActive:false,warrantPdfPickerTimer:null ,warrantQuery:'',warrantCrosscheckReview:null,warrantCrosscheckCancelled:false};
 const icon={dashboard:'▦',people:'♙',vehicles:'⌑',warrants:'⚖',vehicleInterest:'🚘',fiscalization:'🚦',team:'♧',history:'↺',smart:'✨',review:'🔎',maintenance:'🛠️',cities:'⌖'};
 const FISCALIZATION_CITY_ID='10000000-0000-4000-8000-000000000001';
 const canUseFiscalization=()=>state.activeCityId===FISCALIZATION_CITY_ID;
@@ -436,6 +437,68 @@ async function reviewWarrantDuplicate(submissionId,decision){
   toast(decision==='approve'?'Duplicidade confirmada; um único registro ativo foi mantido.':decision==='register_distinct'?'Mandado distinto registrado para conferência de vínculo.':'Submissão rejeitada e mantida no histórico.');
   await refreshWarrantReviewBadge();await renderWarrants();
 }
+function warrantCrosscheckMarkup(){
+  const review=state.warrantCrosscheckReview;
+  const states=['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+  const stateOptions='<option value="">Escolher UF se a planilha não tiver coluna de estado</option>'+states.map(uf=>'<option value="'+uf+'">'+uf+'</option>').join('');
+  if(!review)return '<section class="warrant-crosscheck-card"><h2>Cruzamento nacional de planilha BNMP</h2><p>Selecione uma ou várias planilhas CSV. O app compara os nomes com os indivíduos das cidades autorizadas à sua conta e mostra possíveis correspondências com nome, filiação, processo, UF e situação.</p><div class="warrant-crosscheck-controls"><label class="warrant-crosscheck-state">UF padrão <select data-warrant-crosscheck-state>'+stateOptions+'</select></label><label class="button secondary warrant-file-label">Selecionar CSV(s)<input type="file" accept=".csv,text/csv" data-warrant-crosscheck-csv multiple hidden></label></div><p class="warrant-caution">A conferência não grava mandados nem altera cadastros. Cada nome é apenas uma sugestão; confirme identidade e situação na fonte oficial. A ausência numa planilha não baixa nem exclui mandado.</p></section>';
+  const resultCards=(review.matches||[]).slice(0,100).map(row=>'<article class="warrant-crosscheck-result"><div class="warrant-crosscheck-data"><strong>'+esc(row.full_name)+'</strong><span><b>Filiação:</b> Mãe '+esc(row.mother_name||'não informada')+' · Pai '+esc(row.father_name||'não informado')+'</span><span><b>Processo:</b> '+esc(row.process_number||row.warrant_number||'não informado')+'</span><span><b>Estado:</b> '+esc(row.state)+' · <b>Situação:</b> '+esc(row.status)+'</span></div><div class="warrant-crosscheck-candidates">'+(row.candidates||[]).map(person=>'<div class="warrant-crosscheck-person"><strong>Possível cadastro em '+esc(person.city_name||'cidade autorizada')+': '+esc(formatPersonName(person.full_name))+'</strong><span>'+esc(person.reason)+' · similaridade de nome '+Math.round(person.confidence*100)+'%</span></div>').join('')+'</div></article>').join('');
+  return '<section class="warrant-crosscheck-card"><h2>Resultado do cruzamento</h2><p>'+esc(review.fileNames||'Planilha(s) selecionada(s)')+' · '+Number(review.totalRows||0).toLocaleString('pt-BR')+' linhas analisadas · '+Number(review.matches?.length||0).toLocaleString('pt-BR')+' possíveis correspondências · '+Number(review.withoutCandidate||0).toLocaleString('pt-BR')+' sem correspondência provável · cidades consultadas: '+esc(review.cityNames||'autorizadas')+'</p>'+(review.running?'<div class="warrant-crosscheck-progress"><progress max="100" value="'+Number(review.progress||0)+'"></progress><span data-warrant-crosscheck-status>'+esc(review.progressLabel||'Preparando conferência…')+'</span><button class="button secondary small" type="button" data-warrant-crosscheck-cancel>Cancelar</button></div>':'')+(review.error?'<p class="warrant-caution">'+esc(review.error)+'</p>':'')+(review.matches?.length?'<div class="warrant-crosscheck-actions"><button type="button" class="button secondary" data-warrant-crosscheck-clear>Limpar resultado</button><button type="button" class="button secondary" data-warrant-crosscheck-export>Baixar correspondências CSV ('+review.matches.length.toLocaleString('pt-BR')+')</button></div><p class="muted">As sugestões acumulam as planilhas selecionadas nesta sessão. Exibindo até 100 na tela; o CSV contém todas. Nenhuma associação foi confirmada.</p><div class="warrant-crosscheck-results">'+resultCards+'</div>':'<p class="muted">'+(review.running?'O cruzamento está em andamento.':review.cancelled?'Conferência interrompida após '+Number(review.totalRows||0).toLocaleString('pt-BR')+' linhas. Os resultados mostrados são parciais.':'Nenhuma sugestão alcançou o limite de similaridade. A lista original não foi alterada.')+'</p>')+'</section>';
+}
+async function runWarrantCrosscheck(files, fallbackState){
+  if(files.length>27)throw new Error('Selecione até 27 arquivos CSV por vez.');
+  if(files.reduce((sum,file)=>sum+file.size,0)>50*1024*1024)throw new Error('O conjunto de planilhas deve ter até 50 MB. Divida a importação em lotes menores.');
+  if(!isAdmin())throw new Error('Apenas administradores podem cruzar listas de mandados.');
+  if(state.warrantCrosscheckReview?.running)throw new Error('Aguarde o cruzamento atual terminar antes de enviar outra planilha.');
+  const previous=state.warrantCrosscheckReview?.error?null:state.warrantCrosscheckReview;
+  const previousMatches=previous?.matches||[],previousTotal=Number(previous?.totalRows||0),previousWithout=Number(previous?.withoutCandidate||0);
+  const fileNamesList=[...new Set([...(previous?.fileNamesList||[]),...files.map(file=>file.name)])];
+  state.warrantCrosscheckCancelled=false;
+  const parsedFiles=[];
+  for(const file of files){
+    if(file.size>50*1024*1024)throw new Error(file.name+' ultrapassa 50 MB. Divida a planilha e tente de novo.');
+    const parsed=parseNationwideWarrantCsv(await file.text(),fallbackState);
+    if(parsed.rowsMissingState)throw new Error('A planilha '+file.name+' tem linhas sem UF. Selecione a UF padrão antes de cruzar.');
+    parsed.records.forEach(row=>row.source_file=file.name);
+    parsedFiles.push(parsed);
+  }
+  const rows=parsedFiles.flatMap(item=>item.records);
+  if(!rows.length)throw new Error('Não há registros válidos nas planilhas selecionadas.');
+  state.warrantCrosscheckReview={running:true,progress:0,progressLabel:'Carregando os indivíduos autorizados…',matches:previousMatches,totalRows:previousTotal+rows.length,withoutCandidate:previousWithout,fileNamesList,fileNames:fileNamesList.join(', '),cityNames:state.cities.map(city=>city.name).filter(Boolean).join(', ')||'cidades autorizadas'};
+  await renderWarrants();
+  const people=[],cityIds=(state.cities||[]).map(city=>city.id).filter(Boolean);if(!cityIds.length)throw new Error('Não há cidades autorizadas para comparar.');const cityNames=(state.cities||[]).map(city=>city.name).filter(Boolean);
+  let offset=0;
+  for(;;){
+    if(state.warrantCrosscheckCancelled)throw new Error('Conferência cancelada pelo usuário.');
+    const {data,error}=await state.client.from('people').select('id,full_name,birthday,city_id').in('city_id',cityIds).is('archived_at',null).order('id',{ascending:true}).range(offset,offset+499);
+    if(error)throw error;
+    people.push(...(data||[]));if((data||[]).length<500)break;offset+=500;
+  }
+  const matches=[...previousMatches];let withoutCandidate=previousWithout,processed=0;
+  for(let start=0;start<rows.length;start+=400){
+    if(state.warrantCrosscheckCancelled)break;
+    const result=findWarrantNameCandidates(rows.slice(start,start+400),people);
+    for(const row of result){for(const person of row.candidates)person.city_name=(state.cities||[]).find(city=>city.id===person.city_id)?.name||'Cidade autorizada';if(row.candidates.length)matches.push(row);else withoutCandidate++}
+    processed=Math.min(start+400,rows.length);
+    const progress=Math.min(99,Math.round((start+400)/rows.length*100));
+    state.warrantCrosscheckReview={...state.warrantCrosscheckReview,progress,progressLabel:'Conferindo '+Math.min(start+400,rows.length).toLocaleString('pt-BR')+' de '+rows.length.toLocaleString('pt-BR')+' linhas…'};
+    const status=document.querySelector('[data-warrant-crosscheck-status]'),bar=document.querySelector('.warrant-crosscheck-progress progress');
+    if(status)status.textContent=state.warrantCrosscheckReview.progressLabel;if(bar)bar.value=progress;
+    await new Promise(resolve=>setTimeout(resolve,0));
+  }
+  state.warrantCrosscheckReview={...state.warrantCrosscheckReview,running:false,progress:state.warrantCrosscheckCancelled?Math.round(processed/rows.length*100):100,progressLabel:state.warrantCrosscheckCancelled?'Cancelado antes do fim':'Concluído',matches,totalRows:previousTotal+(state.warrantCrosscheckCancelled?processed:rows.length),withoutCandidate,cancelled:state.warrantCrosscheckCancelled};
+  await renderWarrants();
+}
+function exportWarrantCrosscheckCsv(){
+  const rows=state.warrantCrosscheckReview?.matches||[];if(!rows.length)return;
+  const quote=value=>'"'+String(value??'').replace(/"/g,'""')+'"';
+  const headers=['Nome na planilha','Nome da mãe','Nome do pai','Número do processo','UF','Situação','Data de nascimento','Arquivo de origem','Cidade do cadastro','Nome possível no cadastro','Similaridade (%)','Motivo'];
+  const lines=[headers.map(quote).join(';')];
+  for(const row of rows)for(const person of row.candidates||[])lines.push([row.full_name,row.mother_name,row.father_name,row.process_number||row.warrant_number,row.state,row.status,row.birth_date,row.source_file,person.city_name,person.full_name,Math.round(person.confidence*100),person.reason].map(quote).join(';'));
+  const blob=new Blob(['\uFEFF'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),anchor=document.createElement('a');
+  anchor.href=url;anchor.download='cruzamento-mandados-'+new Date().toISOString().slice(0,10)+'.csv';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
 async function renderWarrants(){
   const admin=isAdmin();if(!admin&&!['operator','admin'].includes(state.profile?.role)){state.page='people';await loadPage();return}
   const warrants=[];
@@ -495,10 +558,10 @@ async function renderWarrants(){
   const list=rows.length?'<div class="warrant-record-list">'+rows.map(w=>warrantRecordMarkup(w,admin,docsById,linkedPeopleByWarrant.get(w.id)||[])).join('')+'</div>':'<div class="empty" data-warrant-no-records>Nenhum mandado cadastrado ou vinculado.</div>';
   const searchBox='<div class="warrant-list-search"><label class="warrant-search-label" for="warrantListSearch">Pesquisar mandados</label><div class="search-control warrant-search-control"><input class="search" id="warrantListSearch" type="search" data-warrant-list-search value="'+esc(state.warrantQuery||'')+'" placeholder="Nome, CPF, número ou processo" autocomplete="off"><button class="button search-button" type="button" data-warrant-search-focus aria-label="Pesquisar mandados" title="Pesquisar mandados">⌕</button></div><span class="warrant-list-count" data-warrant-list-count aria-live="polite"></span></div>';
   if(!admin)state.warrantTab='list';
-  const tabBar=admin?'<nav class="warrant-tabs" aria-label="Seções de mandados"><button type="button" class="team-tab warrant-tab '+(state.warrantTab==='list'?'active':'')+'" data-warrant-tab="list">Mandados incluídos <span>'+rows.length+'</span></button><button type="button" class="team-tab warrant-tab '+(state.warrantTab==='include'?'active':'')+'" data-warrant-tab="include">Incluir mandados</button><button type="button" class="team-tab warrant-tab '+(state.warrantTab==='review'?'active':'')+'" data-warrant-tab="review">Revisão <span>'+(matches.length+proposals.length+duplicateSubmissions.length)+'</span></button></nav>':'';
+  const tabBar=admin?'<nav class="warrant-tabs" aria-label="Seções de mandados"><button type="button" class="team-tab warrant-tab '+(state.warrantTab==='list'?'active':'')+'" data-warrant-tab="list">Mandados incluídos <span>'+rows.length+'</span></button><button type="button" class="team-tab warrant-tab '+(state.warrantTab==='include'?'active':'')+'" data-warrant-tab="include">Incluir mandados</button><button type="button" class="team-tab warrant-tab '+(state.warrantTab==='crosscheck'?'active':'')+'" data-warrant-tab="crosscheck">Cruzar planilhas</button><button type="button" class="team-tab warrant-tab '+(state.warrantTab==='review'?'active':'')+'" data-warrant-tab="review">Revisão <span>'+(matches.length+proposals.length+duplicateSubmissions.length)+'</span></button></nav>':'';
   const inclusionSection='<section class="warrant-inclusion-section"><div class="warrant-section-title"><div><h2>Incluir mandados</h2><p>Importe uma planilha, envie até '+MAX_WARRANT_PDF_BATCH+' PDFs ou cadastre um mandado.</p></div></div>'+toolsHtml+'</section>';
   const activeSection='<section class="warrant-active-section"><div class="warrant-section-title"><div><h2>'+(admin?'Mandados já incluídos':'Mandados vinculados')+'</h2><p>Registros disponíveis conforme seu perfil.</p></div>'+(admin?'<button type="button" class="button danger small" data-warrant-delete-all '+(rows.length+duplicateSubmissions.length?'':'disabled')+'>Excluir todos os mandados</button>':'')+'</div>'+searchBox+list+'<div class="empty warrant-search-empty" data-warrant-search-empty hidden>Nenhum mandado corresponde à pesquisa.</div></section>';
-  const tabContent=admin?(state.warrantTab==='include'?inclusionSection:state.warrantTab==='review'?reviewHtml:activeSection):activeSection;
+  const crosscheckSection='<section class="warrant-inclusion-section">'+warrantCrosscheckMarkup()+'</section>';const tabContent=admin?(state.warrantTab==='include'?inclusionSection:state.warrantTab==='crosscheck'?crosscheckSection:state.warrantTab==='review'?reviewHtml:activeSection):activeSection;
   frame('<section class="page-section warrants-page"><header class="warrant-page-header"><div><p class="eyebrow">CADASTRO CRIMINAL</p><h1>Mandados de prisão</h1><p class="muted">'+(admin?'Consulte, inclua e revise mandados de prisão.':'Consulte os mandados vinculados a indivíduos revisados pela administração.')+'</p></div>'+(admin?'<span class="warrant-admin-pill">Área administrativa</span>':'')+'</header>'+tabBar+tabContent+'</section>');
   document.querySelectorAll('[data-warrant-tab]').forEach(button=>button.addEventListener('click',async()=>{state.warrantTab=button.dataset.warrantTab;saveLastView();await renderWarrants()}));
   const warrantSearchInput=document.querySelector('[data-warrant-list-search]'),warrantSearchButton=document.querySelector('[data-warrant-search-focus]');if(warrantSearchInput){warrantSearchInput.addEventListener('input',()=>{state.warrantQuery=warrantSearchInput.value;if(!warrantSearchInput.value.trim())filterWarrantList()});warrantSearchInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();state.warrantQuery=warrantSearchInput.value;filterWarrantList()}})}if(warrantSearchButton)warrantSearchButton.addEventListener('click',()=>{state.warrantQuery=warrantSearchInput?.value||'';filterWarrantList()});filterWarrantList();
@@ -2232,6 +2295,13 @@ document.addEventListener('change',async event=>{
     }catch(error){toast(msg(error))}finally{input.value=''}
     return;
   }
+  if(input.matches?.('[data-warrant-crosscheck-csv]')){
+    const files=[...(input.files||[])],fallbackState=document.querySelector('[data-warrant-crosscheck-state]')?.value||'';
+    input.value='';if(!files.length)return;
+    state.page='warrants';state.warrantTab='crosscheck';saveLastView();
+    try{await runWarrantCrosscheck(files,fallbackState)}catch(error){if(state.warrantCrosscheckReview){state.warrantCrosscheckReview={...state.warrantCrosscheckReview,running:false,error:msg(error)};try{await renderWarrants()}catch{}}toast(msg(error))}
+    return;
+  }
   if(!input.matches?.('[data-warrant-csv]'))return;
   if(!isAdmin()){toast('Apenas administradores podem importar listas.');return}
   const file=input.files?.[0];if(!file)return;
@@ -2251,6 +2321,9 @@ document.addEventListener('click',async event=>{
   const removePdf=target.closest('[data-warrant-pdf-remove]');if(removePdf){if(!isAdmin()||warrantPdfBatchSaving||warrantPdfBatchReading)return;const [removed]=warrantPdfBatch.splice(Number(removePdf.dataset.warrantPdfRemove),1);await deletePersistedWarrantQueueEntry(removed);await renderWarrants();return}
   if(target.closest('[data-warrant-clear-pdf-batch]')){if(!isAdmin()||warrantPdfBatchSaving||warrantPdfBatchReading)return;await Promise.all(warrantPdfBatch.map(deletePersistedWarrantQueueEntry));warrantPdfBatch=[];await renderWarrants();return}
   if(target.closest('[data-warrant-save-pdf-batch]')){await wrap(saveWarrantPdfBatch);return}
+  if(target.closest('[data-warrant-crosscheck-export]')){exportWarrantCrosscheckCsv();return}
+  if(target.closest('[data-warrant-crosscheck-clear]')){state.warrantCrosscheckReview=null;await renderWarrants();return}
+  if(target.closest('[data-warrant-crosscheck-cancel]')){state.warrantCrosscheckCancelled=true;return}
   if(target.closest('[data-warrant-import]')){await wrap(warrantImportCsv);return}
   if(target.closest('[data-warrant-cancel-import]')){warrantImportPreview=null;await renderWarrants();return}
   const search=target.closest('[data-warrant-search]');if(search){await wrap(()=>findWarrantPerson(search.dataset.warrantSearch));return}
