@@ -29,7 +29,7 @@ test('marca linhas sem UF para que o operador resolva antes da conferência', ()
 
 test('retorna candidatos por nome para revisão, sem declarar vínculo definitivo', () => {
   const records=[{full_name:'João Carlos Silva',source_row:2},{full_name:'Maria Souza',source_row:3}];
-  const people=[{id:'p1',full_name:'João Carlos da Silva'},{id:'p2',full_name:'José Maria Souza'}];
+  const people=[{id:'p1',full_name:'João Carlos da Silva'},{id:'p2',full_name:'José Eduardo Silva'}];
   const matches=findWarrantNameCandidates(records,people);
   assert.equal(matches[0].candidates[0].id,'p1');
   assert.equal(matches[0].candidates[0].reason,'Nome idêntico');
