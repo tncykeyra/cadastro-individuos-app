@@ -2142,7 +2142,6 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 @media(max-width:700px){.warrant-crosscheck-card{padding:14px}.warrant-crosscheck-result{grid-template-columns:1fr}.warrant-crosscheck-progress{grid-template-columns:1fr auto}.warrant-crosscheck-progress progress{grid-column:1/-1;grid-row:1}.warrant-crosscheck-controls>*{width:100%}.warrant-crosscheck-controls .button{justify-content:center}}
 
 
-.warrant-crosscheck-state-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:9px}
-.warrant-crosscheck-state-button{display:flex;align-items:center;justify-content:center;min-height:48px;white-space:normal;text-align:center;line-height:1.25}
-.warrant-crosscheck-state-button input[type=file]{display:none}
-@media(max-width:600px){.warrant-crosscheck-state-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.warrant-crosscheck-state-button{min-height:50px;padding:10px 8px;font-size:.84rem}}
+.warrant-crosscheck-all-upload{display:flex;justify-content:center;align-items:center;min-height:50px;width:fit-content;max-width:100%}
+.warrant-crosscheck-all-upload input[type=file]{display:none}
+@media(max-width:600px){.warrant-crosscheck-all-upload{width:100%;white-space:normal;text-align:center}}
