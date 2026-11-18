@@ -2150,3 +2150,10 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 .warrant-crosscheck-existing>strong{color:#81501a}
 [data-theme="dark"] .warrant-crosscheck-existing{border-color:#d69a53;background:#392b1a}
 [data-theme="dark"] .warrant-crosscheck-existing>strong{color:#ffd18a}
+
+.warrant-crosscheck-excluded-list{border:1px solid var(--line);border-radius:9px;padding:8px 10px;background:var(--soft);min-width:0}
+.warrant-crosscheck-excluded-list>summary{cursor:pointer;font-size:.82rem;font-weight:650;color:var(--muted);overflow-wrap:anywhere}
+.warrant-crosscheck-excluded{border-color:#c7863c;background:color-mix(in srgb,#c7863c 8%,var(--surface))}
+[data-theme="dark"] .warrant-crosscheck-excluded-list{background:#202628;border-color:#596267}
+[data-theme="dark"] .warrant-crosscheck-excluded-list>summary{color:#d0d6d8}
+[data-theme="dark"] .warrant-crosscheck-excluded{border-color:#d69a53;background:#392b1a}
