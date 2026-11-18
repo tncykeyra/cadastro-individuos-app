@@ -443,12 +443,16 @@ function warrantCrosscheckMarkup(){
   const stateOptions='<option value="">Escolher UF se a planilha não tiver coluna de estado</option>'+states.map(uf=>'<option value="'+uf+'">'+uf+'</option>').join('');
   if(!review)return '<section class="warrant-crosscheck-card"><h2>Cruzamento nacional de planilha BNMP</h2><p>Selecione uma ou várias planilhas CSV. O app compara os nomes com os indivíduos das cidades autorizadas à sua conta e mostra possíveis correspondências com nome, filiação, processo, UF e situação.</p><div class="warrant-crosscheck-controls"><label class="warrant-crosscheck-state">UF padrão <select data-warrant-crosscheck-state>'+stateOptions+'</select></label><label class="button secondary warrant-file-label">Selecionar CSV(s)<input type="file" accept=".csv,text/csv" data-warrant-crosscheck-csv multiple hidden></label></div><p class="warrant-caution">A conferência não grava mandados nem altera cadastros. Cada nome é apenas uma sugestão; confirme identidade e situação na fonte oficial. A ausência numa planilha não baixa nem exclui mandado.</p></section>';
   const resultCards=(review.matches||[]).slice(0,100).map(row=>'<article class="warrant-crosscheck-result"><div class="warrant-crosscheck-data"><strong>'+esc(row.full_name)+'</strong><span><b>Filiação:</b> Mãe '+esc(row.mother_name||'não informada')+' · Pai '+esc(row.father_name||'não informado')+'</span><span><b>Processo:</b> '+esc(row.process_number||row.warrant_number||'não informado')+'</span><span><b>Estado:</b> '+esc(row.state)+' · <b>Situação:</b> '+esc(row.status)+'</span></div><div class="warrant-crosscheck-candidates">'+(row.candidates||[]).map(person=>'<div class="warrant-crosscheck-person"><strong>Possível cadastro em '+esc(person.city_name||'cidade autorizada')+': '+esc(formatPersonName(person.full_name))+'</strong><span>'+esc(person.reason)+' · similaridade de nome '+Math.round(person.confidence*100)+'%</span></div>').join('')+'</div></article>').join('');
-  return '<section class="warrant-crosscheck-card"><h2>Resultado do cruzamento</h2><p>'+esc(review.fileNames||'Planilha(s) selecionada(s)')+' · '+Number(review.totalRows||0).toLocaleString('pt-BR')+' linhas analisadas · '+Number(review.matches?.length||0).toLocaleString('pt-BR')+' possíveis correspondências · '+Number(review.withoutCandidate||0).toLocaleString('pt-BR')+' sem correspondência provável · cidades consultadas: '+esc(review.cityNames||'autorizadas')+'</p>'+(review.running?'<div class="warrant-crosscheck-progress"><progress max="100" value="'+Number(review.progress||0)+'"></progress><span data-warrant-crosscheck-status>'+esc(review.progressLabel||'Preparando conferência…')+'</span><button class="button secondary small" type="button" data-warrant-crosscheck-cancel>Cancelar</button></div>':'')+(review.error?'<p class="warrant-caution">'+esc(review.error)+'</p>':'')+(review.matches?.length?'<div class="warrant-crosscheck-actions"><button type="button" class="button secondary" data-warrant-crosscheck-export>Baixar correspondências CSV ('+review.matches.length.toLocaleString('pt-BR')+')</button></div><p class="muted">Exibindo até 100 sugestões na tela. O CSV contém todas as correspondências. Nenhuma associação foi confirmada.</p><div class="warrant-crosscheck-results">'+resultCards+'</div>':'<p class="muted">'+(review.running?'O cruzamento está em andamento.':review.cancelled?'Conferência interrompida após '+Number(review.totalRows||0).toLocaleString('pt-BR')+' linhas. Os resultados mostrados são parciais.':'Nenhuma sugestão alcançou o limite de similaridade. A lista original não foi alterada.')+'</p>')+'</section>';
+  return '<section class="warrant-crosscheck-card"><h2>Resultado do cruzamento</h2><p>'+esc(review.fileNames||'Planilha(s) selecionada(s)')+' · '+Number(review.totalRows||0).toLocaleString('pt-BR')+' linhas analisadas · '+Number(review.matches?.length||0).toLocaleString('pt-BR')+' possíveis correspondências · '+Number(review.withoutCandidate||0).toLocaleString('pt-BR')+' sem correspondência provável · cidades consultadas: '+esc(review.cityNames||'autorizadas')+'</p>'+(review.running?'<div class="warrant-crosscheck-progress"><progress max="100" value="'+Number(review.progress||0)+'"></progress><span data-warrant-crosscheck-status>'+esc(review.progressLabel||'Preparando conferência…')+'</span><button class="button secondary small" type="button" data-warrant-crosscheck-cancel>Cancelar</button></div>':'')+(review.error?'<p class="warrant-caution">'+esc(review.error)+'</p>':'')+(review.matches?.length?'<div class="warrant-crosscheck-actions"><button type="button" class="button secondary" data-warrant-crosscheck-clear>Limpar resultado</button><button type="button" class="button secondary" data-warrant-crosscheck-export>Baixar correspondências CSV ('+review.matches.length.toLocaleString('pt-BR')+')</button></div><p class="muted">As sugestões acumulam as planilhas selecionadas nesta sessão. Exibindo até 100 na tela; o CSV contém todas. Nenhuma associação foi confirmada.</p><div class="warrant-crosscheck-results">'+resultCards+'</div>':'<p class="muted">'+(review.running?'O cruzamento está em andamento.':review.cancelled?'Conferência interrompida após '+Number(review.totalRows||0).toLocaleString('pt-BR')+' linhas. Os resultados mostrados são parciais.':'Nenhuma sugestão alcançou o limite de similaridade. A lista original não foi alterada.')+'</p>')+'</section>';
 }
 async function runWarrantCrosscheck(files, fallbackState){
   if(files.length>27)throw new Error('Selecione até 27 arquivos CSV por vez.');
   if(files.reduce((sum,file)=>sum+file.size,0)>50*1024*1024)throw new Error('O conjunto de planilhas deve ter até 50 MB. Divida a importação em lotes menores.');
   if(!isAdmin())throw new Error('Apenas administradores podem cruzar listas de mandados.');
+  if(state.warrantCrosscheckReview?.running)throw new Error('Aguarde o cruzamento atual terminar antes de enviar outra planilha.');
+  const previous=state.warrantCrosscheckReview?.error?null:state.warrantCrosscheckReview;
+  const previousMatches=previous?.matches||[],previousTotal=Number(previous?.totalRows||0),previousWithout=Number(previous?.withoutCandidate||0);
+  const fileNamesList=[...new Set([...(previous?.fileNamesList||[]),...files.map(file=>file.name)])];
   state.warrantCrosscheckCancelled=false;
   const parsedFiles=[];
   for(const file of files){
@@ -460,7 +464,7 @@ async function runWarrantCrosscheck(files, fallbackState){
   }
   const rows=parsedFiles.flatMap(item=>item.records);
   if(!rows.length)throw new Error('Não há registros válidos nas planilhas selecionadas.');
-  state.warrantCrosscheckReview={running:true,progress:0,progressLabel:'Carregando os indivíduos autorizados…',matches:[],totalRows:rows.length,withoutCandidate:0,fileNames:files.map(file=>file.name).join(', '),cityNames:state.cities.map(city=>city.name).filter(Boolean).join(', ')||'cidades autorizadas'};
+  state.warrantCrosscheckReview={running:true,progress:0,progressLabel:'Carregando os indivíduos autorizados…',matches:previousMatches,totalRows:previousTotal+rows.length,withoutCandidate:previousWithout,fileNamesList,fileNames:fileNamesList.join(', '),cityNames:state.cities.map(city=>city.name).filter(Boolean).join(', ')||'cidades autorizadas'};
   await renderWarrants();
   const people=[],cityIds=(state.cities||[]).map(city=>city.id).filter(Boolean);if(!cityIds.length)throw new Error('Não há cidades autorizadas para comparar.');const cityNames=(state.cities||[]).map(city=>city.name).filter(Boolean);
   let offset=0;
@@ -470,7 +474,7 @@ async function runWarrantCrosscheck(files, fallbackState){
     if(error)throw error;
     people.push(...(data||[]));if((data||[]).length<500)break;offset+=500;
   }
-  const matches=[];let withoutCandidate=0,processed=0;
+  const matches=[...previousMatches];let withoutCandidate=previousWithout,processed=0;
   for(let start=0;start<rows.length;start+=400){
     if(state.warrantCrosscheckCancelled)break;
     const result=findWarrantNameCandidates(rows.slice(start,start+400),people);
@@ -482,7 +486,7 @@ async function runWarrantCrosscheck(files, fallbackState){
     if(status)status.textContent=state.warrantCrosscheckReview.progressLabel;if(bar)bar.value=progress;
     await new Promise(resolve=>setTimeout(resolve,0));
   }
-  state.warrantCrosscheckReview={...state.warrantCrosscheckReview,running:false,progress:state.warrantCrosscheckCancelled?Math.round(processed/rows.length*100):100,progressLabel:state.warrantCrosscheckCancelled?'Cancelado antes do fim':'Concluído',matches,totalRows:state.warrantCrosscheckCancelled?processed:rows.length,withoutCandidate,cancelled:state.warrantCrosscheckCancelled};
+  state.warrantCrosscheckReview={...state.warrantCrosscheckReview,running:false,progress:state.warrantCrosscheckCancelled?Math.round(processed/rows.length*100):100,progressLabel:state.warrantCrosscheckCancelled?'Cancelado antes do fim':'Concluído',matches,totalRows:previousTotal+(state.warrantCrosscheckCancelled?processed:rows.length),withoutCandidate,cancelled:state.warrantCrosscheckCancelled};
   await renderWarrants();
 }
 function exportWarrantCrosscheckCsv(){
@@ -2318,6 +2322,7 @@ document.addEventListener('click',async event=>{
   if(target.closest('[data-warrant-clear-pdf-batch]')){if(!isAdmin()||warrantPdfBatchSaving||warrantPdfBatchReading)return;await Promise.all(warrantPdfBatch.map(deletePersistedWarrantQueueEntry));warrantPdfBatch=[];await renderWarrants();return}
   if(target.closest('[data-warrant-save-pdf-batch]')){await wrap(saveWarrantPdfBatch);return}
   if(target.closest('[data-warrant-crosscheck-export]')){exportWarrantCrosscheckCsv();return}
+  if(target.closest('[data-warrant-crosscheck-clear]')){state.warrantCrosscheckReview=null;await renderWarrants();return}
   if(target.closest('[data-warrant-crosscheck-cancel]')){state.warrantCrosscheckCancelled=true;return}
   if(target.closest('[data-warrant-import]')){await wrap(warrantImportCsv);return}
   if(target.closest('[data-warrant-cancel-import]')){warrantImportPreview=null;await renderWarrants();return}
