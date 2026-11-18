@@ -177,7 +177,7 @@ function compareEvidence(expected, values, normalize = normalizeWarrantName) {
   return available.includes(target) ? { status: 'match' } : { status: 'conflict' };
 }
 
-export function findWarrantNameCandidates(rows, people, { threshold = 1, maxCandidates = 3 } = {}) {
+export function findWarrantNameCandidates(rows, people, { threshold = 1, maxCandidates = 3, includeConflicts = false } = {}) {
   const index = new Map();
   for (const person of people || []) {
     const name = String(person?.full_name || '').trim();
@@ -223,7 +223,7 @@ export function findWarrantNameCandidates(rows, people, { threshold = 1, maxCand
       const bothParentsConflict = evidence['nome da mãe'].status === 'conflict' && evidence['nome do pai'].status === 'conflict';
       const strongIdentityConflict = (evidence.nascimento.status === 'conflict' && !parentMatch) ||
         (bothParentsConflict && evidence.nascimento.status !== 'match');
-      if (strongIdentityConflict) {
+      if (strongIdentityConflict && !includeConflicts) {
         excludedCandidates.push({ ...result, exclusion_reason: 'Divergência em ' + conflicts.join(' e ') });
       } else if (confidence >= threshold) candidates.push(result);
     }
