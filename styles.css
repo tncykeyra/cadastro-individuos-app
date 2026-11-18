@@ -2145,3 +2145,8 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 .warrant-crosscheck-all-upload{display:flex;justify-content:center;align-items:center;min-height:50px;width:fit-content;max-width:100%}
 .warrant-crosscheck-all-upload input[type=file]{display:none}
 @media(max-width:600px){.warrant-crosscheck-all-upload{width:100%;white-space:normal;text-align:center}}
+
+.warrant-crosscheck-existing{border-color:#c7863c;background:color-mix(in srgb,#c7863c 10%,var(--surface))}
+.warrant-crosscheck-existing>strong{color:#81501a}
+[data-theme="dark"] .warrant-crosscheck-existing{border-color:#d69a53;background:#392b1a}
+[data-theme="dark"] .warrant-crosscheck-existing>strong{color:#ffd18a}
