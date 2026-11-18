@@ -43,3 +43,13 @@ test('identifies state from spreadsheet filenames for batch uploads', () => {
   assert.equal(inferWarrantStateFromFilename('BNMP_São Paulo.csv'),'SP');
   assert.equal(inferWarrantStateFromFilename('reportes-gerais.csv'),'');
 });
+
+
+test('recovers a row with an unmatched opening quote instead of aborting the CSV', () => {
+  const csv='Nome;Número do processo;Estado;Situação\n"João da Silva;0000001-12.2024.8.26.0001;SP;Pendente';
+  const result=parseNationwideWarrantCsv(csv);
+  assert.equal(result.records.length,1);
+  assert.equal(result.records[0].full_name,'João da Silva');
+  assert.equal(result.records[0].state,'SP');
+  assert.equal(result.records[0].status,'Pendente');
+});
