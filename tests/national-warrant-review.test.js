@@ -105,3 +105,40 @@ test('não aceita sigla de estado inválida como UF', () => {
   const result = parseNationwideWarrantCsv('Nome;Estado\nJoão Silva;XX');
   assert.equal(result.rowsMissingState, 1);
 });
+
+
+test('afunila homônimos com nascimento e filiação das anotações ou de mandados confirmados', () => {
+  const rows=[{
+    full_name:'João Carlos da Silva',
+    birth_date:'03/02/1980',
+    mother_name:'Maria da Silva',
+    father_name:'Pedro da Silva'
+  }];
+  const people=[
+    {
+      id:'notes-match',
+      full_name:'JOÃO CARLOS DA SILVA',
+      birthday:'1980-02-03',
+      notes:'Nome da mãe: Maria da Silva\nNome do pai: Pedro da Silva',
+      city_id:'c1'
+    },
+    {
+      id:'pdf-match',
+      full_name:'João Carlos da Silva',
+      city_id:'c2',
+      linked_warrants:[{birth_date:'1980-02-03',mother_name:'Maria da Silva',father_name:'Pedro da Silva'}]
+    },
+    {
+      id:'homonym',
+      full_name:'João Carlos da Silva',
+      birthday:'1975-09-10',
+      notes:'Nome da mãe: Ana Souza\nNome do pai: José Souza',
+      city_id:'c3'
+    }
+  ];
+  const result=findWarrantNameCandidates(rows,people)[0];
+  assert.deepEqual(new Set(result.candidates.map(person=>person.id)),new Set(['notes-match','pdf-match']));
+  assert.equal(result.candidates.find(person=>person.id==='notes-match').evidence_matches.length,3);
+  assert.equal(result.excluded_candidates[0].id,'homonym');
+  assert.match(result.excluded_candidates[0].exclusion_reason,/Divergência/);
+});
