@@ -27,16 +27,23 @@ test('marca linhas sem UF para que o operador resolva antes da conferência', ()
   assert.equal(result.records[0].state,'UF não identificada');
 });
 
-test('retorna candidatos por nome para revisão, sem declarar vínculo definitivo', () => {
-  const records=[{full_name:'João Carlos Silva',source_row:2},{full_name:'Maria Souza',source_row:3}];
-  const people=[{id:'p1',full_name:'João Carlos da Silva'},{id:'p2',full_name:'José Eduardo Silva'}];
+test('compara somente o nome completo igual, normalizando caixa, acentos e espaços', () => {
+  const records=[
+    {full_name:'JOÃO  CARLOS DA SILVA',source_row:2},
+    {full_name:'João Carlos Silva',source_row:3},
+    {full_name:'Maria Souza',source_row:4}
+  ];
+  const people=[
+    {id:'p1',full_name:'Joao Carlos da Silva'},
+    {id:'p2',full_name:'João Carlos Silva'},
+    {id:'p3',full_name:'José Eduardo Silva'}
+  ];
   const matches=findWarrantNameCandidates(records,people);
-  assert.equal(matches[0].candidates[0].id,'p1');
-  assert.equal(matches[0].candidates[0].reason,'Nome idêntico');
-  assert.ok(matches[0].candidates[0].confidence > 0.9);
-  assert.equal(matches[1].candidates.length,0);
+  assert.deepEqual(matches[0].candidates.map(person=>person.id),['p1']);
+  assert.equal(matches[0].candidates[0].confidence,1);
+  assert.deepEqual(matches[1].candidates.map(person=>person.id),['p2']);
+  assert.equal(matches[2].candidates.length,0);
 });
-
 
 test('identifies state from spreadsheet filenames for batch uploads', () => {
   assert.equal(inferWarrantStateFromFilename('mandados_SP_2026.csv'),'SP');

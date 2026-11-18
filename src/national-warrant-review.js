@@ -150,45 +150,23 @@ export function parseNationwideWarrantCsv(text, fallbackState = '') {
   return { records, rowsMissingState, hasStateColumn: column.state >= 0, columns: column };
 }
 
-function tokens(name) {
-  return normalizeWarrantName(name).split(/\s+/).filter(token => token.length > 1);
-}
-
-function nameScore(left, right) {
-  const a = normalizeWarrantName(left), b = normalizeWarrantName(right);
-  if (!a || !b) return 0;
-  if (a === b) return 1;
-  const aTokens = tokens(a), bTokens = tokens(b);
-  const setB = new Set(bTokens);
-  const overlap = aTokens.filter(token => setB.has(token)).length;
-  const overlapScore = overlap / Math.max(1, Math.min(aTokens.length, bTokens.length));
-  const prefixBonus = aTokens[0] && bTokens[0] && (aTokens[0].startsWith(bTokens[0]) || bTokens[0].startsWith(aTokens[0])) ? 0.08 : 0;
-  return Math.min(0.96, overlapScore * 0.88 + prefixBonus);
-}
-
-export function findWarrantNameCandidates(rows, people, { threshold = 0.72, maxCandidates = 3 } = {}) {
+export function findWarrantNameCandidates(rows, people, { threshold = 1, maxCandidates = 3 } = {}) {
   const index = new Map();
   for (const person of people || []) {
     const name = String(person?.full_name || '').trim();
     const normalized = normalizeWarrantName(name);
     if (!person?.id || !normalized) continue;
     const entry = { id: person.id, full_name: name, birthday: person.birthday || '', city_id: person.city_id || '' };
-    for (const token of new Set(tokens(name))) {
-      const list = index.get(token) || [];
-      list.push(entry); index.set(token, list);
-    }
+    const list = index.get(normalized) || [];
+    list.push(entry);
+    index.set(normalized, list);
   }
   return (rows || []).map(row => {
-    const candidatePool = new Map();
-    for (const token of new Set(tokens(row.full_name))) {
-      for (const person of index.get(token) || []) candidatePool.set(person.id, person);
-    }
-    const candidates = [...candidatePool.values()].map(person => ({
-      ...person,
-      confidence: nameScore(row.full_name, person.full_name),
-      reason: normalizeWarrantName(row.full_name) === normalizeWarrantName(person.full_name) ? 'Nome idêntico' : 'Nome semelhante; confirme com filiação e nascimento'
-    })).filter(candidate => candidate.confidence >= threshold)
-      .sort((a, b) => b.confidence - a.confidence || a.full_name.localeCompare(b.full_name, 'pt-BR'))
+    const normalized = normalizeWarrantName(row?.full_name);
+    const candidates = (index.get(normalized) || [])
+      .map(person => ({ ...person, confidence: 1, reason: 'Nome completo igual após normalização' }))
+      .filter(candidate => candidate.confidence >= threshold)
+      .sort((a, b) => a.full_name.localeCompare(b.full_name, 'pt-BR'))
       .slice(0, maxCandidates);
     return { ...row, candidates };
   });
