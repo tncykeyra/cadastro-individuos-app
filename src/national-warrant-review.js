@@ -150,25 +150,87 @@ export function parseNationwideWarrantCsv(text, fallbackState = '') {
   return { records, rowsMissingState, hasStateColumn: column.state >= 0, columns: column };
 }
 
+function normalizeCrosscheckBirthDate(value) {
+  const text = String(value || '').trim();
+  let match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return match[1] + '-' + match[2] + '-' + match[3];
+  match = text.match(/^(\d{2})[\/.-](\d{2})[\/.-](\d{4})$/);
+  return match ? match[3] + '-' + match[2] + '-' + match[1] : '';
+}
+
+function extractLabeledParentName(notes, parent) {
+  const source = String(notes || '');
+  const found = parent === 'mother'
+    ? source.match(/(?:^|[\n;,.|:])\s*(?:nome\s+da\s+m[aã]e|m[aã]e|filia[cç][aã]o\s+materna)\s*[:=–-]\s*([^\n;,.|]+)/i)
+    : source.match(/(?:^|[\n;,.|:])\s*(?:nome\s+do\s+pai|pai|filia[cç][aã]o\s+paterna)\s*[:=–-]\s*([^\n;,.|]+)/i);
+  if (!found) return '';
+  const otherLabels = parent === 'mother'
+    ? /\b(?:nome\s+do\s+pai|pai|filia[cç][aã]o\s+paterna)\s*[:=–-].*$/i
+    : /\b(?:nome\s+da\s+m[aã]e|m[aã]e|filia[cç][aã]o\s+materna)\s*[:=–-].*$/i;
+  return normalizeWarrantName(found[1].replace(otherLabels, ''));
+}
+
+function compareEvidence(expected, values, normalize = normalizeWarrantName) {
+  const target = normalize(expected);
+  const available = [...new Set((values || []).map(value => normalize(value)).filter(Boolean))];
+  if (!target || !available.length) return { status: 'unavailable' };
+  return available.includes(target) ? { status: 'match' } : { status: 'conflict' };
+}
+
 export function findWarrantNameCandidates(rows, people, { threshold = 1, maxCandidates = 3 } = {}) {
   const index = new Map();
   for (const person of people || []) {
     const name = String(person?.full_name || '').trim();
     const normalized = normalizeWarrantName(name);
     if (!person?.id || !normalized) continue;
-    const entry = { id: person.id, full_name: name, birthday: person.birthday || '', city_id: person.city_id || '' };
+    const entry = { ...person, full_name: name, birthday: person.birthday || '', city_id: person.city_id || '' };
     const list = index.get(normalized) || [];
     list.push(entry);
     index.set(normalized, list);
   }
   return (rows || []).map(row => {
     const normalized = normalizeWarrantName(row?.full_name);
-    const candidates = (index.get(normalized) || [])
-      .map(person => ({ ...person, confidence: 1, reason: 'Nome completo igual após normalização' }))
-      .filter(candidate => candidate.confidence >= threshold)
-      .sort((a, b) => a.full_name.localeCompare(b.full_name, 'pt-BR'))
-      .slice(0, maxCandidates);
-    return { ...row, candidates };
+    const candidates = [], excludedCandidates = [];
+    for (const person of index.get(normalized) || []) {
+      const notes = [person.notes, person.occurrence_notes].filter(Boolean).join('\\n');
+      const linkedWarrants = person.linked_warrants || [];
+      const birthValues = [person.birthday, ...linkedWarrants.map(warrant => warrant.birth_date)];
+      const motherValues = [extractLabeledParentName(notes, 'mother'), ...linkedWarrants.map(warrant => warrant.mother_name)];
+      const fatherValues = [extractLabeledParentName(notes, 'father'), ...linkedWarrants.map(warrant => warrant.father_name)];
+      const evidence = {
+        'nascimento': compareEvidence(row.birth_date, birthValues, normalizeCrosscheckBirthDate),
+        'nome da mãe': compareEvidence(row.mother_name, motherValues),
+        'nome do pai': compareEvidence(row.father_name, fatherValues)
+      };
+      const confirmed = Object.entries(evidence).filter(([, result]) => result.status === 'match').map(([label]) => label);
+      const conflicts = Object.entries(evidence).filter(([, result]) => result.status === 'conflict').map(([label]) => label);
+      const confidence = 1;
+      const result = {
+        ...person,
+        confidence,
+        evidence_matches: confirmed,
+        evidence_conflicts: conflicts,
+        reason: confirmed.length
+          ? 'Nome completo igual; também confere: ' + confirmed.join(', ') + (conflicts.length ? '. Divergência em: ' + conflicts.join(', ') : '')
+          : conflicts.length
+            ? 'Nome completo igual; divergência em: ' + conflicts.join(', ')
+            : 'Nome completo igual; nascimento e filiação sem dados para comparar',
+        evidence_score: confirmed.length * 2 - conflicts.length
+      };
+      // Do not suggest a homonym when two or more independent known fields conflict
+      // and none of the available identity fields corroborates it.
+      const parentMatch = evidence['nome da mãe'].status === 'match' || evidence['nome do pai'].status === 'match';
+      const bothParentsConflict = evidence['nome da mãe'].status === 'conflict' && evidence['nome do pai'].status === 'conflict';
+      const strongIdentityConflict = (evidence.nascimento.status === 'conflict' && !parentMatch) ||
+        (bothParentsConflict && evidence.nascimento.status !== 'match');
+      if (strongIdentityConflict) {
+        excludedCandidates.push({ ...result, exclusion_reason: 'Divergência em ' + conflicts.join(' e ') });
+      } else if (confidence >= threshold) candidates.push(result);
+    }
+    const sort = (a, b) => b.evidence_score - a.evidence_score || a.full_name.localeCompare(b.full_name, 'pt-BR');
+    candidates.sort(sort);
+    excludedCandidates.sort(sort);
+    return { ...row, candidates: candidates.slice(0, maxCandidates), excluded_candidates: excludedCandidates };
   });
 }
 
