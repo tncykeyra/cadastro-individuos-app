@@ -81,3 +81,20 @@ test('sem processo, só sinaliza possível repetição quando nome, nascimento e
   assert.equal(result[0].existing_warrant_match_type, 'identity');
   assert.equal(result[1].existing_warrant_match_type, '');
 });
+
+
+test('aceita o nome completo do estado na coluna e no nome do arquivo', () => {
+  const inColumn = parseNationwideWarrantCsv('Nome;Estado;Número do processo\nJoão Silva;Estado do Acre;0000001-12.2024.8.01.0001');
+  assert.equal(inColumn.records[0].state, 'AC');
+  assert.equal(inColumn.rowsMissingState, 0);
+
+  const byFilename = parseNationwideWarrantCsv('Nome;Número do processo\nJoão Silva;0000001-12.2024.8.01.0001', inferWarrantStateFromFilename('acre.csv'));
+  assert.equal(byFilename.records[0].state, 'AC');
+  assert.equal(byFilename.rowsMissingState, 0);
+  assert.equal(inferWarrantStateFromFilename('mandados-Estado-do-Acre-2026.csv'), 'AC');
+});
+
+test('não aceita sigla de estado inválida como UF', () => {
+  const result = parseNationwideWarrantCsv('Nome;Estado\nJoão Silva;XX');
+  assert.equal(result.rowsMissingState, 1);
+});

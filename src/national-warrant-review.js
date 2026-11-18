@@ -86,6 +86,21 @@ const UF_NAMES = {
   'rio de janeiro':'RJ', 'rio grande do norte':'RN', 'rio grande do sul':'RS', rondonia:'RO',
   roraima:'RR', 'santa catarina':'SC', 'sao paulo':'SP', sergipe:'SE', tocantins:'TO'
 };
+const VALID_STATE_CODES = new Set([...Object.values(UF_NAMES), 'DF']);
+function resolveWarrantStateCode(value, fallback = '') {
+  const normalized = normalizeHeader(value);
+  if (normalized.length === 2 && VALID_STATE_CODES.has(normalized.toUpperCase())) return normalized.toUpperCase();
+  if (UF_NAMES[normalized]) return UF_NAMES[normalized];
+  for (const [name, code] of Object.entries(UF_NAMES).sort((a, b) => b[0].length - a[0].length)) {
+    if ((' ' + normalized + ' ').includes(' ' + name + ' ')) return code;
+  }
+  if (fallback) {
+    const fallbackValue = normalizeHeader(fallback);
+    if (fallbackValue.length === 2 && VALID_STATE_CODES.has(fallbackValue.toUpperCase())) return fallbackValue.toUpperCase();
+    if (UF_NAMES[fallbackValue]) return UF_NAMES[fallbackValue];
+  }
+  return '';
+}
 
 export function parseNationwideWarrantCsv(text, fallbackState = '') {
   if (String(text || '').length > MAX_CSV_CHARS) throw new Error('O CSV deve ter até 50 MB. Divida a planilha por estado e tente novamente.');
@@ -98,14 +113,14 @@ export function parseNationwideWarrantCsv(text, fallbackState = '') {
     alias: findColumn(headers, ['alcunha', 'vulgo', 'apelido'], h => h.includes('alcunha')),
     mother: findColumn(headers, ['mae', 'nome da mae', 'nome mae'], h => h.includes('nome da mae')),
     father: findColumn(headers, ['pai', 'nome do pai', 'nome pai'], h => h.includes('nome do pai')),
-    state: findColumn(headers, ['uf', 'estado', 'unidade federativa'], h => h === 'uf expedicao' || h === 'estado expedidor'),
+    state: findColumn(headers, ['uf', 'estado', 'unidade federativa'], h => h.includes('unidade federativa') || h.includes('estado') || h === 'uf expedicao'),
     status: findColumn(headers, ['situacao', 'status', 'situacao do mandado'], h => h.includes('situacao')),
     birth: findColumn(headers, ['nascimento', 'data nascimento', 'data de nascimento'], h => h.includes('nascimento')),
     warrant: findColumn(headers, ['numero', 'numero mandado', 'numero do mandado', 'peca'], h => h.includes('mandado') || h === 'peca')
   };
   if (column.name < 0) throw new Error('Não encontrei a coluna de nome. Confira o cabeçalho da planilha.');
   const value = (row, index) => index < 0 ? '' : clean(row[index]);
-  const fallback = String(fallbackState || '').trim().toUpperCase();
+  const fallback = resolveWarrantStateCode(fallbackState);
   const records = [];
   let rowsMissingState = 0;
   for (let i = 1; i < parsed.length; i++) {
@@ -113,7 +128,7 @@ export function parseNationwideWarrantCsv(text, fallbackState = '') {
     const full_name = value(row, column.name);
     if (!full_name) continue;
     const stateRaw = value(row, column.state);
-    const uf = stateRaw.length === 2 ? stateRaw.toUpperCase() : UF_NAMES[normalizeHeader(stateRaw)] || fallback;
+    const uf = resolveWarrantStateCode(stateRaw, fallback);
     if (!uf) rowsMissingState++;
     const sourceReference = value(row, column.process);
     const numberValue = value(row, column.warrant);
@@ -183,13 +198,11 @@ export function inferWarrantStateFromFilename(filename) {
   const base = String(filename || '').split(/[\\/]/).pop().replace(/\.[^.]*$/, '');
   const normalized = normalizeHeader(base);
   const tokens = new Set(normalized.split(' '));
-  const states = [
-    ['AC','acre'],['AL','alagoas'],['AP','amapa'],['AM','amazonas'],['BA','bahia'],['CE','ceara'],['DF','distrito federal'],['ES','espirito santo'],['GO','goias'],['MA','maranhao'],['MT','mato grosso'],['MS','mato grosso do sul'],['MG','minas gerais'],['PA','para'],['PB','paraiba'],['PR','parana'],['PE','pernambuco'],['PI','piaui'],['RJ','rio de janeiro'],['RN','rio grande do norte'],['RS','rio grande do sul'],['RO','rondonia'],['RR','roraima'],['SC','santa catarina'],['SP','sao paulo'],['SE','sergipe'],['TO','tocantins']
-  ];
-  for (const [uf, name] of states) {
-    if (tokens.has(uf.toLowerCase()) || (' '+normalized+' ').includes(' '+name+' ')) return uf;
+  for (const token of tokens) {
+    const code = resolveWarrantStateCode(token);
+    if (code) return code;
   }
-  return '';
+  return resolveWarrantStateCode(normalized);
 }
 
 
