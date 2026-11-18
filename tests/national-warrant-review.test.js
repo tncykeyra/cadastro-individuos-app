@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { parseNationwideWarrantCsv, findWarrantNameCandidates } from '../src/national-warrant-review.js';
+import { parseNationwideWarrantCsv, findWarrantNameCandidates, inferWarrantStateFromFilename } from '../src/national-warrant-review.js';
 
 test('interpreta nomes, filiação, processo, UF e situação sem descartar estados não pendentes', () => {
   const csv='Número;Nome;Alcunha;Nome da mãe;Nome do pai;Número do processo;Estado;Situação\n' +
@@ -35,4 +35,11 @@ test('retorna candidatos por nome para revisão, sem declarar vínculo definitiv
   assert.equal(matches[0].candidates[0].reason,'Nome idêntico');
   assert.ok(matches[0].candidates[0].confidence > 0.9);
   assert.equal(matches[1].candidates.length,0);
+});
+
+
+test('identifies state from spreadsheet filenames for batch uploads', () => {
+  assert.equal(inferWarrantStateFromFilename('mandados_SP_2026.csv'),'SP');
+  assert.equal(inferWarrantStateFromFilename('BNMP_São Paulo.csv'),'SP');
+  assert.equal(inferWarrantStateFromFilename('reportes-gerais.csv'),'');
 });
