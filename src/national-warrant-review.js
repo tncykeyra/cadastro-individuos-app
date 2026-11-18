@@ -144,3 +144,16 @@ export function findWarrantNameCandidates(rows, people, { threshold = 0.72, maxC
     return { ...row, candidates };
   });
 }
+
+export function inferWarrantStateFromFilename(filename) {
+  const base = String(filename || '').split(/[\\/]/).pop().replace(/\.[^.]*$/, '');
+  const normalized = normalizeHeader(base);
+  const tokens = new Set(normalized.split(' '));
+  const states = [
+    ['AC','acre'],['AL','alagoas'],['AP','amapa'],['AM','amazonas'],['BA','bahia'],['CE','ceara'],['DF','distrito federal'],['ES','espirito santo'],['GO','goias'],['MA','maranhao'],['MT','mato grosso'],['MS','mato grosso do sul'],['MG','minas gerais'],['PA','para'],['PB','paraiba'],['PR','parana'],['PE','pernambuco'],['PI','piaui'],['RJ','rio de janeiro'],['RN','rio grande do norte'],['RS','rio grande do sul'],['RO','rondonia'],['RR','roraima'],['SC','santa catarina'],['SP','sao paulo'],['SE','sergipe'],['TO','tocantins']
+  ];
+  for (const [uf, name] of states) {
+    if (tokens.has(uf.toLowerCase()) || (' '+normalized+' ').includes(' '+name+' ')) return uf;
+  }
+  return '';
+}
