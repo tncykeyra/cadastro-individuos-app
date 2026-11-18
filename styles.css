@@ -2141,11 +2141,7 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 .warrant-crosscheck-person>strong{font-size:.86rem;overflow-wrap:anywhere}
 @media(max-width:700px){.warrant-crosscheck-card{padding:14px}.warrant-crosscheck-result{grid-template-columns:1fr}.warrant-crosscheck-progress{grid-template-columns:1fr auto}.warrant-crosscheck-progress progress{grid-column:1/-1;grid-row:1}.warrant-crosscheck-controls>*{width:100%}.warrant-crosscheck-controls .button{justify-content:center}}
 
-.warrant-crosscheck-state-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:8px;max-height:58vh;overflow:auto;padding:2px;overscroll-behavior:contain}
-.warrant-crosscheck-state-row{display:grid;grid-template-columns:minmax(105px,1fr) auto;align-items:center;gap:6px 10px;padding:9px 10px;border:1px solid var(--line);border-radius:11px;background:var(--page);min-width:0}
-.warrant-crosscheck-state-row>label:first-child{display:flex;align-items:center;gap:7px;min-width:0;cursor:pointer}
-.warrant-crosscheck-state-row input[type=checkbox]{width:18px;height:18px;accent-color:var(--brand);flex:0 0 auto}
-.warrant-crosscheck-state-row>label:first-child span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.warrant-crosscheck-state-row .warrant-file-label{justify-content:center;min-height:38px;padding:8px 12px}
-.warrant-crosscheck-state-row>small{grid-column:1/-1;color:var(--muted);font-size:.75rem;overflow-wrap:anywhere}
-.warrant-crosscheck-state-row .warrant-file-label[aria-disabled=true]{opacity:.55;cursor:not-allowed}
+
+.warrant-crosscheck-all-upload{display:flex;justify-content:center;align-items:center;min-height:50px;width:fit-content;max-width:100%}
+.warrant-crosscheck-all-upload input[type=file]{display:none}
+@media(max-width:600px){.warrant-crosscheck-all-upload{width:100%;white-space:normal;text-align:center}}
