@@ -18,7 +18,7 @@ function detectDelimiter(text) {
   }).sort((a, b) => b.count - a.count)[0].delimiter;
 }
 
-function parseRows(text, delimiter) {
+function parseRowsStrict(text, delimiter) {
   const rows = [];
   let row = [], cell = '', quoted = false;
   const input = String(text || '').replace(/^\uFEFF/, '');
@@ -35,10 +35,44 @@ function parseRows(text, delimiter) {
       row = []; cell = '';
     } else cell += ch;
   }
-  if (quoted) throw new Error('O CSV contém aspas sem fechamento. Salve novamente e tente de novo.');
+  if (quoted) throw new Error('unbalanced_quotes');
   row.push(cell);
   if (row.some(value => String(value).trim())) rows.push(row);
   return rows;
+}
+
+function recoverCsvLine(line, delimiter) {
+  const row = [];
+  let cell = '', quoted = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (quoted && line[i + 1] === '"') { cell += '"'; i++; continue; }
+      if (!quoted && cell.trim() === '') { quoted = true; continue; }
+      if (quoted) {
+        let next = i + 1;
+        while (next < line.length && /\s/.test(line[next])) next++;
+        if (next === line.length || line[next] === delimiter) { quoted = false; continue; }
+      }
+      cell += ch;
+    } else if (!quoted && ch === delimiter) { row.push(cell); cell = ''; }
+    else cell += ch;
+  }
+  if (quoted) {
+    return line.split(delimiter).map(value => value.replace(/^\s*"/, '').replace(/"\s*$/, '').replace(/""/g, '"'));
+  }
+  row.push(cell);
+  return row;
+}
+
+function parseRows(text, delimiter) {
+  const input = String(text || '').replace(/^\uFEFF/, '');
+  try {
+    return parseRowsStrict(input, delimiter);
+  } catch (error) {
+    if (error?.message !== 'unbalanced_quotes') throw error;
+    return input.split(/\r?\n/).filter(line => line.trim()).map(line => recoverCsvLine(line, delimiter));
+  }
 }
 
 function findColumn(headers, aliases, predicate = () => false) {
