@@ -123,7 +123,7 @@ export function findWarrantNameCandidates(rows, people, { threshold = 0.72, maxC
     const name = String(person?.full_name || '').trim();
     const normalized = normalizeWarrantName(name);
     if (!person?.id || !normalized) continue;
-    const entry = { id: person.id, full_name: name, birthday: person.birthday || '' };
+    const entry = { id: person.id, full_name: name, birthday: person.birthday || '', city_id: person.city_id || '' };
     for (const token of new Set(tokens(name))) {
       const list = index.get(token) || [];
       list.push(entry); index.set(token, list);
