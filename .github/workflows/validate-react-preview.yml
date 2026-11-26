@@ -1,0 +1,32 @@
+name: Validar prévia React
+
+on:
+  push:
+    branches: [react-migracao-gradual]
+  pull_request:
+    branches: [react-migracao-gradual]
+    paths:
+      - "src/react/**"
+      - "react-preview.html"
+      - "vite.config.js"
+      - "package.json"
+      - ".github/workflows/validate-react-preview.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-react-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+      - name: Validar compilação das duas interfaces
+        run: npm run build
