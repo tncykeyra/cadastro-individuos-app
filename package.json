@@ -7,7 +7,8 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "dev:react": "vite --host 0.0.0.0 --open /react-preview.html"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.0.0",
