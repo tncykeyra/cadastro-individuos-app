@@ -32,8 +32,8 @@ Na raiz do projeto:
 
 1. Instale as dependências com `npm install`.
 2. Crie um arquivo local `.env.local` com as duas variáveis abaixo, usando a URL e a chave pública do mesmo projeto Supabase já utilizado pelo aplicativo atual.
-3. Execute `npm run dev:react`.
-4. Abra o endereço local informado pelo Vite e acrescente `react-preview.html` ao caminho.
+3. Execute `npm run dev` (ou `npm run dev:react`). O comando abre diretamente `react-preview.html`.
+4. Acesse o endereço local informado pelo Vite. Para abrir a versão legada nesta branch, execute `npm run dev:legacy`.
 
 Exemplo de configuração local:
 
