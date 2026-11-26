@@ -105,6 +105,10 @@ export async function renderFiscalizationPage(client, isAdmin) {
 
 export function wireFiscalizationActions(client, canAdmin, refresh, notify) {
   const root = document;
+  root.__fiscalizationAbort?.abort?.();
+  const controller = new AbortController();
+  root.__fiscalizationAbort = controller;
+  const listenerOptions = { signal: controller.signal };
   const openGuide = id => {
     const guide = activeGuideRecords.get(String(id));
     const list = document.querySelector('#fiscalizationGuideList');
@@ -144,7 +148,7 @@ export function wireFiscalizationActions(client, canAdmin, refresh, notify) {
   };
   root.addEventListener('input', event => {
     if (event.target?.id === 'fiscalizationSearch') applyGuideFilters();
-  });
+  }, listenerOptions);
   root.addEventListener('click', async event => {
     const target = event.target;
     const openButton = target.closest?.('[data-guide-open]');
@@ -233,7 +237,8 @@ export function wireFiscalizationActions(client, canAdmin, refresh, notify) {
       return;
     }
     if (target.closest?.('[data-fiscalization-image-close]')) document.querySelector('#fiscalizationImageDialog')?.close();
-  });
+  }, listenerOptions);
+
   root.addEventListener('submit', async event => {
     if (event.target?.id !== 'fiscalizationForm') return;
     event.preventDefault();
@@ -281,5 +286,5 @@ export function wireFiscalizationActions(client, canAdmin, refresh, notify) {
     } catch (error) {
       notify(error.message || 'Não foi possível salvar o material.');
     } finally { submit.disabled = false; }
-  });
+  }, listenerOptions);
 }
