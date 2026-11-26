@@ -19,6 +19,8 @@
 6. Consulta e pesquisa de indivíduos e veículos, incluindo tela de detalhes.
 7. Respeito às políticas RLS do banco. As consultas também filtram a cidade ativa quando aplicável.
 8. Tema claro/escuro e identidade visual baseada nos tons originais cinza, sem introduzir azul.
+9. Módulo **Veículos de interesse** integrado ao shell React, reutilizando os fluxos operacionais existentes de consulta, inclusão, edição, baixa, preferências pessoais, pesquisa de veículo e geração de PDF.
+10. Módulo **Fiscalização** integrado ao shell React, com materiais, pesquisa, categorias e funções administrativas de manutenção, restrito à cidade definida pela regra original.
 
 ## Limite de segurança desta etapa
 
@@ -45,6 +47,35 @@ VITE_SUPABASE_ANON_KEY=SUA_CHAVE_PUBLICA_PUBLISHABLE_OU_ANON
 Nunca use a chave `service_role` no navegador, em arquivo versionado ou em variável `VITE_*`.
 
 O endereço usado na prévia também precisa estar autorizado em **Supabase → Authentication → URL Configuration → Redirect URLs**. Para StackBlitz ou outro ambiente online, configure as mesmas duas variáveis como secrets/variables do ambiente. Não coloque essas chaves em mensagens, commits ou arquivos públicos.
+
+## Inventário de migração e paridade
+
+| Módulo | Situação |
+|---|---|
+| Login Google, sessão e cidade ativa | Integrado |
+| Painel e indicadores | React, consulta real |
+| Indivíduos | Consulta e detalhes em React; formulários, fotos, vínculos e propostas ainda pendentes |
+| Veículos | Consulta e detalhes em React; formulários, fotos, vínculos e propostas ainda pendentes |
+| Veículos de interesse | Integrado com o módulo operacional existente |
+| Fiscalização | Integrado com o módulo operacional existente, com restrição de cidade |
+| Mandados | Ainda pendente; inclui importação PDF/CSV, OCR, revisão e auditoria |
+| Cadastro inteligente | Ainda pendente |
+| Revisão inteligente | Ainda pendente |
+| Manutenção inteligente e Google Drive | Ainda pendente |
+| Histórico e restauração de versões | Ainda pendente |
+| Usuários, autorizações e perfis por cidade | Ainda pendente |
+| Cidades e acessos master | Ainda pendente |
+| OCR de documentos e fotografias | Ainda pendente |
+| PDFs, exportações e compartilhamento | Ainda pendente, exceto PDF do módulo Veículos de interesse |
+
+## Critérios para considerar a migração completa
+
+- Cada módulo deve preservar permissões, RLS, escopo por cidade e trilhas de auditoria.
+- Operações de identidade e placa devem continuar usando os fluxos de proposta/aprovação já existentes para operadores.
+- Fotos devem preservar buckets, cache privado, capa, enquadramento, retenção e deduplicação.
+- Mandados devem preservar importação em lote, conferência de duplicidades, análise de identidade, baixa e confirmação administrativa.
+- Os testes devem cobrir regressões dos módulos originais e testes específicos dos componentes React.
+- A versão React só pode ser considerada equivalente depois de testes funcionais com perfis autorizados e comparação com a versão legada.
 
 ## Próximas etapas
 
