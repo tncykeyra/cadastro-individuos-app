@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase, supabaseConfigured } from './supabase.js';
+import { renderVehicleInterestPage, wireVehicleInterestActions } from '../vehicle-interest.js';
+import { renderFiscalizationPage, wireFiscalizationActions } from '../fiscalization.js';
 import './react.css';
 
 const number = (value) => Number(value || 0).toLocaleString('pt-BR');
@@ -34,6 +36,54 @@ function Metric({ label, value, detail }) {
 
 function EmptyState({ title, detail }) {
   return <div className="react-empty"><strong>{title}</strong><span>{detail}</span></div>;
+}
+
+
+function LegacyFeature({ page, activeCity, session, isAdmin }) {
+  useEffect(() => {
+    const root = document.querySelector('#mainContent');
+    if (!root || !supabase || !activeCity?.id) return undefined;
+    let alive = true;
+    const resolvePhoto = async (path) => {
+      if (!path) return '';
+      const { data, error } = await supabase.storage.from('people-photos').createSignedUrl(path, 3600);
+      return error ? '' : data?.signedUrl || '';
+    };
+    const loadVehicleInterest = async () => {
+      const markup = await renderVehicleInterestPage(supabase, {
+        cityId: activeCity.id, cityName: activeCity.name || '', userId: session.user.id, resolvePhoto,
+      });
+      if (!alive) return;
+      root.innerHTML = markup;
+      wireVehicleInterestActions(supabase, {
+        cityId: activeCity.id, cityName: activeCity.name || '', userId: session.user.id, resolvePhoto,
+        onRefresh: loadVehicleInterest,
+      });
+    };
+    const loadFiscalization = async () => {
+      const markup = await renderFiscalizationPage(supabase, isAdmin);
+      if (alive) root.innerHTML = markup;
+    };
+    const start = async () => {
+      try {
+        if (page === 'vehicleInterest') await loadVehicleInterest();
+        if (page === 'fiscalization') {
+          await loadFiscalization();
+          if (alive) wireFiscalizationActions(supabase, () => isAdmin, loadFiscalization, (message) => window.alert(message));
+        }
+      } catch (featureError) {
+        if (alive) root.innerHTML = '<div class="react-alert error" role="alert">' + String(featureError?.message || 'Não foi possível carregar este módulo.') + '</div>';
+      }
+    };
+    void start();
+    return () => {
+      alive = false;
+      root.__vehicleInterestAbort?.abort?.();
+      document.__fiscalizationAbort?.abort?.();
+      root.replaceChildren();
+    };
+  }, [page, activeCity?.id, activeCity?.name, session?.user?.id, isAdmin]);
+  return <div id="mainContent" className="react-legacy-host" aria-live="polite"><p className="react-loading-inline">Carregando módulo…</p></div>;
 }
 
 export default function App() {
@@ -254,14 +304,19 @@ export default function App() {
           <button className={'react-nav-item ' + (page === 'dashboard' ? 'active' : '')} onClick={() => { setPage('dashboard'); setSelected(null); }}><span>▦</span>Painel da cidade</button>
           <button className={'react-nav-item ' + (page === 'people' ? 'active' : '')} onClick={() => { setPage('people'); setSelected(null); setSearch(''); }}><span>♙</span>Indivíduos</button>
           <button className={'react-nav-item ' + (page === 'vehicles' ? 'active' : '')} onClick={() => { setPage('vehicles'); setSelected(null); setSearch(''); }}><span>⌑</span>Veículos</button>
+          <button className={'react-nav-item ' + (page === 'vehicleInterest' ? 'active' : '')} onClick={() => { setPage('vehicleInterest'); setSelected(null); }}><span>🚘</span>Veículos de interesse</button>
+          {activeCity.id === '10000000-0000-4000-8000-000000000001' && <button className={'react-nav-item ' + (page === 'fiscalization' ? 'active' : '')} onClick={() => { setPage('fiscalization'); setSelected(null); }}><span>🚦</span>Fiscalização</button>}
           <button className="react-nav-item" disabled title="Próxima etapa da migração"><span>⚖</span>Mandados <small>em migração</small></button>
+          <button className="react-nav-item" disabled title="Próxima etapa da migração"><span>✦</span>Cadastro inteligente <small>em migração</small></button>
+          {isAdmin && <><button className="react-nav-item" disabled title="Próxima etapa da migração"><span>⌕</span>Revisão inteligente <small>em migração</small></button><button className="react-nav-item" disabled title="Próxima etapa da migração"><span>↺</span>Histórico <small>em migração</small></button><button className="react-nav-item" disabled title="Próxima etapa da migração"><span>♧</span>Usuários <small>em migração</small></button></>}
+          {profile?.role === 'master' && <button className="react-nav-item" disabled title="Próxima etapa da migração"><span>⌖</span>Cidades e acessos <small>em migração</small></button>}
         </nav>
         <div className="react-sidebar-footer">Acesso restrito · Uso autorizado</div>
       </aside>
 
       <main className="react-main">
         <header className="react-topbar">
-          <div><span className="react-eyebrow">ÁREA DE TRABALHO</span><strong>{page === 'dashboard' ? 'Painel da cidade' : page === 'people' ? 'Indivíduos' : 'Veículos'}</strong></div>
+          <div><span className="react-eyebrow">ÁREA DE TRABALHO</span><strong>{{ dashboard: 'Painel da cidade', people: 'Indivíduos', vehicles: 'Veículos', vehicleInterest: 'Veículos de interesse', fiscalization: 'Fiscalização' }[page] || 'Cadastro de Indivíduos'}</strong></div>
           <div className="react-top-actions">
             {cities.length > 1 && <select aria-label="Cidade ativa" value={activeCity.id} onChange={(event) => void changeCity(event.target.value)} disabled={busy}>{cities.map((city) => <option key={city.id} value={city.id}>{city.name}</option>)}</select>}
             <button className="react-icon-button" type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Alternar tema">{theme === 'dark' ? '☀' : '◐'}</button>
@@ -277,12 +332,13 @@ export default function App() {
             <span className="react-status">React · consulta conectada</span>
           </div>
 
+          {(page === 'vehicleInterest' || page === 'fiscalization') && <LegacyFeature page={page} activeCity={activeCity} session={session} isAdmin={isAdmin} />}
           {page === 'dashboard' && <><div className="react-metrics"><Metric label="Indivíduos cadastrados" value={stats.people === null ? '—' : number(stats.people)} detail="Registros ativos na cidade" /><Metric label="Indivíduos com CPF" value={stats.cpf === null ? '—' : number(stats.cpf)} detail="CPF informado no cadastro" /><Metric label="Veículos cadastrados" value={stats.vehicles === null ? '—' : number(stats.vehicles)} detail="Registros ativos na cidade" /><Metric label="Mandados ativos" value={stats.warrants === null ? '—' : number(stats.warrants)} detail="Contagem pelo procedimento existente" /></div><section className="react-panel"><div><span className="react-eyebrow">ACESSO RÁPIDO</span><h2>Módulos disponíveis nesta etapa</h2><p>As consultas de indivíduos e veículos já usam a sessão e as permissões do banco atual.</p></div><div className="react-module-grid"><button className="react-module" onClick={() => setPage('people')}><span>♙</span><strong>Indivíduos</strong><small>Pesquisar e consultar cadastros.</small></button><button className="react-module" onClick={() => setPage('vehicles')}><span>⌑</span><strong>Veículos</strong><small>Pesquisar e consultar veículos.</small></button></div></section></>}
 
           {(page === 'people' || page === 'vehicles') && !selected && <section className="react-panel"><div className="react-list-heading"><div><span className="react-eyebrow">PESQUISA</span><h2>{page === 'people' ? 'Localizar indivíduo' : 'Localizar veículo'}</h2></div><span className="react-count">{number(visibleRecords.length)} resultado(s)</span></div><input className="react-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={page === 'people' ? 'Nome, CPF, RG ou matrícula' : 'Placa, marca, modelo ou cor'} aria-label="Pesquisar registros" /><p className="react-helper">A pesquisa respeita a cidade ativa e as regras de acesso do banco.</p>{busy && <p className="react-loading-inline">Consultando…</p>}{!busy && visibleRecords.length === 0 && <EmptyState title="Nenhum registro encontrado" detail="Confira os termos da pesquisa ou tente novamente." />}{visibleRecords.length > 0 && <div className="react-record-list">{visibleRecords.map((record) => <button className="react-record-row" key={record.id} onClick={() => void openDetail(record.id)}><span className="react-record-avatar">{page === 'people' ? '♙' : '⌑'}</span><span className="react-record-copy"><strong>{page === 'people' ? record.full_name : record.plate}</strong><small>{page === 'people' ? ['CPF: ' + (record.cpf_digits || '—'), 'RG: ' + (record.rg || '—')].join(' · ') : [record.make, record.model, record.color].filter(Boolean).join(' · ') || 'Dados complementares não informados'}</small></span><span className="react-record-arrow">›</span></button>)}</div>}</section>}
 
           {selected && <section className="react-panel react-detail"><button className="react-back" onClick={() => setSelected(null)}>← Voltar à lista</button><span className="react-eyebrow">CONSULTA INDIVIDUAL</span><h2>{selected.kind === 'people' ? selected.data.full_name : selected.data.plate}</h2><div className="react-detail-grid">{Object.entries(selected.data).filter(([key, value]) => !['id', 'created_at'].includes(key) && value !== null && value !== '').map(([key, value]) => <div className="react-detail-field" key={key}><small>{({ full_name: 'Nome completo', cpf_digits: 'CPF', rg: 'RG', registration: 'Matrícula', alias: 'Apelido / vulgo', birthday: 'Nascimento', address_primary: 'Endereço principal', address_secondary: 'Endereço secundário', occurrence_notes: 'Crimes / anotações de ocorrência', occurrence_reference: 'Referência da ocorrência', notes: 'Anotações', plate: 'Placa', make: 'Marca', model: 'Modelo', color: 'Cor' })[key] || key}</small><strong>{key === 'birthday' ? date(value) : String(value)}</strong></div>)}</div><small className="react-detail-date">Cadastro criado em {selected.data.created_at ? new Date(selected.data.created_at).toLocaleString('pt-BR') : '—'}</small></section>}
-          <p className="react-readonly-note">Etapa de consulta: esta interface não cria, edita, arquiva nem exclui registros.</p>
+          {!['vehicleInterest', 'fiscalization'].includes(page) && <p className="react-readonly-note">Etapa de consulta: esta interface não cria, edita, arquiva nem exclui registros.</p>}
         </section>
       </main>
     </div>
