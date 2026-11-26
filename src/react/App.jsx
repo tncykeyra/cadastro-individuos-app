@@ -45,6 +45,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [accessBlocked, setAccessBlocked] = useState(false);
   const [records, setRecords] = useState([]);
   const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState('');
@@ -59,6 +60,7 @@ export default function App() {
   const loadUser = useCallback(async (currentSession) => {
     setLoading(true);
     setError('');
+    setAccessBlocked(false);
     setSession(currentSession || null);
     setProfile(null);
     setCities([]);
@@ -81,7 +83,7 @@ export default function App() {
         setError(userProfile.role === 'pending'
           ? 'Sua conta ainda aguarda autorização do administrador.'
           : 'O acesso desta conta está desativado.');
-        await supabase.auth.signOut();
+        setAccessBlocked(true);
         setLoading(false);
         return;
       }
@@ -103,6 +105,7 @@ export default function App() {
       setActiveCity(currentCity);
     } catch (loadError) {
       setError(cleanError(loadError));
+      setAccessBlocked(true);
       setProfile(null);
       setCities([]);
       setActiveCity(null);
@@ -239,6 +242,7 @@ export default function App() {
     return <main className="react-auth-page"><section className="react-auth-card"><Brand /><span className="react-eyebrow">CONFIGURAÇÃO NECESSÁRIA</span><h1>Conecte o Supabase</h1><p>Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no ambiente de execução. Use somente a chave pública publishable/anon.</p><div className="react-alert">Nenhuma chave foi incluída no código. A versão React ainda não está conectada.</div></section></main>;
   }
   if (loading) return <main className="react-auth-page"><section className="react-auth-card"><Brand /><p>Validando sua sessão e suas permissões…</p></section></main>;
+  if (accessBlocked) return <main className="react-auth-page"><section className="react-auth-card"><Brand /><span className="react-eyebrow">ACESSO NÃO LIBERADO</span><h1>Não foi possível acessar</h1><div className="react-alert error" role="alert">{error}</div><button className="react-primary react-login-button" type="button" onClick={() => void supabase.auth.signOut()}>Sair da conta</button></section></main>;
   if (!session || !activeCity) return <Login onLogin={login} busy={busy} error={error} />;
 
   return (
