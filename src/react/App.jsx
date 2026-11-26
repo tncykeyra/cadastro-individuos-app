@@ -328,7 +328,7 @@ export default function App() {
         <section className="react-content">
           {error && <div className="react-alert error" role="alert">{error}</div>}
           <div className="react-page-heading">
-            <div><span className="react-eyebrow">{activeCity.name.toUpperCase()}</span><h1>{page === 'dashboard' ? 'Resumo operacional' : selected ? 'Detalhes do cadastro' : page === 'people' ? 'Indivíduos cadastrados' : 'Veículos cadastrados'}</h1><p>{page === 'dashboard' ? 'Indicadores carregados diretamente do banco de dados.' : 'Consulta protegida pelo mesmo acesso do sistema atual.'}</p></div>
+            <div><span className="react-eyebrow">{activeCity.name.toUpperCase()}</span><h1>{selected ? 'Detalhes do cadastro' : ({ dashboard: 'Resumo operacional', people: 'Indivíduos cadastrados', vehicles: 'Veículos cadastrados', vehicleInterest: 'Veículos de interesse', fiscalization: 'Materiais de fiscalização' }[page] || 'Cadastro de Indivíduos')}</h1><p>{page === 'dashboard' ? 'Indicadores carregados diretamente do banco de dados.' : 'Consulta protegida pelo mesmo acesso do sistema atual.'}</p></div>
             <span className="react-status">React · consulta conectada</span>
           </div>
 
