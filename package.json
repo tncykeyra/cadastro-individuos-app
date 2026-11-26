@@ -13,7 +13,9 @@
     "@supabase/supabase-js": "^2.0.0",
     "pdfjs-dist": "^6.4.299",
     "tesseract.js": "^7.0.0",
-    "exceljs": "4.4.0"
+    "exceljs": "4.4.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "vite": "^6.0.0"
