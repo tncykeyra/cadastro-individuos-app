@@ -101,3 +101,9 @@
 .react-top-actions button { white-space: nowrap; }
 @media (max-width: 1000px) { .react-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .react-topbar { padding: 12px 18px; } .react-content { padding: 28px 18px 50px; } }
 @media (max-width: 700px) { .react-shell { display: block; } .react-sidebar { min-height: auto; padding: 12px; } .react-sidebar nav { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-top: 14px; } .react-nav-caption, .react-sidebar-footer { grid-column: 1 / -1; } .react-brand { padding-bottom: 12px; } .react-topbar { align-items: flex-start; min-height: 60px; padding: 10px 13px; } .react-top-actions { flex-wrap: wrap; justify-content: flex-end; gap: 7px; } .react-user { display: none; } .react-top-actions select { max-width: 130px; } .react-content { padding: 24px 14px 40px; } .react-page-heading { align-items: flex-start; flex-direction: column; } .react-metrics { gap: 9px; } .react-metric { padding: 14px; } .react-module-grid { gap: 8px; } .react-panel { padding: 16px; } .react-detail-grid { grid-template-columns: 1fr; } }
+
+.react-legacy-host { min-height: 260px; padding: 2px 0 24px; color: var(--react-ink); }
+.react-legacy-host .page-intro, .react-legacy-host .section-heading { margin-top: 0; }
+.react-legacy-host .button { cursor: pointer; }
+.react-legacy-host input, .react-legacy-host select, .react-legacy-host textarea { max-width: 100%; }
+.react-legacy-host [hidden] { display: none !important; }
