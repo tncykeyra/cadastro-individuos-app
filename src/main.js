@@ -238,7 +238,7 @@ function getWarrantsUiMode(){try{return localStorage.getItem(WARRANTS_UI_MODE_KE
 function setWarrantsUiMode(mode){try{localStorage.setItem(WARRANTS_UI_MODE_KEY,mode==='classic'?'classic':'react')}catch{}}
 function settleLoadedCardPhotos(root){root?.querySelectorAll?.('.card-photo-cover img,.card-photo-thumbnail img').forEach(image=>{const holder=image.closest('.card-photo-cover,.card-photo-thumbnail');if(!holder)return;const settle=()=>{holder.classList.remove('is-photo-loading');holder.classList.toggle('is-photo-error',image.naturalWidth<=0)};image.addEventListener('load',settle,{once:true});image.addEventListener('error',settle,{once:true});if(image.complete)settle()})}
 function frame(content){const root=$('#mainContent');if(warrantReactRoot){warrantReactRoot.unmount();warrantReactRoot=null}if(vehicleReactRoot){vehicleReactRoot.unmount();vehicleReactRoot=null}if(loadingProgressTimer){clearInterval(loadingProgressTimer);loadingProgressTimer=null}root.innerHTML=content;settleLoadedCardPhotos(root);root.focus({preventScroll:true});}
-async function renderVehicleWorkspace(contentHtml,view='list',recordId=null){
+async function renderVehicleWorkspace(contentHtml,view='list',recordId=null,vehicleOptions={}){
   const root=$('#mainContent');
   const renderClassic=()=>{
     frame(contentHtml);
@@ -255,7 +255,7 @@ async function renderVehicleWorkspace(contentHtml,view='list',recordId=null){
     if(vehicleReactRoot){vehicleReactRoot.unmount();vehicleReactRoot=null}
     vehicleReactRoot=createRoot(root);
     flushSync(()=>vehicleReactRoot.render(React.createElement(VehiclesWorkspace,{
-      contentHtml,view,
+      contentHtml,view,recordId,canDelete:Boolean(vehicleOptions.canDelete),
       onSwitchClassic:()=>{setVehiclesUiMode('classic');if(vehicleReactRoot){vehicleReactRoot.unmount();vehicleReactRoot=null}if(view==='detail')void openVehicle(recordId,true);else void renderRecords()}
     })));
     root.focus({preventScroll:true});
