@@ -29,7 +29,7 @@ test('componentes React de produção usam o botão compartilhado', () => {
     assert.doesNotMatch(source, /<button(?=[\s/>])/, files[index] + ' não deve criar botões nativos paralelos');
   }
   assert.match(button, /forwardRef/);
-  assert.match(button, /dangerouslySetInnerHTML/); // props HTML continuam compatíveis com os portais existentes.
+  assert.match(button, /\.\.\.props/); // atributos HTML e dangerouslySetInnerHTML são encaminhados aos elementos nativos.
   assert.match(button, /\.filter\(Boolean\)\.join\(' '\)/);
   assert.doesNotMatch(button, /type="button"/); // não altera o comportamento submit implícito de formulários existentes.
 });
