@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
+import { flushSync } from 'react-dom';
 import './vehicles-workspace.css';
 
 function ShareIcon() {
@@ -136,6 +137,6 @@ function AssociationDialogShell({ isPerson, targetFieldHtml, notesFieldHtml }) {
 
 export function mountAssociationDialog(dialog, props) {
   const root = createRoot(dialog);
-  root.render(<AssociationDialogShell {...props} />);
+  flushSync(() => root.render(<AssociationDialogShell {...props} />));
   return root;
 }
