@@ -68,3 +68,19 @@ test('Carregamento do painel é exibido por componente React com animação aces
     assert.ok(dashboardCss.includes(animation), 'Animação ou acessibilidade ausente: ' + animation);
   }
 });
+
+
+test('Tela animada padronizada é usada nas seções e nas fichas de veículos', async () => {
+  const main = await readFile(mainUrl, 'utf8');
+  assert.ok(main.includes("import './react/city-dashboard.css';"));
+  const loadingStart = main.indexOf('function loadingPage(');
+  const loadingEnd = main.indexOf('async function loadUser(', loadingStart);
+  const loading = main.slice(loadingStart, loadingEnd);
+  for (const className of ['city-react-loading-screen','city-react-loading-card','city-react-loader-orbit','city-react-loader-core','city-react-loading-track','city-react-loading-skeletons']) {
+    assert.ok(loading.includes(className), 'Elemento visual de carregamento ausente: ' + className);
+  }
+  assert.ok(loading.includes('aria-live="polite"'));
+  assert.ok(main.includes("loadingPage('Abrindo cadastro do veículo…')"));
+  const pageLoader = main.slice(main.indexOf('async function loadPage(){'), main.indexOf('async function galleryPhotos(', main.indexOf('async function loadPage(){')));
+  assert.ok(pageLoader.includes('nav();loadingPage();try{'));
+});
