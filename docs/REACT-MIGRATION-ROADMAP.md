@@ -22,6 +22,14 @@ Migrar a interface do Cadastro Criminal para React por etapas verificáveis, sem
 - Listagem e ficha de veículos, com retorno à interface clássica.
 - Área de mandados, com retorno à interface clássica.
 
+## Camada React transversal — versão 2.45.0
+
+- As páginas genéricas que ainda eram inseridas diretamente pelo controlador legado agora são montadas dentro de `LegacyPageWorkspace`, sob uma raiz React.
+- Os botões dessas páginas e do diálogo principal são renderizados pelo componente compartilhado `Button`, com preservação de classes, IDs, atributos `data-*`, atributos de formulário e delegação de eventos já existente.
+- Painel da cidade, indivíduos, veículos e mandados mantêm seus workspaces React específicos. A raiz genérica é desmontada antes de cada troca para evitar raízes React concorrentes.
+- A camada não altera consultas, gravações, autenticação, RPCs, políticas RLS ou contratos do Supabase.
+- Esta é uma ponte de compatibilidade: formulários, tabelas e regras de negócio das páginas ainda serão convertidos em componentes React nativos por módulo. Não representa a conclusão da migração estrutural.
+
 ## Áreas que ainda precisam de migração estrutural
 
 A aplicação ainda possui fluxos de apresentação imperativa em `src/main.js` e módulos auxiliares. A padronização visual não deve ser confundida com migração integral de tela. Os próximos lotes devem migrar, com testes funcionais próprios:
@@ -46,4 +54,4 @@ A aplicação ainda possui fluxos de apresentação imperativa em `src/main.js` 
 
 ## Estado
 
-A versão 2.44.1 inicia a migração transversal com o viewport global de notificações em React. Os diálogos, galerias, formulários, importações e exportações ainda exigem migração por fluxo, com validação própria. Esta entrega não declara concluída a etapa 6 nem a migração estrutural de todas as telas. A migração restante deve seguir os lotes acima, evitando uma troca ampla que possa interromper o serviço.
+A versão 2.45.0 amplia a montagem React para as páginas genéricas e padroniza seus botões. A versão 2.44.1 iniciou a migração transversal com o viewport global de notificações em React. Os diálogos, galerias, formulários, importações e exportações ainda exigem migração por fluxo, com validação própria. Esta entrega não declara concluída a etapa 6 nem a migração estrutural de todas as telas. A migração restante deve seguir os lotes acima, evitando uma troca ampla que possa interromper o serviço.
