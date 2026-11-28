@@ -1,6 +1,83 @@
-/* Camada de estilo do workspace React de Mandados */
-.warrants-react-shell .warrants-react-footnote{margin:16px 2px 0;padding:12px 14px;border-top:1px solid var(--line);color:var(--muted);font-size:.76rem;line-height:1.5}
-:root[data-theme="dark"] .warrants-react-shell .warrant-record,:root[data-theme="dark"] .warrants-react-shell .warrant-review-card,:root[data-theme="dark"] .warrants-react-shell .warrant-duplicate-review{background:var(--surface);color:var(--ink)}
-:root[data-theme="dark"] .warrants-react-shell .warrant-tabs .team-tab{background:var(--surface);color:var(--muted)}
-:root[data-theme="dark"] .warrants-react-shell .warrant-tabs .team-tab.active{background:var(--brand);color:#fff}
-:root[data-theme="dark"] .warrants-react-shell .warrant-tool-card,:root[data-theme="dark"] .warrants-react-shell .warrant-active-section{background:var(--surface)}
+/* Redesign visual da área de Mandados — apresentação, sem alterar regras ou dados. */
+.warrants-react-shell{--warrant-card-bg:var(--surface,#fff);--warrant-card-border:var(--line,#e1e4e6);--warrant-card-muted:var(--muted,#687176);--warrant-card-ink:var(--ink,#252c30);color:var(--warrant-card-ink)}
+.warrants-react-shell .warrants-react-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:clamp(18px,3vw,28px);margin:0 0 18px;border:1px solid var(--warrant-card-border);border-radius:22px;background:linear-gradient(125deg,var(--surface,#fff),var(--page,#f2f4f4));box-shadow:0 10px 30px #20282d0b}
+.warrants-react-shell .warrants-react-eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--brand-dark,#3e474c);font-size:.7rem;font-weight:850;letter-spacing:.13em}
+.warrants-react-shell .warrants-react-eyebrow:before{content:"";width:22px;height:3px;border-radius:4px;background:var(--brand,#50595e)}
+.warrants-react-shell .warrants-react-hero h1{margin:9px 0 7px;font-size:clamp(1.65rem,4vw,2.45rem);line-height:1.08;letter-spacing:-.035em}
+.warrants-react-shell .warrants-react-hero p{max-width:650px;margin:0;color:var(--warrant-card-muted);line-height:1.55;font-size:.92rem}
+.warrants-react-shell .warrants-react-hero-side{display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex:0 0 auto}
+.warrants-react-shell .warrants-react-role{padding:7px 11px;border:1px solid var(--warrant-card-border);border-radius:999px;background:var(--warrant-card-bg);font-size:.72rem;font-weight:750}
+.warrants-react-shell .warrants-react-switch{border:1px solid var(--warrant-card-border);border-radius:10px;background:var(--warrant-card-bg);color:var(--warrant-card-ink);padding:9px 12px;font:inherit;font-size:.78rem;font-weight:700;cursor:pointer}
+.warrants-react-shell .warrants-react-switch:hover{border-color:var(--brand);transform:translateY(-1px)}
+.warrants-react-shell .warrants-react-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 24px}
+.warrants-react-shell .warrants-react-metric{position:relative;display:flex;flex-direction:column;gap:7px;min-width:0;min-height:126px;padding:17px 18px;border:1px solid var(--warrant-card-border);border-radius:17px;background:var(--warrant-card-bg);box-shadow:0 5px 18px #20282d08;overflow:hidden}
+.warrants-react-shell .warrants-react-metric:after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--brand,#50595e)}
+.warrants-react-shell .warrants-react-metric:nth-child(2):after{background:#9a7838}
+.warrants-react-shell .warrants-react-metric:nth-child(3):after{background:#777f84}
+.warrants-react-shell .warrants-react-metric:nth-child(4):after{background:#a0a5a8}
+.warrants-react-shell .warrants-react-metric>span{color:var(--warrant-card-muted);font-size:.76rem;font-weight:750;letter-spacing:.015em}
+.warrants-react-shell .warrants-react-metric strong{font-size:clamp(1.8rem,3vw,2.25rem);line-height:1;font-weight:850;letter-spacing:-.045em;font-variant-numeric:tabular-nums}
+.warrants-react-shell .warrants-react-metric small{margin-top:auto;color:var(--warrant-card-muted);font-size:.7rem;line-height:1.4}
+.warrants-react-shell .warrants-page{max-width:1240px}
+.warrants-react-shell .warrant-record-list,.warrants-react-shell .warrant-review-list,.warrants-react-shell .warrant-alert-list{gap:15px}
+.warrants-react-shell .warrant-record,.warrants-react-shell .warrant-review-card,.warrants-react-shell .warrant-duplicate-review{position:relative;padding:20px;border:1px solid var(--warrant-card-border);border-radius:19px;background:var(--warrant-card-bg);box-shadow:0 5px 20px #20282d0a;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.warrants-react-shell .warrant-record:hover,.warrants-react-shell .warrant-review-card:hover,.warrants-react-shell .warrant-duplicate-review:hover{transform:translateY(-2px);border-color:#aeb4b7;box-shadow:0 12px 28px #20282d12}
+.warrants-react-shell .warrant-record:before,.warrants-react-shell .warrant-review-card:before,.warrants-react-shell .warrant-duplicate-review:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;border-radius:19px 0 0 19px;background:#858d91}
+.warrants-react-shell .warrant-record:has(.warrant-status.pending):before{background:#9a7838}
+.warrants-react-shell .warrant-record:has(.warrant-status.reported):before{background:#777f84}
+.warrants-react-shell .warrant-record-top{align-items:flex-start;gap:18px;padding-left:5px}
+.warrants-react-shell .warrant-source,.warrants-react-shell .warrant-review-tag{border:1px solid var(--warrant-card-border);background:var(--page,#f2f4f4);color:var(--brand-dark,#3e474c);font-size:.68rem;font-weight:850;letter-spacing:.055em;text-transform:uppercase}
+.warrants-react-shell .warrant-record h3,.warrants-react-shell .warrant-review-card h3{margin:11px 0 6px;font-size:clamp(1.08rem,2vw,1.28rem);line-height:1.25;letter-spacing:-.015em}
+.warrants-react-shell .warrant-record .warrant-meta{font-size:.8rem;line-height:1.55}
+.warrants-react-shell .warrant-status{flex:0 0 auto;max-width:230px;padding:8px 12px;border:1px solid transparent;border-radius:999px;font-size:.72rem;font-weight:850;letter-spacing:.01em;text-align:center}
+.warrants-react-shell .warrant-status.pending{border-color:#e3d2a9;background:#f7f0df;color:#71551c}
+.warrants-react-shell .warrant-status.reported{border-color:#d6dadd;background:#eceff0;color:#4c565b}
+.warrants-react-shell .warrant-status.closed{border-color:#d9dddf;background:#f2f3f3;color:#596166}
+.warrants-react-shell .warrant-linked-people{margin:17px 0 5px;padding:12px;border:1px solid var(--warrant-card-border);border-radius:14px;background:var(--page,#f6f7f7)}
+.warrants-react-shell .warrant-linked-person{padding:9px;border:1px solid transparent;border-radius:11px;background:var(--warrant-card-bg);transition:border-color .15s ease,background .15s ease}
+.warrants-react-shell .warrant-linked-person:hover{border-color:#b9bfc2;background:var(--surface,#fff)}
+.warrants-react-shell .warrant-linked-photo{flex-basis:54px;width:54px;height:64px;border:1px solid var(--warrant-card-border);border-radius:10px}
+.warrants-react-shell .warrant-record-actions{display:flex;gap:9px;margin:17px 0 0;padding:14px 0 0 5px;border-top:1px solid var(--warrant-card-border)}
+.warrants-react-shell .warrant-record-actions .button,.warrants-react-shell .warrant-actions .button{min-height:38px;border-radius:10px;font-weight:750}
+.warrants-react-shell .warrant-person-search{margin:15px 0 0 5px;padding-top:13px;border-top:1px dashed var(--warrant-card-border)}
+.warrants-react-shell .warrant-person-search summary{font-size:.83rem}
+.warrants-react-shell .warrant-search-result{padding:12px;border-radius:12px;background:var(--page,#f6f7f7)}
+.warrants-react-shell .warrant-review-heading{align-items:flex-start}
+.warrants-react-shell .warrant-confidence{padding:7px 10px;border:1px solid var(--warrant-card-border);border-radius:999px;background:var(--page,#f6f7f7);font-size:.72rem}
+.warrants-react-shell .warrant-review-person{padding:10px 12px;border:1px solid var(--warrant-card-border);border-radius:13px;background:var(--page,#f6f7f7)}
+.warrants-react-shell .warrant-review-photo-frame{flex-basis:58px;width:58px;height:66px;border-radius:10px}
+.warrants-react-shell .warrant-caution{border-radius:10px}
+.warrants-react-shell .warrant-duplicate-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:15px 0}
+.warrants-react-shell .warrant-duplicate-facts>span{padding:11px;border:1px solid var(--warrant-card-border);border-radius:11px;background:var(--page,#f6f7f7);font-size:.8rem;overflow-wrap:anywhere}
+.warrants-react-shell .warrant-alert-item{padding:15px;border-radius:14px;background:var(--warrant-card-bg)}
+.warrants-react-shell .warrant-person-alert{border-radius:18px}
+.warrants-react-shell .warrant-tool-card,.warrants-react-shell .warrant-active-section{border-radius:18px;box-shadow:0 5px 20px #20282d08}
+.warrants-react-shell .warrants-react-footnote{margin-top:20px;padding:13px 3px;border-top:1px solid var(--warrant-card-border);font-size:.74rem}
+:root[data-theme="dark"] .warrants-react-shell{--warrant-card-bg:var(--surface,#242a2e);--warrant-card-border:var(--line,#41494e);--warrant-card-muted:var(--muted,#aeb5b9);--warrant-card-ink:var(--ink,#f0f2f3)}
+:root[data-theme="dark"] .warrants-react-shell .warrants-react-hero{background:linear-gradient(125deg,var(--surface),var(--page));box-shadow:none}
+:root[data-theme="dark"] .warrants-react-shell .warrants-react-metric,:root[data-theme="dark"] .warrants-react-shell .warrant-record,:root[data-theme="dark"] .warrants-react-shell .warrant-review-card,:root[data-theme="dark"] .warrants-react-shell .warrant-duplicate-review{background:var(--warrant-card-bg);color:var(--warrant-card-ink);box-shadow:none}
+:root[data-theme="dark"] .warrants-react-shell .warrant-source,:root[data-theme="dark"] .warrants-react-shell .warrant-review-tag,:root[data-theme="dark"] .warrants-react-shell .warrant-confidence,:root[data-theme="dark"] .warrants-react-shell .warrant-linked-people,:root[data-theme="dark"] .warrants-react-shell .warrant-review-person,:root[data-theme="dark"] .warrants-react-shell .warrant-search-result,:root[data-theme="dark"] .warrants-react-shell .warrant-duplicate-facts>span{background:var(--page);color:var(--warrant-card-ink)}
+:root[data-theme="dark"] .warrants-react-shell .warrants-react-switch,:root[data-theme="dark"] .warrants-react-shell .warrant-linked-person{background:var(--surface);color:var(--warrant-card-ink)}
+:root[data-theme="dark"] .warrants-react-shell .warrant-status.pending{background:#453a22;border-color:#77643b;color:#f0d99f}
+:root[data-theme="dark"] .warrants-react-shell .warrant-status.reported,:root[data-theme="dark"] .warrants-react-shell .warrant-status.closed{background:#343b40;border-color:#525b60;color:#d5dadd}
+:root[data-theme="dark"] .warrants-react-shell .warrant-alert-item{background:var(--warrant-card-bg)}
+@media(max-width:820px){.warrants-react-shell .warrants-react-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){
+ .warrants-react-shell .warrants-react-hero{align-items:stretch;flex-direction:column;padding:17px;border-radius:17px}
+ .warrants-react-shell .warrants-react-hero-side{align-items:flex-start}
+ .warrants-react-shell .warrants-react-metrics{gap:9px;margin-bottom:18px}
+ .warrants-react-shell .warrants-react-metric{min-height:112px;padding:14px 13px 13px 16px;border-radius:14px}
+ .warrants-react-shell .warrants-react-metric>span{font-size:.69rem}
+ .warrants-react-shell .warrants-react-metric strong{font-size:1.8rem}
+ .warrants-react-shell .warrants-react-metric small{font-size:.65rem}
+ .warrants-react-shell .warrant-record,.warrants-react-shell .warrant-review-card,.warrants-react-shell .warrant-duplicate-review{padding:16px 14px 15px 17px;border-radius:16px}
+ .warrants-react-shell .warrant-record-top{gap:10px}
+ .warrants-react-shell .warrant-record-top>.warrant-status{align-self:flex-start}
+ .warrants-react-shell .warrant-record-actions{display:grid;grid-template-columns:1fr;padding-left:0}
+ .warrants-react-shell .warrant-record-actions .button{width:100%;justify-content:center}
+ .warrants-react-shell .warrant-record-actions .warrant-meta{padding:6px 2px}
+ .warrants-react-shell .warrant-duplicate-facts{grid-template-columns:1fr}
+ .warrants-react-shell .warrant-review-heading{gap:10px}
+ .warrants-react-shell .warrant-confidence{text-align:left;align-self:flex-start}
+}
+@media(prefers-reduced-motion:reduce){.warrants-react-shell .warrant-record,.warrants-react-shell .warrant-review-card,.warrants-react-shell .warrant-duplicate-review,.warrants-react-shell .warrant-linked-person{transition:none}}
