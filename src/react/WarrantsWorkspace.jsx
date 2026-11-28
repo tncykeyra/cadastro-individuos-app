@@ -51,7 +51,7 @@ function mountWarrantButtons(scope, roots) {
   for (const button of candidates) {
     const workspace = button.closest('.warrants-react-shell');
     const dialog = button.closest('#recordDialog');
-    const warrantDialog = dialog?.querySelector('.warrant-form, .warrant-summary, [data-warrant-id]');
+    const warrantDialog = dialog?.querySelector('form[id^="warrant"], [class*="warrant"], [data-warrant-id]');
     if (!workspace && !warrantDialog) continue;
     const props = buttonPropsFromMarkup(button);
     const markup = button.innerHTML;
