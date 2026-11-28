@@ -6,7 +6,6 @@ const [person, vehicle, styles, main] = await Promise.all([
   readFile(new URL('../src/react/PersonDetail.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/react/VehicleDetail.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/react/detail-actions.css', import.meta.url), 'utf8'),
-  readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8')
 ]);
 
