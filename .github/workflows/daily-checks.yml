@@ -1,5 +1,7 @@
 name: Verificações diárias do aplicativo
 on:
+  push:
+    branches: [react-migracao-gradual]
   schedule:
     - cron: '17 8 * * *'
   workflow_dispatch:
