@@ -9,7 +9,7 @@ const [worker, main, pkg] = await Promise.all([
 ]);
 
 test('PWA usa um novo cache de shell para descartar os arquivos da versão anterior', () => {
-  assert.match(worker, /cadastro-app-shell-v149/);
+  assert.match(worker, /cadastro-app-shell-v150/);
   assert.match(worker, /self\.skipWaiting\(\)/);
   assert.match(worker, /self\.clients\.claim\(\)/);
   assert.match(worker, /keys\.filter\(key=>key!==CACHE\)/);
@@ -24,5 +24,5 @@ test('clientes instalados solicitam a nova versão do service worker sem cache H
 });
 
 test('nova versão pública do aplicativo é identificada na interface', () => {
-  assert.equal(JSON.parse(pkg).version, '2.52.11');
+  assert.equal(JSON.parse(pkg).version, '2.52.12');
 });
