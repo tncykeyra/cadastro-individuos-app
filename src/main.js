@@ -12,6 +12,7 @@ import { renderIntelligentEntry, parseIntelligentText, parseIntelligentBundle, i
 import { renderSystemTestsPanel, refreshSystemTestsPanel } from './system-tests-panel.js';
 import { mountAssociationDialog } from './react/VehiclesWorkspace.jsx';
 import { renderSidebar } from './react/Sidebar.jsx';
+import './react/ui-system.css';
 
 let ocrEnginePromise;
 async function processOcrFiles(...args){
