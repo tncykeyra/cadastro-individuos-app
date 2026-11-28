@@ -46,6 +46,7 @@ Tornar React a arquitetura padrão de todos os módulos da aplicação, removend
 - Ficha de Veículo em JSX nativo: galeria de fotos, dados de identificação, aviso de sugestão de placa, pessoas associadas e ações de compartilhar, editar, excluir, associar e desativar vínculo.
 - Estrutura principal da ficha de Indivíduo em JSX nativo: galeria, identificação, CPF/RG, matrícula, vulgo, aniversário, endereços, anotações, informações de ocorrência e veículos associados.
 - A ficha nativa de Indivíduo recebe os dados e resultados das consultas já existentes. Mantém os fluxos atuais de edição, compartilhamento, exclusão autorizada, associações, alertas de mandados, sugestões de identidade e verificação entre cidades.
+- Corrigida a estrutura JSX da ficha nativa de Indivíduo após identificar falha de compilação. Build de produção e cinco workflows de validação passaram no commit `d0b0fb866f1b4f08c8397f4a6f4d522cfd4c3958`.
 - A ficha nativa reutiliza os serviços e as rotinas de negócio existentes. As ações continuam conectadas aos manipuladores atuais.
 - Nenhuma tabela, RPC, política RLS, registro ou arquivo do Supabase foi alterado.
 - O fallback de erro mantém uma ação de retorno caso o carregamento do componente React falhe.
