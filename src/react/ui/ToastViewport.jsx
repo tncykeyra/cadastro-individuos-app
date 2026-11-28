@@ -4,6 +4,21 @@ import './toast.css';
 
 let root = null;
 let nextToastId = 0;
+const toastModeKey = 'cadastro-criminal-toast-mode-v1';
+
+function getToastMode() {
+  try { return window.localStorage.getItem(toastModeKey) === 'classic' ? 'classic' : 'react'; }
+  catch { return 'react'; }
+}
+
+function setToastMode(mode) {
+  const selected = mode === 'classic' ? 'classic' : 'react';
+  try { window.localStorage.setItem(toastModeKey, selected); } catch {}
+  window.dispatchEvent(new CustomEvent('app:toast-mode-change', { detail: { mode: selected } }));
+  return selected;
+}
+
+if (typeof window !== 'undefined') window.setToastMode = setToastMode;
 
 function ToastItem({ item, onDismiss }) {
   useEffect(() => {
