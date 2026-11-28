@@ -63,21 +63,21 @@ test('integração mantém ações e contratos de navegação e formulário exis
 });
 
 test('versão e cache foram atualizados e o plano de migração explicita as áreas restantes', () => {
-  assert.equal(JSON.parse(pkg).version, '2.47.0');
-  assert.match(index, /styles\.css\?v=163/);
-  assert.match(serviceWorker, /cadastro-app-shell-v117/);
+  assert.equal(JSON.parse(pkg).version, '2.48.0');
+  assert.match(index, /styles\.css\?v=164/);
+  assert.match(serviceWorker, /cadastro-app-shell-v118/);
   for (const module of ['Autenticação','Cadastro Inteligente','Usuários','Histórico','Veículos de interesse','Fiscalização','ponte de compatibilidade']) {
     assert.ok(roadmap.includes(module), 'área da migração documentada: ' + module);
   }
 });
 
-test('workspace de cidades mantém ações e retorno clássico em React', async () => {
+test('workspace de cidades mantém ações sem oferecer retorno à interface clássica', async () => {
   const cities = await readFile(new URL('../src/react/CitiesWorkspace.jsx', import.meta.url), 'utf8');
   assert.match(cities, /onActivate/);
   assert.match(cities, /onCreate/);
   assert.match(cities, /onAssign/);
   assert.match(cities, /onRemove/);
-  assert.match(cities, /Usar interface clássica/);
+  assert.doesNotMatch(cities, /Usar interface clássica/);
 });
 
 test('tipografia ampliada somente no desktop e preserva o layout mobile', () => {
