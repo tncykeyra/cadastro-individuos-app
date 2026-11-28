@@ -29,3 +29,24 @@ test('estilos usam a paleta do aplicativo e têm adaptação mobile', () => {
   assert.match(styles, /--brand/);
   assert.match(styles, /prefers-reduced-motion/);
 });
+
+test('todos os botões da área Mandados são montados pelo React, inclusive ações dinâmicas dos diálogos', () => {
+  assert.match(component, /function mountWarrantButtons/);
+  assert.match(component, /createRoot\(mount\)/);
+  assert.match(component, /flushSync\(\(\) => root\.render/);
+  assert.match(component, /new MutationObserver/);
+  assert.match(component, /closest\('\.warrants-react-shell'\)/);
+  assert.match(component, /closest\('#recordDialog'\)/);
+  assert.match(component, /data-warrants-react-owned/);
+  assert.match(component, /WarrantsReactContent contentHtml=\{contentHtml\}/);
+});
+
+test('ações, abas e formulários de mandados continuam conectados aos fluxos existentes', () => {
+  assert.match(main, /document\.querySelectorAll\('\[data-warrant-tab\]'\)/);
+  assert.match(main, /data-warrant-search-focus/);
+  assert.match(main, /data-warrant-proposal-approve/);
+  assert.match(main, /warrantManualForm:saveWarrantManual/);
+  assert.match(main, /warrantConfirmForm:submitWarrantConfirmation/);
+  assert.match(component, /buttonPropsFromMarkup/);
+  assert.match(component, /dangerouslySetInnerHTML/);
+});
