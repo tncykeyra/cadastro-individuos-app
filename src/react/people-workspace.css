@@ -62,25 +62,41 @@
 }
 
 
-/* Os botões são montados em portais React dentro de .people-react-button-mount.
-   O seletor precisa alcançar o botão dentro desse mount (não como filho direto). */
+/* Mantém as ações "Associar pessoa" e "Associar veículo" com o mesmo padrão visual. */
+.people-react-content .association-section-heading .people-react-button-mount,
+.people-react-content .person-relationships .section-heading .people-react-button-mount{
+  display:inline-flex;
+  flex:0 0 auto;
+  min-width:0;
+}
+.people-react-content .association-section-heading .people-react-button-mount .button,
+.people-react-content .person-relationships .section-heading .people-react-button-mount .button{
+  display:inline-flex;
+  box-sizing:border-box;
+  min-width:0;
+  min-height:42px;
+  padding:10px 16px;
+  align-items:center;
+  justify-content:center;
+  border-radius:12px;
+  font-size:.86rem;
+  font-weight:700;
+  line-height:1.25;
+  text-align:center;
+  white-space:normal;
+}
 @media(max-width:700px){
+  .people-react-content .association-section-heading .people-react-button-mount,
+  .people-react-content .person-relationships .section-heading .people-react-button-mount{
+    display:flex;
+    flex:1 1 100%;
+    width:100%;
+  }
   .people-react-content .association-section-heading .people-react-button-mount .button,
   .people-react-content .person-relationships .section-heading .people-react-button-mount .button{
     display:flex;
-    box-sizing:border-box;
     width:100%;
-    min-width:0;
     min-height:46px;
-    align-items:center;
-    justify-content:center;
-    white-space:normal;
-    text-align:center;
-  }
-  .people-react-content .association-section-heading .people-react-button-mount,
-  .people-react-content .person-relationships .section-heading .people-react-button-mount{
-    display:block;
-    width:100%;
-    min-width:0;
+    padding:11px 14px;
   }
 }
