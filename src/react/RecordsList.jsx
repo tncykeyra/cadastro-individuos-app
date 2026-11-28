@@ -54,12 +54,14 @@ export default function RecordsList({
   const people = entity === 'people';
   const [searchValue, setSearchValue] = useState(query);
   const searchTimer = useRef(null);
+  const onSearchRef = useRef(onSearch);
+  onSearchRef.current = onSearch;
   useEffect(() => setSearchValue(query), [query]);
   useEffect(() => {
     if (searchValue === query) return undefined;
-    searchTimer.current = setTimeout(() => onSearch(searchValue), 300);
+    searchTimer.current = setTimeout(() => onSearchRef.current(searchValue), 300);
     return () => clearTimeout(searchTimer.current);
-  }, [searchValue, query, onSearch]);
+  }, [searchValue, query]);
   const submitSearch = () => {
     clearTimeout(searchTimer.current);
     onSearch(searchValue);
