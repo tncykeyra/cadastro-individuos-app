@@ -48,7 +48,7 @@ function Pagination({ page, pageSize, total, onChange }) {
 
 export default function RecordsList({
   entity, records = [], relatedRecords = [], total = 0, page = 0, pageSize = 30,
-  query = '', letter = 'all', serverPaged = false, onSearch, onAdd, onExport,
+  query = '', letter = 'all', serverPaged = false, onSearch, onSearchInput, onAdd, onExport,
   onOpen, onPageChange, onPageSizeChange, onLetterChange,
 }) {
   const people = entity === 'people';
@@ -90,6 +90,7 @@ export default function RecordsList({
             onChange={event => {
               const nextValue = event.target.value;
               setSearchValue(nextValue);
+              onSearchInput?.(nextValue);
             }}
             onKeyDown={event => {
               if (event.key === 'Enter') {
