@@ -29,8 +29,8 @@ test('pesquisas de associação de indivíduos e veículos usam debounce sem des
 });
 
 test('veículos de interesse pesquisam a lista e veículos associados em tempo real', () => {
-  assert.match(interest, /listSearchTimer=setTimeout\\(\\(\\)=>/);
-  assert.match(interest, /interestSearchTimer=setTimeout\\(\\(\\)=>/);
+  assert.match(interest, /listSearchTimer=setTimeout\(\(\)=>/);
+  assert.match(interest, /interestSearchTimer=setTimeout\(\(\)=>/);
   assert.match(main, /onRefresh:async\(\)=>\{const input=\$\('#interestSearch'\),restore=input&&document\.activeElement===input/);
   assert.match(main, /next\.focus\(\{preventScroll:true\}\)/);
 });
