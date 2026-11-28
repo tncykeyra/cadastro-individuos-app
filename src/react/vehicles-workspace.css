@@ -173,3 +173,7 @@
  .association-react-actions{position:sticky;bottom:0;padding:13px 17px calc(13px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1.4fr}
  .association-react-actions .button{min-height:44px;padding-inline:10px;font-size:.84rem}
 }
+
+/* Botões da aba Veículos renderizados e controlados pelo React. */
+.react-button-mount{display:contents}
+.vehicles-react-content button:focus-visible{outline:3px solid color-mix(in srgb,var(--brand,#50595e) 38%,transparent);outline-offset:3px}
