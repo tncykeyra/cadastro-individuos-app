@@ -1,6 +1,6 @@
-import React,{useMemo,useState}from'react';
+import React, { useMemo, useState } from 'react';
 import Button from'./ui/Button.jsx';
-import'./cities-workspace.css';
+import './cities-workspace.css';
 export default function CitiesWorkspace({cityCatalog=[],profiles=[],members=[],onActivate,onCreate,onAssign,onRemove,onSwitchClassic}){
  const[selectedUser,setSelectedUser]=useState(''),[cityRoles,setCityRoles]=useState({}),[newCityName,setNewCityName]=useState(''),[busy,setBusy]=useState(''),[actionError,setActionError]=useState('');
  const activeCities=useMemo(()=>cityCatalog.filter(c=>c.active),[cityCatalog]);
