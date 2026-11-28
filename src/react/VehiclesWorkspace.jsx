@@ -179,7 +179,7 @@ function AssociationDialogShell({ isPerson, targetFieldHtml, notesFieldHtml }) {
       </form>
       <div className="dialog-actions association-react-actions">
         <Button className="button secondary" data-close type="button">Cancelar</Button>
-        <Button className="button association-react-submit" type="submit" form="linkForm"><span aria-hidden="true">＋</span> Confirmar associação</Button>
+        <Button className="button association-react-submit" type="submit" form="linkForm"><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg></span> Confirmar associação</Button>
       </div>
     </div>
   );
