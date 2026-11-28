@@ -31,7 +31,7 @@ test('estilos usam a paleta do aplicativo e têm adaptação mobile', () => {
 });
 
 test('todos os botões da área Mandados são montados pelo React, inclusive ações dinâmicas dos diálogos', () => {
-  assert.match(component, /function mountWarrantButtons/);
+  assert.match(component, /function collectWarrantButtons/);
   assert.match(component, /createPortal\(/);
   assert.match(component, /useLayoutEffect\(/);
   assert.match(component, /new MutationObserver/);
