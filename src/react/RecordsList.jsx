@@ -10,21 +10,25 @@ const formatCpf = value => {
 function RecordCard({ entity, record, onOpen }) {
   const isPerson = entity === 'people';
   const title = isPerson ? record.full_name || 'Nome não informado' : record.plate || 'Placa não informada';
-  const subtitle = isPerson
-    ? ['CPF: ' + formatCpf(record.cpf_digits), 'RG: ' + (record.rg || '—')].join(' · ')
-    : [record.make, record.model, record.color].filter(Boolean).join(' · ') || 'Dados complementares não informados';
+  const cpf = String(record.cpf_digits || '').replace(/\\D/g, '');
+  const formattedCpf = cpf.length === 11 ? cpf.replace(/(\\d{3})(\\d{3})(\\d{3})(\\d{2})/, '$1.$2.$3-$4') : record.cpf_digits || '—';
   const cover = record.photos?.find(photo => photo.is_cover && photo.url) || record.photos?.find(photo => photo.url);
+  const metadata = isPerson
+    ? [record.alias ? 'Vulgo: ' + record.alias : null, record.rg ? 'RG: ' + record.rg : null].filter(Boolean)
+    : [record.make, record.model, record.color].filter(Boolean);
   return (
-    <button className={'react-record-card ' + (isPerson ? 'is-person' : 'is-vehicle')} type="button" onClick={() => onOpen(record.id, entity)}>
-      <span className="react-record-card-media">
+    <button className={'react-record-card ' + (isPerson ? 'is-person person-card' : 'is-vehicle')} type="button" onClick={() => onOpen(record.id, entity)} aria-label={'Abrir ficha de ' + title}>
+      <span className={'react-record-card-media ' + (isPerson ? 'avatar' : '')}>
         {cover?.url
           ? <img src={cover.url} alt={isPerson ? 'Foto de ' + title : 'Foto do veículo'} loading="lazy" />
           : <span aria-hidden="true">{isPerson ? '♙' : '⌑'}</span>}
       </span>
       <span className="react-record-card-copy">
         <strong>{title}</strong>
-        <small>{subtitle}</small>
-        {isPerson && Number(record.warrant_alert_count) > 0 && <small className="react-record-warning">Aviso de mandado de prisão. Confira na fonte oficial.</small>}
+        {isPerson
+          ? <><small>CPF: {formattedCpf}</small>{metadata.map((item,index)=><small key={index}>{item}</small>)}</>
+          : <small>{metadata.join(' · ') || 'Dados complementares não informados'}</small>}
+        {isPerson && Number(record.warrant_alert_count) > 0 && <small className="react-record-warning">⚠ Aviso de mandado. Confira na fonte oficial.</small>}
       </span>
       <span className="react-record-card-arrow" aria-hidden="true">›</span>
     </button>
