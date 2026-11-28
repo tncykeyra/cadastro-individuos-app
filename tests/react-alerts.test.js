@@ -11,7 +11,7 @@ const [main, alert, sidebar, toast] = await Promise.all([
 
 test('alerta de sugestões de edição é renderizado por React e preserva o fluxo de revisão', () => {
   assert.match(main, /IdentitySuggestionAlert/);
-  assert.match(main, /renderIdentitySuggestionAlert\(userId,proposalIds\)/);
+  assert.match(main, /renderIdentitySuggestionAlert\(userId,freshIds\)/);
   assert.doesNotMatch(main, /identitySuggestionAlertDialog/);
   assert.match(alert, /showModal\(\)/);
   assert.match(alert, /Nenhuma informação será modificada antes da sua decisão/);
