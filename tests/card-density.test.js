@@ -20,7 +20,7 @@ test('seletor de densidade aparece apenas nas listas de indivíduos e veículos'
   assert.match(vehicles, /!detail && <CardDensityControl \/>/);
   assert.match(control, /data-card-density="large"/);
   assert.match(control, /data-card-density="compact"/);
-  assert.match(control, /aria-pressed/);
+  assert.match(control, /aria-pressed/);\n  assert.match(control, /onChange=\\{\\(\\) => onChange\\('large'\\)\\}/);\n  assert.match(vehicles, /useState\\(getCardDensity\\)/);
   assert.match(main, /\.people-react-shell,\.vehicles-react-shell/);
   assert.doesNotMatch(main, /document\.documentElement\.dataset\.cardDensity/);
 });
@@ -40,8 +40,8 @@ test('modo miniatura fica limitado aos cartões das duas abas', () => {
 });
 
 test('versão, cache e atualização do service worker acompanham a correção', () => {
-  assert.equal(JSON.parse(pkg).version, '2.52.12');
-  assert.match(worker, /cadastro-app-shell-v150/);
+  assert.equal(JSON.parse(pkg).version, '2.52.13');
+  assert.match(worker, /cadastro-app-shell-v151/);
   assert.match(main, /sw\.js\?v=117/);
   assert.match(index, /card-density\.css\?v=3/);
 });
