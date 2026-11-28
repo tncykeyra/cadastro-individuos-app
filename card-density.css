@@ -55,3 +55,100 @@ html[data-card-density="compact"] #mainContent .vehicles-react-content .vehicle-
   html[data-card-density="compact"] #mainContent .vehicles-react-content .vehicle-card-copy p{font-size:.62rem}
 }
 @media(prefers-reduced-motion:reduce){.card-density-option{transition:none}}
+
+
+/* Correção definitiva: modo grande dos veículos usa toda a largura disponível.
+   Regras isoladas do workspace React e com prioridade sobre os estilos responsivos legados. */
+html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-cards{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr))!important;
+  gap:20px!important;
+  align-items:stretch!important;
+}
+html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-card{
+  display:flex!important;
+  flex-direction:column!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:390px!important;
+  padding:0!important;
+  overflow:hidden!important;
+}
+html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-card .card-photo-gallery,
+html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-card .vehicle-placeholder{
+  display:flex!important;
+  flex-direction:column!important;
+  flex:0 0 260px!important;
+  width:100%!important;
+  height:260px!important;
+  min-height:260px!important;
+  max-height:260px!important;
+  aspect-ratio:auto!important;
+  padding:10px!important;
+  gap:8px!important;
+  box-sizing:border-box!important;
+  overflow:hidden!important;
+}
+html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-card .card-photo-cover{
+  display:block!important;
+  flex:1 1 auto!important;
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  object-fit:cover!important;
+  border-radius:10px!important;
+}
+html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-card .card-photo-thumbnails{
+  display:grid!important;
+  flex:0 0 38px!important;
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  width:100%!important;
+  height:38px!important;
+  gap:6px!important;
+}
+html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-card .card-photo-thumbnail{
+  display:block!important;
+  width:100%!important;
+  height:38px!important;
+}
+html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-card-copy{
+  display:grid!important;
+  gap:8px!important;
+  min-width:0!important;
+  padding:18px 20px 20px!important;
+}
+html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-card-copy h3{
+  font-size:1.12rem!important;
+  line-height:1.35!important;
+}
+html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-card-copy p{
+  font-size:.88rem!important;
+  line-height:1.55!important;
+}
+@media(max-width:520px){
+  html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-cards{
+    grid-template-columns:minmax(0,1fr)!important;
+    gap:16px!important;
+  }
+  html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-card{
+    min-height:420px!important;
+    border-radius:18px!important;
+  }
+  html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-card .card-photo-gallery,
+  html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-card .vehicle-placeholder{
+    flex-basis:290px!important;
+    height:290px!important;
+    min-height:290px!important;
+    max-height:290px!important;
+    padding:10px!important;
+  }
+  html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-card-copy{
+    padding:18px 18px 20px!important;
+  }
+  html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-card-copy h3{
+    font-size:1.08rem!important;
+  }
+  html[data-card-density="large"] .vehicles-react-shell .vehicles-react-content .vehicle-card-copy p{
+    font-size:.84rem!important;
+  }
+}
