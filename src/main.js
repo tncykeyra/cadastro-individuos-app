@@ -2054,7 +2054,8 @@ async function renderRecordsNative(){
  };
  renderRoot.render(React.createElement(RecordsList,{
   entity,records:visible,relatedRecords,total,page:state.listPage,pageSize:state.listPageSize,
-  query:state.searchInput||state.query,letter:state.letter,serverPaged:state.serverPaged,
+  query:state.searchInput,letter:state.letter,serverPaged:state.serverPaged,
+  onSearchInput:value=>{state.searchInput=String(value??'');clearTimeout(state.searchTimer);state.searchRequest++},
   onSearch,onAdd:()=>void showForm(people?'person':'vehicle'),
   onExport:()=>void exportRecords(entity,null),
   onOpen:(id,recordEntity)=>recordEntity==='people'?void openPerson(id):void openVehicle(id),
