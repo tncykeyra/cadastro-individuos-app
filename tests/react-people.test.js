@@ -9,7 +9,8 @@ const [main, component, styles] = await Promise.all([
 ]);
 
 test('aba Indivíduos usa workspace React sem botão de retorno à interface clássica', () => {
-  assert.match(main, /PEOPLE_UI_MODE_KEY/);
+  assert.doesNotMatch(main, /PEOPLE_UI_MODE_KEY|getPeopleUiMode|setPeopleUiMode/);
+  assert.match(main, /async function renderPeopleWorkspace/);
   assert.match(main, /renderPeopleWorkspace\(pageContent,'list'\)/);
   assert.match(main, /renderPeopleWorkspace\([\s\S]*?'detail',id\)/);
   assert.doesNotMatch(main, /onSwitchClassic/);
