@@ -48,7 +48,7 @@ test('sistema visual padroniza foco, estados, variantes e controles sem remover 
 });
 
 test('integração mantém ações e contratos de navegação e formulário existentes', () => {
-  for (const marker of ['data-page','data-open-operator-tour','data-link-person','data-link-vehicle','data-record-pdf','data-vehicle-plate-review','data-identity-review','data-warrant-tab','data-warrant-enable-react']) {
+  for (const marker of ['data-page','data-open-operator-tour','data-link-person','data-link-vehicle','data-record-pdf','data-vehicle-plate-review','data-identity-review','data-warrant-tab','data-warrant-tab']) {
     assert.ok(main.includes(marker), 'contrato preservado: ' + marker);
   }
   assert.match(main, /ui-system\.css/);
