@@ -53,3 +53,18 @@ test('Painel moderno é padrão para todos os usuários, ignorando preferência 
   assert.ok(!main.includes('Experimentar painel moderno'));
   assert.ok(!main.includes("setCityDashboardMode('classic')"));
 });
+
+
+test('Carregamento do painel é exibido por componente React com animação acessível', async () => {
+  const dashboard = await readFile(dashboardUrl, 'utf8');
+  const dashboardCss = await readFile(dashboardCssUrl, 'utf8');
+  const main = await readFile(mainUrl, 'utf8');
+  assert.ok(dashboard.includes('export function CityDashboardLoading'));
+  assert.ok(dashboard.includes('aria-live="polite"'));
+  assert.ok(dashboard.includes('Preparando seu painel'));
+  assert.ok(main.includes('CityDashboardLoading'));
+  assert.ok(main.includes('cityDashboardRoot.render(React.createElement(CityDashboardLoading'));
+  for (const animation of ['city-loader-spin','city-loader-pulse','city-loader-progress','city-loader-shimmer','prefers-reduced-motion']) {
+    assert.ok(dashboardCss.includes(animation), 'Animação ou acessibilidade ausente: ' + animation);
+  }
+});
