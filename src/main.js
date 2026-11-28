@@ -437,6 +437,7 @@ async function loadRelatedSearch(requestId,entity,query){try{const rpc=entity===
 async function loadRecords(requestId=state.searchRequest){state.serverPaged=false;state.listTotal=0;const query=state.query.trim();if(isUsefulSearch(query)){if(state.page==='people'){const {data,error}=await state.client.rpc('search_people_list',{search_term:query,result_limit:100});if(requestId!==state.searchRequest)return;if(error)throw error;state.people=data||[];state.vehicles=[];void loadRelatedSearch(requestId,'vehicles',query)}else if(state.page==='vehicles'){const {data,error}=await state.client.rpc('search_vehicles_list',{search_term:query,result_limit:100});if(requestId!==state.searchRequest)return;if(error)throw error;state.vehicles=data||[];state.people=[];void loadRelatedSearch(requestId,'people',query)}return}if(query){state.people=[];state.vehicles=[];return}if(state.page==='people'){state.people=await loadPagedActive('people','full_name');if(requestId!==state.searchRequest)return;state.vehicles=[]}else if(state.page==='vehicles'){state.vehicles=await loadPagedActive('vehicles','plate');if(requestId!==state.searchRequest)return;state.people=[]}}
 const warrantSearchResults = new Map();
 const warrantSearchRequests = new Map();
+const warrantSearchTimers = new Map();
 const warrantEditRecords = new Map();
 const warrantSelect = 'id,import_batch_id,warrant_number,full_name,cpf_digits,alias,mother_name,father_name,birth_date,source_agency,source_kind,source_reference,status,discharge_reported_at,discharge_reported_date,discharge_reference,discharge_confirmed_at,discharge_confirmed_date,discharge_confirmed_reference,created_at,updated_at';
 const warrantActiveStatuses = ['pending','discharge_reported'];
@@ -707,7 +708,7 @@ async function renderWarrants(){
   const warrantStats={total:rows.length,active:rows.filter(w=>w.status==='pending').length,reported:rows.filter(w=>w.status==='discharge_reported').length,closed:rows.filter(w=>!['pending','discharge_reported'].includes(w.status)).length};
   await renderWarrantWorkspace(pageHtml,warrantStats,admin);
   document.querySelectorAll('[data-warrant-tab]').forEach(button=>button.addEventListener('click',async()=>{state.warrantTab=button.dataset.warrantTab;saveLastView();await renderWarrants()}));
-  const warrantSearchInput=document.querySelector('[data-warrant-list-search]'),warrantSearchButton=document.querySelector('[data-warrant-search-focus]');if(warrantSearchInput){warrantSearchInput.addEventListener('input',()=>{state.warrantQuery=warrantSearchInput.value;if(!warrantSearchInput.value.trim())filterWarrantList()});warrantSearchInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();state.warrantQuery=warrantSearchInput.value;filterWarrantList()}})}if(warrantSearchButton)warrantSearchButton.addEventListener('click',()=>{state.warrantQuery=warrantSearchInput?.value||'';filterWarrantList()});filterWarrantList();
+  const warrantSearchInput=document.querySelector('[data-warrant-list-search]'),warrantSearchButton=document.querySelector('[data-warrant-search-focus]');if(warrantSearchInput){warrantSearchInput.addEventListener('input',()=>{state.warrantQuery=warrantSearchInput.value;filterWarrantList()});warrantSearchInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();state.warrantQuery=warrantSearchInput.value;filterWarrantList()}})}if(warrantSearchButton)warrantSearchButton.addEventListener('click',()=>{state.warrantQuery=warrantSearchInput?.value||'';filterWarrantList()});filterWarrantList();
   if(personIds.length)void loadWarrantReviewPhotos(personMap);
 }
 
@@ -1175,10 +1176,15 @@ async function submitWarrantConfirmation(event){
 }
 async function findWarrantPerson(warrantId){
   if(!isAdmin())throw new Error('Apenas administradores podem revisar associações.');
-  const input=document.querySelector('[data-warrant-search-input="'+CSS.escape(warrantId)+'"]'),name=String(input?.value||'').trim();if(name.length<3)throw new Error('Digite pelo menos três letras do nome.');
+  const input=document.querySelector('[data-warrant-search-input="'+CSS.escape(warrantId)+'"]'),name=String(input?.value||'').trim(),container=input?.closest('.warrant-person-search')?.querySelector('.warrant-search-results');if(name.length<3){if(container)container.replaceChildren();return}
   const request=(warrantSearchRequests.get(warrantId)||0)+1;warrantSearchRequests.set(warrantId,request);
-  const results=await lookupSimilarPeople(name);if(warrantSearchRequests.get(warrantId)!==request||String(input?.value||'').trim()!==name)return;
-  warrantSearchResults.set(warrantId,results||[]);await renderWarrants();
+  if(container)container.innerHTML='<p class="muted">Pesquisando indivíduos…</p>';
+  try{
+    const results=await lookupSimilarPeople(name);
+    if(warrantSearchRequests.get(warrantId)!==request||String(input?.value||'').trim()!==name||!container?.isConnected)return;
+    warrantSearchResults.set(warrantId,results||[]);
+    container.innerHTML=results?.length?results.map(person=>'<div class="warrant-search-result"><span><strong>'+esc(formatPersonName(person.full_name))+'</strong><small>'+esc(person.birthday?'Nascimento: '+warrantDate(person.birthday):'Data de nascimento não cadastrada')+'</small></span><button type="button" class="button small" data-warrant-link="'+warrantId+'" data-warrant-person="'+person.id+'">Adicionar para revisão</button></div>').join(''):'<p class="muted">Nenhum indivíduo semelhante encontrado.</p>';
+  }catch(error){if(warrantSearchRequests.get(warrantId)===request&&container?.isConnected)container.innerHTML='<p class="muted">Não foi possível pesquisar agora. Tente novamente.</p>';throw error}
 }
 async function addWarrantCandidate(warrantId,personId){
   if(!isAdmin())throw new Error('Apenas administradores podem vincular registros.');
@@ -1519,7 +1525,7 @@ async function openSmartExisting(id,kind){
   if(kind==='person'){await openPerson(id);return}
   await openVehicle(id);
 }
-async function loadPage(){if(!state.session){authPage();return}if(state.page==='photoSearch')state.page='people';if(state.page==='team'&&!isAdmin())state.page='dashboard';if(state.page==='fiscalization'&&!canUseFiscalization()){state.page='dashboard';toast('A aba Fiscalização está disponível somente para Lençóis Paulista.')}if(state.page==='cities'&&!isMasterAdmin())state.page='dashboard';if(state.page==='systemTests')state.page=isAdmin()?'maintenance':'dashboard';if(state.page==='history'&&!isAdmin())state.page='dashboard';if(['review','maintenance'].includes(state.page)&&!isAdmin())state.page='dashboard';if(state.page==='warrants'&&!['operator','admin'].includes(state.profile?.role))state.page='people';if(state.page!=='dashboard'&&cityDashboardRoot){cityDashboardRoot.unmount();cityDashboardRoot=null}if(state.page!=='warrants'&&warrantReactRoot){warrantReactRoot.unmount();warrantReactRoot=null}state.selected=null;saveLastView();nav();loadingPage();try{if(state.page==='dashboard')await renderDashboard();else if(['people','vehicles'].includes(state.page)){await loadRecords();await renderRecords()}else if(state.page==='warrants')await renderWarrants();else if(state.page==='vehicleInterest'){const city=state.cities.find(item=>item.id===state.activeCityId);frame(await renderVehicleInterestPage(state.client,{cityId:state.activeCityId,cityName:city?.name||'',userId:state.session.user.id,resolvePhoto:signedPhoto}));wireVehicleInterestActions(state.client,{cityId:state.activeCityId,cityName:city?.name||'',userId:state.session.user.id,resolvePhoto:signedPhoto,onRefresh:async()=>loadPage()})}else if(state.page==='fiscalization')frame(await renderFiscalizationPage(state.client,isAdmin()));else if(state.page==='team')await renderTeam();else if(state.page==='cities')await renderCities();else if(state.page==='history')await renderHistory();else if(state.page==='smart')frame(renderIntelligentEntry(state.smartInitialKind));else if(state.page==='review')await renderSmartReviewPage();else if(state.page==='maintenance')await renderMaintenancePage()}catch(e){frame('<div class="error-box">'+esc(msg(e))+'</div>')}}
+async function loadPage(){if(!state.session){authPage();return}if(state.page==='photoSearch')state.page='people';if(state.page==='team'&&!isAdmin())state.page='dashboard';if(state.page==='fiscalization'&&!canUseFiscalization()){state.page='dashboard';toast('A aba Fiscalização está disponível somente para Lençóis Paulista.')}if(state.page==='cities'&&!isMasterAdmin())state.page='dashboard';if(state.page==='systemTests')state.page=isAdmin()?'maintenance':'dashboard';if(state.page==='history'&&!isAdmin())state.page='dashboard';if(['review','maintenance'].includes(state.page)&&!isAdmin())state.page='dashboard';if(state.page==='warrants'&&!['operator','admin'].includes(state.profile?.role))state.page='people';if(state.page!=='dashboard'&&cityDashboardRoot){cityDashboardRoot.unmount();cityDashboardRoot=null}if(state.page!=='warrants'&&warrantReactRoot){warrantReactRoot.unmount();warrantReactRoot=null}state.selected=null;saveLastView();nav();loadingPage();try{if(state.page==='dashboard')await renderDashboard();else if(['people','vehicles'].includes(state.page)){await loadRecords();await renderRecords()}else if(state.page==='warrants')await renderWarrants();else if(state.page==='vehicleInterest'){const city=state.cities.find(item=>item.id===state.activeCityId);frame(await renderVehicleInterestPage(state.client,{cityId:state.activeCityId,cityName:city?.name||'',userId:state.session.user.id,resolvePhoto:signedPhoto}));wireVehicleInterestActions(state.client,{cityId:state.activeCityId,cityName:city?.name||'',userId:state.session.user.id,resolvePhoto:signedPhoto,onRefresh:async()=>{const input=$('#interestSearch'),restore=input&&document.activeElement===input,selection=restore?{start:input.selectionStart,end:input.selectionEnd,direction:input.selectionDirection}:null;await loadPage();if(restore){const next=$('#interestSearch');if(next){next.focus({preventScroll:true});if(selection)next.setSelectionRange(selection.start,selection.end,selection.direction)}}}})}else if(state.page==='fiscalization')frame(await renderFiscalizationPage(state.client,isAdmin()));else if(state.page==='team')await renderTeam();else if(state.page==='cities')await renderCities();else if(state.page==='history')await renderHistory();else if(state.page==='smart')frame(renderIntelligentEntry(state.smartInitialKind));else if(state.page==='review')await renderSmartReviewPage();else if(state.page==='maintenance')await renderMaintenancePage()}catch(e){frame('<div class="error-box">'+esc(msg(e))+'</div>')}}
 async function galleryPhotos(entity,record){
   const {data,error}=await state.client.from('record_photos').select('id,photo_path,is_cover,crop_position,created_at').eq('entity',entity).eq('entity_id',record.id).order('created_at',{ascending:true});
   if(error)console.warn('A galeria unificada não está disponível; vou tentar as fotos antigas.',error);
@@ -2019,19 +2025,17 @@ async function renderRecordsNative(){
  }
  releaseLegacyPageRoot();
  const renderRoot=people?peopleReactRoot:vehicleReactRoot;
- const onSearch=value=>{
-  state.searchInput=value;
-  clearTimeout(state.searchTimer);
-  state.searchTimer=setTimeout(async()=>{
-   state.query=String(value||'').trim();state.listPage=0;state.letter='all';
-   const request=++state.searchRequest;
-   if(state.query&&!isUsefulSearch(state.query)){
-    state.serverPaged=false;state.listTotal=0;state.people=[];state.vehicles=[];
-    await renderRecords();return;
-   }
-   try{await loadRecords(request);if(request===state.searchRequest)await renderRecords()}
-   catch(error){if(request===state.searchRequest)toast(msg(error))}
-  },250);
+ const onSearch=async value=>{
+  state.searchInput=String(value||'');
+  clearTimeout(state.searchTimer);state.searchTimer=null;
+  state.query=state.searchInput.trim();state.listPage=0;state.letter='all';
+  const request=++state.searchRequest;
+  if(state.query&&!isUsefulSearch(state.query)){
+   state.serverPaged=false;state.listTotal=0;state.people=[];state.vehicles=[];
+   await renderRecords();return;
+  }
+  try{await loadRecords(request);if(request===state.searchRequest)await renderRecords()}
+  catch(error){if(request===state.searchRequest)toast(msg(error))}
  };
  const onPageChange=async nextPage=>{
   state.listPage=Math.max(0,Number(nextPage)||0);
@@ -2050,7 +2054,8 @@ async function renderRecordsNative(){
  };
  renderRoot.render(React.createElement(RecordsList,{
   entity,records:visible,relatedRecords,total,page:state.listPage,pageSize:state.listPageSize,
-  query:state.searchInput||state.query,letter:state.letter,serverPaged:state.serverPaged,
+  query:state.searchInput,letter:state.letter,serverPaged:state.serverPaged,
+  onSearchInput:value=>{state.searchInput=String(value??'');clearTimeout(state.searchTimer);state.searchRequest++},
   onSearch,onAdd:()=>void showForm(people?'person':'vehicle'),
   onExport:()=>void exportRecords(entity,null),
   onOpen:(id,recordEntity)=>recordEntity==='people'?void openPerson(id):void openVehicle(id),
@@ -2248,7 +2253,7 @@ async function showLinkForm(entity,id){
   const associationOption=(record,kind,title,description,icon)=>'<button class="association-search-option" type="button" role="option" data-association-'+kind+'="'+esc(record.id)+'"><span class="association-result-row">'+associationThumb(record,icon)+'<span class="association-result-copy"><strong>'+esc(title)+'</strong><span>'+esc(description)+'</span></span></span></button>';
   if(isPerson){
     const search=d.querySelector('#vehicleAssociationSearch'),target=d.querySelector('#linkTarget'),results=d.querySelector('#vehicleAssociationResults');
-    let associationSearchRequest=0;
+    let associationSearchRequest=0,associationSearchTimer=0;
     const renderResults=async()=>{
       const request=++associationSearchRequest;
       const plate=search.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
@@ -2275,13 +2280,14 @@ async function showLinkForm(entity,id){
       return true
     };
     search.addEventListener('input',()=>{
-      associationSearchRequest++;options=[];
+      clearTimeout(associationSearchTimer);associationSearchRequest++;options=[];vehicleMatches=[];
       search.value=search.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
       target.value='';
-      results.innerHTML=search.value?'<div class="association-search-hint">Toque na lupa ou pressione Enter para pesquisar a placa.</div>':'<div class="association-search-hint">Digite uma placa para pesquisar.</div>'
+      results.innerHTML=search.value?'<div class="association-search-hint">Pesquisa automática ao completar a placa…</div>':'<div class="association-search-hint">Digite uma placa para pesquisar.</div>';
+      if(search.value.length===7)associationSearchTimer=setTimeout(()=>void renderResults(),300);
     });
-    d.querySelector('[data-search-associated-vehicle]')?.addEventListener('click',renderResults);
-    search.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();renderResults()}});
+    d.querySelector('[data-search-associated-vehicle]')?.addEventListener('click',()=>{clearTimeout(associationSearchTimer);void renderResults()});
+    search.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();clearTimeout(associationSearchTimer);void renderResults()}});
     results.addEventListener('click',event=>{
       const choice=event.target.closest('[data-association-vehicle]');
       if(choice){selectVehicle(options.find(v=>v.id===choice.dataset.associationVehicle));return}
@@ -2320,7 +2326,7 @@ async function showLinkForm(entity,id){
   }else{
     const search=d.querySelector('#personAssociationSearch'),target=d.querySelector('#linkTarget'),results=d.querySelector('#personAssociationResults');
     const normalizeText=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
-    let personSearchRequest=0;
+    let personSearchRequest=0,personSearchTimer=0;
     const renderPeopleResults=async()=>{
       const request=++personSearchRequest;
       const query=search.value.trim(),digits=query.replace(/\D/g,'');
@@ -2347,9 +2353,14 @@ async function showLinkForm(entity,id){
       void hydrateAssociationThumbs('people',[person],results);
       return true
     };
-    search.addEventListener('input',()=>{personSearchRequest++;options=[];target.value='';results.innerHTML=search.value.trim()?'<div class="association-search-hint">Toque na lupa ou pressione Enter para pesquisar.</div>':'<div class="association-search-hint">Digite nome, CPF ou RG e toque na lupa.</div>'});
-    search.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();renderPeopleResults()}});
-    d.querySelector('[data-search-associated-person]')?.addEventListener('click',renderPeopleResults);
+    search.addEventListener('input',()=>{
+      clearTimeout(personSearchTimer);personSearchRequest++;options=[];target.value='';
+      const term=search.value.trim();
+      results.innerHTML=term?'<div class="association-search-hint">Pesquisando automaticamente…</div>':'<div class="association-search-hint">Digite nome, CPF ou RG para pesquisar.</div>';
+      if(term.length>=2)personSearchTimer=setTimeout(()=>void renderPeopleResults(),300);
+    });
+    search.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();clearTimeout(personSearchTimer);void renderPeopleResults()}});
+    d.querySelector('[data-search-associated-person]')?.addEventListener('click',()=>{clearTimeout(personSearchTimer);void renderPeopleResults()});
     results.addEventListener('click',event=>{
       const choice=event.target.closest('[data-association-person]');
       if(choice){selectPerson(options.find(person=>person.id===choice.dataset.associationPerson));return}
@@ -2597,7 +2608,17 @@ async function initialize(){if(!config.url||!config.key){frame('<div class="auth
 document.addEventListener('click',event=>{const button=event.target.closest('[data-record-pdf]');if(!button)return;const [entity,id]=button.dataset.recordPdf.split(':');if(['people','vehicles'].includes(entity)&&id)void generateRecordPdf(entity,id)});
 
 document.addEventListener('input',event=>{
-  const personSearch=event.target.closest?.('[data-warrant-search-input]');if(personSearch){const warrantId=personSearch.dataset.warrantSearchInput;warrantSearchRequests.set(warrantId,(warrantSearchRequests.get(warrantId)||0)+1);warrantSearchResults.delete(warrantId);personSearch.closest('.warrant-person-search')?.querySelector('.warrant-search-results')?.replaceChildren();return}
+  const personSearch=event.target.closest?.('[data-warrant-search-input]');if(personSearch){
+    const warrantId=personSearch.dataset.warrantSearchInput;
+    clearTimeout(warrantSearchTimers.get(warrantId));
+    warrantSearchRequests.set(warrantId,(warrantSearchRequests.get(warrantId)||0)+1);
+    warrantSearchResults.delete(warrantId);
+    const container=personSearch.closest('.warrant-person-search')?.querySelector('.warrant-search-results');
+    if(container)container.replaceChildren();
+    const term=personSearch.value.trim();
+    if(term.length>=3)warrantSearchTimers.set(warrantId,setTimeout(()=>{if(personSearch.isConnected&&personSearch.value.trim()===term)void findWarrantPerson(warrantId).catch(error=>console.warn('Falha na pesquisa de indivíduos para mandado.',error))},300));
+    return
+  }
   const input=event.target.closest?.('[data-warrant-pdf-batch-field]');if(!input)return;
   const index=Number(input.dataset.index),entry=warrantPdfBatch[index];if(!entry)return;
   entry.values=entry.values||{};entry.values[input.dataset.warrantPdfBatchField]=input.value;schedulePersistWarrantQueueEntry(entry);
