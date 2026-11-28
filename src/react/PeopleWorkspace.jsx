@@ -84,7 +84,7 @@ export default function PeopleWorkspace({ contentHtml, view = 'list' }) {
         <h1>{detail ? 'Ficha do indivíduo' : 'Indivíduos'}</h1>
         <p>{detail
           ? 'Identificação, informações complementares, vínculos e veículos associados em uma única consulta.'
-          : 'Consulte e gerencie os registros individuais, com acesso organizado aos dados de identificação e aos vínculos associados.'}</p>
+          : 'Consulte e gerencie os registros, com acesso organizado aos dados de identificação e aos vínculos associados.'}</p>
       </div>
       <div className="people-react-tools">
         {detail && <span className="people-react-context"><span className="people-react-context-dot" />Registro selecionado</span>}
