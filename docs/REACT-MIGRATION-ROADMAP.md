@@ -87,3 +87,10 @@ Foram removidos das áreas Painel da Cidade, Indivíduos, Veículos, Mandados e 
 ### Limite estrutural que permanece documentado
 
 A interface de todos os módulos está sob montagem React, mas algumas telas secundárias ainda usam HTML gerado pelo controlador legado dentro de `LegacyPageWorkspace` (`dangerouslySetInnerHTML`). Isso inclui partes de autenticação, cadastro inteligente, revisão/manutenção, usuários, histórico, veículos de interesse, fiscalização e diálogos/formulários auxiliares. Esses fluxos ainda precisam ser reescritos como componentes React nativos, em etapas com testes de equivalência. Esta publicação não deve ser descrita como conversão integral de cada formulário e regra de negócio para JSX.
+
+
+## 2026-11-28 — Remoção do botão flutuante Cadastro Inteligente
+
+- Removido o botão flutuante global que aparecia sobre as telas.
+- O módulo Cadastro Inteligente continua acessível pelo menu lateral, sem alteração de suas operações.
+- A remoção não exclui os recursos de leitura inteligente, OCR, análise de duplicidade ou os fluxos de cadastro.
