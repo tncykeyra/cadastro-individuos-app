@@ -29,8 +29,8 @@ test('ações existentes da ficha, pesquisa e associação permanecem preservada
 test('a interface moderna mantém paleta do aplicativo e adaptação para celular', () => {
   assert.match(styles, /--brand/);
   assert.match(styles, /@media\(max-width:700px\)/);
-  assert.match(styles, /association-section-heading \\.people-react-button-mount \\.button/);
-  assert.match(styles, /person-relationships \\.section-heading \\.people-react-button-mount \\.button/);
+  assert.match(styles, /association-section-heading \.people-react-button-mount \.button/);
+  assert.match(styles, /person-relationships \.section-heading \.people-react-button-mount \.button/);
   assert.match(styles, /width:100%/);
   assert.match(styles, /prefers-reduced-motion/);
 });
@@ -50,5 +50,5 @@ test('detalhes do indivíduo são montados no workspace React e compartilhar vir
 
 test('seções de pessoas e veículos associados usam o mesmo quadro visual', () => {
   assert.match(main, /person-relationships vehicle-relationships/);
-  assert.match(styles, /\.people-react-content \.person-relationships\\s*\\{/);
+  assert.match(styles, /\.people-react-content \.person-relationships\s*\{/);
 });
