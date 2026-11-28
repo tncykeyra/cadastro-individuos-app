@@ -9,7 +9,7 @@ const [worker, main, pkg] = await Promise.all([
 ]);
 
 test('PWA usa um novo cache de shell para descartar os arquivos da versão anterior', () => {
-  assert.match(worker, /cadastro-app-shell-v160/);
+  assert.match(worker, /cadastro-app-shell-v145/);
   assert.match(worker, /self\.skipWaiting\(\)/);
   assert.match(worker, /self\.clients\.claim\(\)/);
   assert.match(worker, /keys\.filter\(key=>key!==CACHE\)/);
