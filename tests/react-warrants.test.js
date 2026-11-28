@@ -1,0 +1,31 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+
+const [main, component, styles] = await Promise.all([
+  readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/react/WarrantsWorkspace.jsx', import.meta.url), 'utf8'),
+  readFile(new URL('../src/react/warrants-workspace.css', import.meta.url), 'utf8')
+]);
+
+test('aba Mandados usa workspace React e mantém modo clássico reversível', () => {
+  assert.match(main, /WARRANTS_UI_MODE_KEY/);
+  assert.match(main, /renderWarrantWorkspace\(pageHtml,warrantStats,admin\)/);
+  assert.match(main, /setWarrantsUiMode\('classic'\)/);
+  assert.match(main, /data-warrant-enable-react/);
+  assert.match(component, /Voltar à interface clássica/);
+  assert.match(component, /dangerouslySetInnerHTML/);
+});
+
+test('workspace apresenta indicadores e preserva o aviso de conferência oficial', () => {
+  assert.match(component, /Registros exibidos/);
+  assert.match(component, /Pendentes/);
+  assert.match(component, /Baixa informada/);
+  assert.match(component, /Baixados ou encerrados/);
+  assert.match(component, /fonte oficial/);
+});
+
+test('estilos usam a paleta do aplicativo e têm adaptação mobile', () => {
+  assert.match(styles, /--brand/);
+  assert.match(styles, /prefers-reduced-motion/);
+});
