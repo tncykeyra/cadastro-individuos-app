@@ -1,0 +1,39 @@
+.react-toast-host {
+  position: fixed;
+  z-index: 30;
+  inset: auto 16px 88px;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.react-toast-stack {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: min(100%, 560px);
+}
+.react-toast-item {
+  width: fit-content;
+  max-width: 100%;
+  padding: 12px 17px;
+  border: 1px solid #ffffff1c;
+  border-radius: 13px;
+  background: #20282c;
+  color: #fff;
+  box-shadow: 0 8px 28px #10171935;
+  font-size: .9rem;
+  line-height: 1.4;
+  text-align: center;
+  overflow-wrap: anywhere;
+  animation: react-toast-enter 180ms ease-out both;
+}
+@keyframes react-toast-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (min-width: 900px) {
+  .react-toast-host { inset: auto 24px 24px; justify-content: flex-end; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .react-toast-item { animation: none; }
+}
