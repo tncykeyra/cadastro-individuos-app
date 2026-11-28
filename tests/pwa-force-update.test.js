@@ -9,14 +9,14 @@ const [worker, main, pkg] = await Promise.all([
 ]);
 
 test('PWA usa um novo cache de shell para descartar os arquivos da versão anterior', () => {
-  assert.match(worker, /cadastro-app-shell-v152/);
+  assert.match(worker, /cadastro-app-shell-v154/);
   assert.match(worker, /self\.skipWaiting\(\)/);
   assert.match(worker, /self\.clients\.claim\(\)/);
   assert.match(worker, /keys\.filter\(key=>key!==CACHE\)/);
 });
 
 test('clientes instalados solicitam a nova versão do service worker sem cache HTTP', () => {
-  assert.match(main, /sw\.js\?v=119/);
+  assert.match(main, /sw\.js\?v=120/);
   assert.match(main, /updateViaCache:'none'/);
   assert.match(main, /registration\.update\(\)/);
   assert.match(main, /setInterval\(\(\)=>\{if\(document\.visibilityState==='visible'\)/);
