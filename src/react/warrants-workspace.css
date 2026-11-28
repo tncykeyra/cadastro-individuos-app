@@ -81,3 +81,9 @@
  .warrants-react-shell .warrant-confidence{text-align:left;align-self:flex-start}
 }
 @media(prefers-reduced-motion:reduce){.warrants-react-shell .warrant-record,.warrants-react-shell .warrant-review-card,.warrants-react-shell .warrant-duplicate-review,.warrants-react-shell .warrant-linked-person{transition:none}}
+
+/* Todos os comandos da aba Mandados são montados como elementos React. */
+.warrants-react-button-mount{display:contents}
+.warrants-react-shell button:focus-visible{outline:3px solid color-mix(in srgb,var(--brand,#50595e) 42%,transparent);outline-offset:3px}
+.warrants-react-shell button:disabled{cursor:not-allowed;opacity:.58;transform:none}
+.warrants-react-shell .warrant-tabs{position:relative;z-index:1}
