@@ -5,7 +5,7 @@ import { readFile } from 'node:fs/promises';
 const [main, component, styles] = await Promise.all([
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/react/WarrantsWorkspace.jsx', import.meta.url), 'utf8'),
-  readFile(new URL('../src/react/warrants-workspace.css', import.meta.url), 'utf8')
+  readFile(new URL('../styles.css', import.meta.url), 'utf8')
 ]);
 
 test('aba Mandados usa workspace React e mantém modo clássico reversível', () => {
