@@ -4,34 +4,22 @@ import './toast.css';
 
 let root = null;
 let nextToastId = 0;
-const toastModeKey = 'cadastro-criminal-toast-mode-v1';
-
-function getToastMode() {
-  try { return window.localStorage.getItem(toastModeKey) === 'classic' ? 'classic' : 'react'; }
-  catch { return 'react'; }
-}
-
-function setToastMode(mode) {
-  const selected = mode === 'classic' ? 'classic' : 'react';
-  try { window.localStorage.setItem(toastModeKey, selected); } catch {}
-  window.dispatchEvent(new CustomEvent('app:toast-mode-change', { detail: { mode: selected } }));
-  return selected;
-}
-
-if (typeof window !== 'undefined') window.setToastMode = setToastMode;
 
 function ToastItem({ item, onDismiss }) {
   useEffect(() => {
-    const timer = window.setTimeout(() => onDismiss(item.id), 2800);
+    const timer = window.setTimeout(() => onDismiss(item.id), 4200);
     return () => window.clearTimeout(timer);
   }, [item.id, onDismiss]);
 
-  return <div className="react-toast-item" role="status">{item.message}</div>;
+  return <div className="react-toast-item" role="status">
+    <span className="react-toast-indicator" aria-hidden="true">✓</span>
+    <span className="react-toast-message">{item.message}</span>
+    <button className="react-toast-dismiss" type="button" onClick={() => onDismiss(item.id)} aria-label="Dispensar notificação">×</button>
+  </div>;
 }
 
 function ToastViewport() {
   const [items, setItems] = useState([]);
-
   useEffect(() => {
     const handleToast = (event) => {
       const message = String(event.detail?.message ?? '').trim();
@@ -42,9 +30,7 @@ function ToastViewport() {
     window.addEventListener('app:toast', handleToast);
     return () => window.removeEventListener('app:toast', handleToast);
   }, []);
-
   const dismiss = (id) => setItems(current => current.filter(item => item.id !== id));
-
   return <div className="react-toast-stack" aria-live="polite" aria-relevant="additions text">
     {items.map(item => <ToastItem key={item.id} item={item} onDismiss={dismiss} />)}
   </div>;
@@ -52,18 +38,8 @@ function ToastViewport() {
 
 export function mountToastViewport(host) {
   if (!host) return;
-  const applyMode = () => {
-    if (getToastMode() === 'classic') {
-      if (root) { root.unmount(); root = null; }
-      host.classList.remove('react-toast-host');
-      host.classList.add('toast');
-      return;
-    }
-    host.classList.remove('toast', 'show');
-    host.classList.add('react-toast-host');
-    if (!root) root = createRoot(host);
-    root.render(<ToastViewport />);
-  };
-  window.addEventListener('app:toast-mode-change', applyMode);
-  applyMode();
+  host.classList.remove('toast', 'show');
+  host.classList.add('react-toast-host');
+  if (!root) root = createRoot(host);
+  root.render(<ToastViewport />);
 }
