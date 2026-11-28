@@ -169,7 +169,7 @@ export function wireVehicleInterestActions(client,{cityId,cityName,userId,resolv
    if(target.hasAttribute('data-interest-cancel')){resetEntry();return}
    if(target.hasAttribute('data-interest-filter')){currentFilter=target.dataset.interestFilter;currentOffset=0;await onRefresh();return}
    if(target.hasAttribute('data-interest-personal-toggle')){const id=String(target.dataset.interestPersonalToggle);if(personalActiveIds.has(id))personalActiveIds.delete(id);else personalActiveIds.add(id);savePersonalPreferences(userId);await onRefresh();setFeedback(personalActiveIds.has(id)?'Veículo ocultado somente para você.':'Veículo ativado somente para você.');return}
-   if(target.hasAttribute('data-interest-search')){currentTerm=safeTerm(root.querySelector('#interestSearch')?.value);currentOffset=0;await onRefresh();return}
+   if(target.hasAttribute('data-interest-search')){clearTimeout(listSearchTimer);currentTerm=safeTerm(root.querySelector('#interestSearch')?.value);currentOffset=0;await onRefresh();return}
    if(target.hasAttribute('data-interest-page')){currentOffset=Math.max(0,currentOffset+Number(target.dataset.interestPage)*PAGE_SIZE);await onRefresh();return}
    if(target.hasAttribute('data-interest-edit')){const row=rowsById.get(String(target.dataset.interestEdit));beginEdit(row);return}
    if(target.hasAttribute('data-interest-discharge')){const row=root.querySelector('[data-interest-discharge-form="'+CSS.escape(target.dataset.interestDischarge)+'"]');if(row){row.hidden=false;row.querySelector('input')?.focus()}return}
@@ -210,7 +210,28 @@ export function wireVehicleInterestActions(client,{cityId,cityName,userId,resolv
    catch(error){setFeedback(error?.message||'Não foi possível baixar o veículo.',true)}finally{operationBusy=false}
   }
  },options);
- const search=root.querySelector('#interestVehicleQuery');search?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();root.querySelector('[data-interest-vehicle-search]')?.click()}},options);
+ const search=root.querySelector('#interestVehicleQuery');let interestSearchTimer=0;
+ search?.addEventListener('input',()=>{
+  clearTimeout(interestSearchTimer);
+  const term=String(search.value||'').trim();
+  const results=root.querySelector('#interestVehicleResults');
+  if(!term){if(results)results.innerHTML='<p class="muted">Digite pelo menos 2 caracteres para pesquisar.</p>';return}
+  if(term.length<2){if(results)results.innerHTML='<p class="muted">Digite pelo menos 2 caracteres para pesquisar.</p>';return}
+  if(results)results.innerHTML='<p class="muted">Pesquisando veículos…</p>';
+  interestSearchTimer=setTimeout(()=>{root.querySelector('[data-interest-vehicle-search]')?.click()},300);
+ },options);
+ root.querySelector('#interestVehicleQuery')?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();clearTimeout(interestSearchTimer);root.querySelector('[data-interest-vehicle-search]')?.click()}},options);
+ const listSearch=root.querySelector('#interestSearch');let listSearchTimer=0;
+ listSearch?.addEventListener('input',()=>{
+  clearTimeout(listSearchTimer);
+  const term=safeTerm(listSearch.value);
+  if(term===currentTerm)return;
+  listSearchTimer=setTimeout(()=>{
+   currentTerm=term;currentOffset=0;
+   root.querySelector('[data-interest-search]')?.click();
+  },300);
+ },options);
+ listSearch?.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();clearTimeout(listSearchTimer);root.querySelector('[data-interest-search]')?.click()}},options);
  const plateSearchForm=root.querySelector('#interestForm');let plateLookupTimer=0,plateLookupValue='';
  const plateInput=root.querySelector('#interestPlateInput');
  plateInput?.addEventListener('input',()=>{
