@@ -16,7 +16,7 @@ test('PWA usa um novo cache de shell para descartar os arquivos da versão anter
 });
 
 test('clientes instalados solicitam a nova versão do service worker sem cache HTTP', () => {
-  assert.match(main, /sw\.js\?v=112/);
+  assert.match(main, /sw\.js\?v=113/);
   assert.match(main, /updateViaCache:'none'/);
   assert.match(main, /registration\.update\(\)/);
   assert.match(main, /setInterval\(\(\)=>\{if\(document\.visibilityState==='visible'\)/);
