@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [index, main, densityCss, vehiclesCss, people, vehicles, control, pkg, worker] = await Promise.all([
+const [index, main, densityCss, vehiclesCss, people, vehicles, control, pkg, worker, recordsList, recordsCss] = await Promise.all([
   readFile(new URL('../index.html', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
   readFile(new URL('../card-density.css', import.meta.url), 'utf8'),
@@ -12,6 +12,8 @@ const [index, main, densityCss, vehiclesCss, people, vehicles, control, pkg, wor
   readFile(new URL('../src/react/CardDensityControl.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../package.json', import.meta.url), 'utf8'),
   readFile(new URL('../public/sw.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/react/RecordsList.jsx', import.meta.url), 'utf8'),
+  readFile(new URL('../src/react/RecordsList.jsx.css', import.meta.url), 'utf8'),
 ]);
 
 test('seletor controlado aparece apenas nas listas de indivíduos e veículos', () => {
@@ -45,4 +47,14 @@ test('versão, cache e atualização do service worker acompanham a correção',
   assert.match(worker, /cadastro-app-shell-v151/);
   assert.match(main, /sw\.js\?v=118/);
   assert.match(index, /card-density\.css\?v=4/);
+});
+
+
+test('listagem React efetiva controla densidade e amplia cards de veículos', () => {
+  assert.match(recordsList, /CardDensityControl value=\{density\} onChange=\{changeDensity\}/);
+  assert.match(recordsList, /data-card-density=\{density\}/);
+  assert.match(recordsList, /useState\(getCardDensity\)/);
+  assert.match(recordsCss, /react-records-module\[data-card-density="large"\] \.react-record-card\.is-vehicle/);
+  assert.match(recordsCss, /aspect-ratio:3\/4/);
+  assert.match(recordsCss, /react-records-module\[data-card-density="compact"\] \.react-record-card\.is-vehicle/);
 });
