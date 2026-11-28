@@ -50,9 +50,11 @@ export async function renderSystemTests({frame,isMasterAdmin}){
         </div>
 
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px">
-          <a id="systemTestsReport" class="button" href="${WORKFLOW_URL}" target="_blank" rel="noopener noreferrer">Ver execução no GitHub</a>
+          <a class="button" href="${WORKFLOW_URL}" target="_blank" rel="noopener noreferrer" aria-label="Abrir GitHub Actions para executar os testes">▶ Rodar testes agora</a>
+          <a id="systemTestsReport" class="button secondary" href="${WORKFLOW_URL}" target="_blank" rel="noopener noreferrer">Ver última execução</a>
           <a class="button secondary" href="${WORKFLOW_URL}" target="_blank" rel="noopener noreferrer">Histórico de execuções</a>
         </div>
+        <p class="muted" style="font-size:12px;line-height:1.5;margin:10px 0 0">Ao clicar, o GitHub será aberto. Entre com uma conta autorizada, selecione a branch <strong>main</strong> em “Run workflow” e confirme para iniciar os testes. Por segurança, o aplicativo não armazena token nem credencial do GitHub.</p>
       </section>
 
       <p class="muted" style="font-size:12px;line-height:1.5;margin-top:14px">A aprovação confirma que os testes automatizados existentes e a compilação foram concluídos com sucesso. Ela não substitui testes funcionais de todas as telas, permissões, consultas e operações do sistema. Este painel é somente de leitura e não acessa nem altera registros do Supabase.</p>
