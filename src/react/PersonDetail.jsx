@@ -29,7 +29,7 @@ function Gallery({ photos = [] }) {
         <img src={photo.url} alt={'Miniatura '+(index+1)} loading="lazy"/><span>{photo.is_cover?'Capa':index+1}</span>
       </button>)}
     </div>}
-  </section>;
+  </section></div></div>;
 }
 
 function Info({label,value,wide=false,copy}) {
@@ -43,7 +43,7 @@ function Info({label,value,wide=false,copy}) {
 export default function PersonDetail({person,photos=[],vehicles=[],canDelete=false,identityHtml='',warrantHtml='',crossCityHtml='',relationshipsHtml=''}) {
   const name = person.full_name || 'Nome não informado';
   const addresses = [person.address_primary,person.address_secondary,...(Array.isArray(person.additional_addresses)?person.additional_addresses:[])].map(value=>String(value||'').trim()).filter(Boolean);
-  return <section className="person-native-detail">
+  return <div className="people-react-shell is-detail"><header className="people-react-hero"><div className="people-react-heading"><span className="people-react-eyebrow">CONSULTA INDIVIDUAL</span><h1>Ficha do indivíduo</h1><p>Identificação, informações complementares, vínculos e veículos associados em uma única consulta.</p></div><div className="people-react-tools"><span className="people-react-context"><span className="people-react-context-dot"/>Registro selecionado</span></div></header><div className="people-react-content"><section className="person-native-detail">
     <Button variant="secondary" size="small" type="button" data-back>← Voltar para indivíduos</Button>
     <div className="detail-hero">
       <div><Gallery photos={photos}/></div>
