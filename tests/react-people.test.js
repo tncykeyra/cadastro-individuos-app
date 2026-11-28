@@ -53,3 +53,12 @@ test('seções de pessoas e veículos associados usam o mesmo quadro visual', ()
   assert.match(main, /person-relationships vehicle-relationships/);
   assert.match(styles, /\.people-react-content \.person-relationships\s*\{/);
 });
+
+
+test('cabeçalho e orientação da consulta de indivíduos usam linguagem profissional e objetiva', () => {
+  assert.match(component, /GESTÃO DE INDIVÍDUOS/);
+  assert.match(component, /Gestão de indivíduos/);
+  assert.match(component, /dados de identificação e aos vínculos associados/);
+  assert.match(main, /Localize registros por nome, CPF, RG ou endereço/);
+  assert.doesNotMatch(component, /GESTÃO DE CADASTROS INDIVIDUAIS/);
+});
