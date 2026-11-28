@@ -17,6 +17,7 @@ import { renderSystemTestsPanel, refreshSystemTestsPanel } from './system-tests-
 import { mountAssociationDialog } from './react/VehiclesWorkspace.jsx';
 import { renderSidebar } from './react/Sidebar.jsx';
 import SmartFab from './react/SmartFab.jsx';
+import IdentitySuggestionAlert from './react/IdentitySuggestionAlert.jsx';
 import './react/ui-system.css';
 import './react/desktop-typography.css';
 import { mountToastViewport } from './react/ui/ToastViewport.jsx';
@@ -39,7 +40,7 @@ const FISCALIZATION_CITY_ID='10000000-0000-4000-8000-000000000001';
 const canUseFiscalization=()=>state.activeCityId===FISCALIZATION_CITY_ID;
 const shareIcon=()=>'<svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.7 6.8-4.1M8.6 13.3l6.8 4.1"/></svg>';
 const label={dashboard:'Painel da cidade',people:'Indivíduos',vehicles:'Veículos',warrants:'Mandados',vehicleInterest:'Veículos de interesse',fiscalization:'Fiscalização',team:'Usuários',history:'Histórico',smart:'Cadastro Inteligente',review:'Revisão Inteligente',maintenance:'Manutenção Inteligente',cities:'Cidades e acessos'};
-let smartFabRoot=null,smartFabHost=null;
+let smartFabRoot=null,smartFabHost=null,identityAlertRoot=null,identityAlertHost=null;
 const photoUrls=new Map(),photoUrlExpiresAt=new Map(),photoCachedKeys=new Set(),photoBlobInflight=new Map();let photoDbPromise=null;let warrantImportPreview=null;const MAX_WARRANT_PDF_BATCH=50,MAX_WARRANT_PDF_FILE_BYTES=20*1024*1024,MAX_WARRANT_PDF_BATCH_BYTES=40*1024*1024;let warrantPdfBatch=[];let warrantPdfBatchSaving=false;let warrantPdfBatchReading=false;const warrantQueueDbName='cadastro-criminal-warrant-queue-v1';let warrantQueueDbPromise=null;const warrantQueueSaveTimers=new Map();
 const msg=e=>e?.message||'Não foi possível concluir. Tente novamente.';
 function toast(text){const message=String(text??'');let classic=false;try{classic=localStorage.getItem('cadastro-criminal-toast-mode-v1')==='classic'}catch{}if(classic){const el=$('#toast');if(el){el.textContent=message;el.classList.add('show');clearTimeout(el._classicToastTimer);el._classicToastTimer=setTimeout(()=>el.classList.remove('show'),2600)}return}window.dispatchEvent(new CustomEvent('app:toast',{detail:{message}}))}
@@ -110,10 +111,12 @@ function nav(){
     const alertText=Number(state.masterActivityPendingCount)===1?'Há 1 atividade aguardando revisão':'Há atividades aguardando revisão';
     masterActivityAlert.setAttribute('aria-label',alertText);
     masterActivityAlert.title=alertText;
+    masterActivityAlert.textContent=hasMasterActivity?(Number(state.masterActivityPendingCount)>99?'99+':String(Number(state.masterActivityPendingCount))):'';
+    masterActivityAlert.setAttribute('aria-label',hasMasterActivity?alertText:'');
   }
   const menuToggle=$('#menuToggle');
   if(menuToggle)menuToggle.setAttribute('aria-label',hasMasterActivity?'Abrir menu. Há atividades aguardando revisão.':'Abrir menu');
-  const getNavItems=(items,sidebar=false)=>items.map(([id,name])=>{const showAlert=sidebar&&((admin&&((id==='people'&&Number(state.pendingIdentityCount)>0)||(id==='warrants'&&Number(state.pendingWarrantReviewCount)>0)||(id==='vehicles'&&Number(state.pendingVehiclePlateCount)>0)))||(master&&id==='team'&&Number(state.masterActivityPendingCount)>0)),alertLabel=id==='team'?'Atividades pendentes para revisão do administrador master':id==='people'?'Sugestões de nome ou CPF pendentes':id==='vehicles'?'Sugestões de placa pendentes':'Revisões de mandados pendentes';const iconHtml=id==='people'?personIcon():id==='vehicles'?carIcon().replace('car-icon','car-icon menu-svg'):icon[id];return {id,name,iconHtml,showAlert,alertLabel}});
+  const getNavItems=(items,sidebar=false)=>items.map(([id,name])=>{const alertCount=!sidebar?0:id==='people'&&admin?Number(state.pendingIdentityCount)||0:id==='warrants'&&admin?Number(state.pendingWarrantReviewCount)||0:id==='vehicles'&&admin?Number(state.pendingVehiclePlateCount)||0:id==='team'&&master?Number(state.masterActivityPendingCount)||0:0;const alertLabel=id==='team'?'Atividades pendentes para revisão do administrador master':id==='people'?'Sugestões de nome ou CPF pendentes':id==='vehicles'?'Sugestões de placa pendentes':'Revisões de mandados pendentes';const iconHtml=id==='people'?personIcon():id==='vehicles'?carIcon().replace('car-icon','car-icon menu-svg'):icon[id];return {id,name,iconHtml,showAlert:alertCount>0,alertCount,alertLabel}});
   const renderItems=(items)=>getNavItems(items).map(({id,name,iconHtml})=>'<button class="nav-item '+(state.page===id?'active':'')+'" data-page="'+id+'"><span class="nav-icon">'+iconHtml+'</span><span>'+name+'</span></button>').join('');
   const activeCity=state.cities.find(city=>city.id===state.activeCityId);renderSidebar($('#sideNav'),{items:getNavItems(sideItems,true),page:state.page,cities:allowed?state.cities:[],activeCityId:state.activeCityId,activeCityName:activeCity?.name||'',showTour:allowed,onCityChange:changeActiveCity});
   $('#bottomNav').innerHTML=renderItems(bottomItems);
@@ -183,6 +186,28 @@ function rememberIdentitySuggestionDismissal(userId,proposalIds){
     localStorage.setItem(identitySuggestionDismissedKey(userId),JSON.stringify([...ids].slice(-500)));
   }catch{}
 }
+function renderIdentitySuggestionAlert(userId,proposalIds){
+  if(!identityAlertHost){
+    identityAlertHost=document.createElement('div');
+    identityAlertHost.id='identitySuggestionAlertReactRoot';
+    document.body.append(identityAlertHost);
+    identityAlertRoot=createRoot(identityAlertHost);
+  }
+  identityAlertRoot.render(React.createElement(IdentitySuggestionAlert,{
+    count:proposalIds.length,
+    onClose:()=>{
+      rememberIdentitySuggestionDismissal(userId,proposalIds);
+      identityAlertRoot?.render(null);
+    },
+    onNavigate:()=>{
+      state.page='team';
+      state.teamPage='identity';
+      saveLastView();
+      nav();
+      void loadPage();
+    }
+  }));
+}
 async function refreshPendingIdentitySuggestionPopup(){
   const userId=state.session?.user?.id;
   if(!userId||!isAdmin())return;
@@ -193,31 +218,12 @@ async function refreshPendingIdentitySuggestionPopup(){
     if(!pendingIds.length)return;
     if(state.page==='team'&&state.teamPage==='identity'){
       rememberIdentitySuggestionDismissal(userId,pendingIds);
+      identityAlertRoot?.render(null);
       return;
     }
     const dismissed=readDismissedIdentitySuggestions(userId),freshIds=pendingIds.filter(id=>!dismissed.has(id));
     if(!freshIds.length)return;
-    let dialog=document.querySelector('#identitySuggestionAlertDialog');
-    if(!dialog){
-      dialog=document.createElement('dialog');
-      dialog.id='identitySuggestionAlertDialog';
-      dialog.className='identity-suggestion-alert-dialog';
-      dialog.addEventListener('close',()=>{
-        let ids=[];
-        try{ids=JSON.parse(dialog.dataset.proposalIds||'[]')}catch{}
-        rememberIdentitySuggestionDismissal(dialog.dataset.userId,ids);
-      });
-      dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close()});
-      document.body.append(dialog);
-    }
-    if(dialog.open)return;
-    dialog.dataset.userId=userId;
-    dialog.dataset.proposalIds=JSON.stringify(freshIds);
-    dialog.innerHTML='<section class="identity-suggestion-alert-card" aria-labelledby="identitySuggestionAlertTitle"><button class="identity-suggestion-alert-close" type="button" aria-label="Fechar aviso">×</button><span class="identity-suggestion-alert-icon" aria-hidden="true">!</span><p class="identity-suggestion-alert-eyebrow">REVISÃO ADMINISTRATIVA</p><h2 id="identitySuggestionAlertTitle">Sugestão de alteração aguardando</h2><p class="identity-suggestion-alert-copy">Há '+freshIds.length.toLocaleString('pt-BR')+' nova(s) sugestão(ões) de nome ou CPF para revisar. Na aba de sugestões você pode conferir os dados e aprovar ou rejeitar cada alteração.</p><div class="identity-suggestion-alert-actions"><button class="button secondary" type="button">Agora não</button><button class="button" type="button" data-page="team" data-team-page="identity">Ver sugestões</button></div></section>';
-    dialog.querySelector('.identity-suggestion-alert-close')?.addEventListener('click',()=>dialog.close());
-    dialog.querySelector('.identity-suggestion-alert-actions .button.secondary')?.addEventListener('click',()=>dialog.close());
-    dialog.querySelector('[data-page="team"]')?.addEventListener('click',()=>dialog.close());
-    if(!dialog.open)dialog.showModal();
+    renderIdentitySuggestionAlert(userId,freshIds);
   }catch(error){console.warn('Não foi possível verificar as sugestões de nome e CPF.',error)}
 }
 function scheduleMasterActivityRefresh(){
@@ -285,91 +291,50 @@ function saveLastView(){const userId=state.session?.user?.id;if(!userId)return;t
 function getLastView(userId){try{const value=JSON.parse(localStorage.getItem(lastViewKey(userId))||'null');if(!value||!['dashboard','people','vehicles','warrants','vehicleInterest','team','history','smart','review','maintenance'].includes(value.page))return null;if(['team','history','review','maintenance'].includes(value.page)&&!isAdmin())return null;return {page:value.page,selected:typeof value.selected==='string'?value.selected:null,listPage:Math.max(0,Number(value.listPage)||0),letter:typeof value.letter==='string'?value.letter:'all',query:typeof value.query==='string'?value.query:'',searchInput:typeof value.searchInput==='string'?value.searchInput:'',listPageSize:Math.max(1,Number(value.listPageSize)||30),warrantTab:['list','include','review'].includes(value.warrantTab)?value.warrantTab:'list',warrantQuery:typeof value.warrantQuery==='string'?value.warrantQuery:'',teamPage:typeof value.teamPage==='string'?value.teamPage:'authorize'}}catch{return null}}
 let loadingProgressTimer=null,warrantReactRoot=null,vehicleReactRoot=null,peopleReactRoot=null,citiesReactRoot=null,legacyPageRoot=null;
 function releaseLegacyPageRoot(){if(legacyPageRoot){legacyPageRoot.unmount();legacyPageRoot=null}}
-const PEOPLE_UI_MODE_KEY='cadastro-individuos-interface-v1';
-function getPeopleUiMode(){try{return localStorage.getItem(PEOPLE_UI_MODE_KEY)==='classic'?'classic':'react'}catch{return'react'}}
-function setPeopleUiMode(mode){try{localStorage.setItem(PEOPLE_UI_MODE_KEY,mode==='classic'?'classic':'react')}catch{}}
-const VEHICLES_UI_MODE_KEY='cadastro-veiculos-interface-v1';
-function getVehiclesUiMode(){try{return localStorage.getItem(VEHICLES_UI_MODE_KEY)==='classic'?'classic':'react'}catch{return'react'}}
-function setVehiclesUiMode(mode){try{localStorage.setItem(VEHICLES_UI_MODE_KEY,mode==='classic'?'classic':'react')}catch{}}
-const WARRANTS_UI_MODE_KEY='cadastro-mandados-interface-v1';
-function getWarrantsUiMode(){try{return localStorage.getItem(WARRANTS_UI_MODE_KEY)==='classic'?'classic':'react'}catch{return'react'}}
-function setWarrantsUiMode(mode){try{localStorage.setItem(WARRANTS_UI_MODE_KEY,mode==='classic'?'classic':'react')}catch{}}
 function settleLoadedCardPhotos(root){root?.querySelectorAll?.('.card-photo-cover img,.card-photo-thumbnail img').forEach(image=>{const holder=image.closest('.card-photo-cover,.card-photo-thumbnail');if(!holder)return;const settle=()=>{holder.classList.remove('is-photo-loading');holder.classList.toggle('is-photo-error',image.naturalWidth<=0)};image.addEventListener('load',settle,{once:true});image.addEventListener('error',settle,{once:true});if(image.complete)settle()})}
 function frame(content){const root=$('#mainContent');if(citiesReactRoot){citiesReactRoot.unmount();citiesReactRoot=null}if(warrantReactRoot){warrantReactRoot.unmount();warrantReactRoot=null}if(vehicleReactRoot){vehicleReactRoot.unmount();vehicleReactRoot=null}if(peopleReactRoot){peopleReactRoot.unmount();peopleReactRoot=null}if(typeof cityDashboardRoot!=='undefined'&&cityDashboardRoot){cityDashboardRoot.unmount();cityDashboardRoot=null}releaseLegacyPageRoot();if(loadingProgressTimer){clearInterval(loadingProgressTimer);loadingProgressTimer=null}legacyPageRoot=createRoot(root);flushSync(()=>legacyPageRoot.render(React.createElement(LegacyPageWorkspace,{contentHtml:content,pageTitle:label[state.page]||'Cadastro Criminal'})));settleLoadedCardPhotos(root);root.focus({preventScroll:true});}
 async function renderVehicleWorkspace(contentHtml,view='list',recordId=null,vehicleOptions={}){
   const root=$('#mainContent');
-  const renderClassic=()=>{
-    frame(contentHtml);
-    const host=view==='detail'?root.querySelector('.detail-hero'):root.querySelector('.page-intro');
-    const switcher=document.createElement('div');
-    switcher.className='vehicle-classic-switch';
-    switcher.innerHTML='<span>Interface clássica</span><button type="button" class="button secondary small">Usar interface moderna</button>';
-    (host||root).append(switcher);
-    switcher.querySelector('button').addEventListener('click',()=>{setVehiclesUiMode('react');if(view==='detail')void openVehicle(recordId,true);else void renderRecords()});
-  };
-  if(getVehiclesUiMode()==='classic'){renderClassic();return}
   try{
     const [{createRoot},{flushSync},{default:React},{default:VehiclesWorkspace}]=await Promise.all([import('react-dom/client'),import('react-dom'),import('react'),import('./react/VehiclesWorkspace.jsx')]);
     if(vehicleReactRoot){vehicleReactRoot.unmount();vehicleReactRoot=null}
     releaseLegacyPageRoot();vehicleReactRoot=createRoot(root);
-    flushSync(()=>vehicleReactRoot.render(React.createElement(VehiclesWorkspace,{
-      contentHtml,view,recordId,canDelete:Boolean(vehicleOptions.canDelete),
-    })));
+    flushSync(()=>vehicleReactRoot.render(React.createElement(VehiclesWorkspace,{contentHtml,view,recordId,canDelete:Boolean(vehicleOptions.canDelete)})));
     root.focus({preventScroll:true});
     settleLoadedCardPhotos(root);
   }catch(error){
-    console.error('Não foi possível abrir a interface React de veículos. A interface clássica será mantida.',error);
-    setVehiclesUiMode('classic');renderClassic();toast('A interface moderna de veículos não pôde ser carregada. A interface clássica foi mantida.');
+    console.error('Falha ao carregar o workspace React de veículos.',error);
+    frame(contentHtml);
+    toast('O módulo de veículos foi aberto no contêiner React de compatibilidade. Tente atualizar o aplicativo.');
   }
 }
-
 async function renderPeopleWorkspace(contentHtml,view='list',recordId=null){
   const root=$('#mainContent');
-  const renderClassic=()=>{
-    frame(contentHtml);
-    const host=view==='detail'?root.querySelector('.detail-hero'):root.querySelector('.page-intro');
-    const switcher=document.createElement('div');
-    switcher.className='people-classic-switch';
-    switcher.innerHTML='<span>Interface clássica</span><button type="button" class="button secondary small">Usar interface moderna</button>';
-    (host||root).append(switcher);
-    switcher.querySelector('button').addEventListener('click',()=>{setPeopleUiMode('react');if(view==='detail')void openPerson(recordId,true);else void renderRecords()});
-  };
-  if(getPeopleUiMode()==='classic'){renderClassic();return}
   try{
     const [{createRoot},{flushSync},{default:React},{default:PeopleWorkspace}]=await Promise.all([import('react-dom/client'),import('react-dom'),import('react'),import('./react/PeopleWorkspace.jsx')]);
     if(peopleReactRoot){peopleReactRoot.unmount();peopleReactRoot=null}
     releaseLegacyPageRoot();peopleReactRoot=createRoot(root);
-    flushSync(()=>peopleReactRoot.render(React.createElement(PeopleWorkspace,{
-      contentHtml,view,
-    })));
+    flushSync(()=>peopleReactRoot.render(React.createElement(PeopleWorkspace,{contentHtml,view})));
     root.focus({preventScroll:true});
     settleLoadedCardPhotos(root);
   }catch(error){
-    console.error('Não foi possível abrir a interface React de indivíduos. A interface clássica será mantida.',error);
-    setPeopleUiMode('classic');renderClassic();toast('A interface moderna de indivíduos não pôde ser carregada. A interface clássica foi mantida.');
+    console.error('Falha ao carregar o workspace React de indivíduos.',error);
+    frame(contentHtml);
+    toast('O módulo de indivíduos foi aberto no contêiner React de compatibilidade. Tente atualizar o aplicativo.');
   }
 }
-
 async function renderWarrantWorkspace(contentHtml,stats,admin){
   const root=$('#mainContent');
-  if(getWarrantsUiMode()==='classic'){
-    frame(contentHtml);
-    const page=root.querySelector('.warrants-page');
-    page?.insertAdjacentHTML('afterbegin','<div class="warrant-mode-switch warrant-mode-switch-classic"><span>Interface clássica</span><button type="button" class="button secondary small" data-warrant-enable-react>Experimentar painel moderno</button></div>');
-    root.querySelector('[data-warrant-enable-react]')?.addEventListener('click',()=>{setWarrantsUiMode('react');void renderWarrants()});
-    return;
-  }
   try{
     const [{createRoot},{flushSync},{default:React},{default:WarrantsWorkspace}]=await Promise.all([import('react-dom/client'),import('react-dom'),import('react'),import('./react/WarrantsWorkspace.jsx')]);
     if(warrantReactRoot){warrantReactRoot.unmount();warrantReactRoot=null}
     releaseLegacyPageRoot();warrantReactRoot=createRoot(root);
-    flushSync(()=>warrantReactRoot.render(React.createElement(WarrantsWorkspace,{
-      contentHtml,stats,admin,
-    })));
+    flushSync(()=>warrantReactRoot.render(React.createElement(WarrantsWorkspace,{contentHtml,stats,admin})));
     root.focus({preventScroll:true});
   }catch(error){
-    console.error('Não foi possível abrir a interface React de mandados. A interface clássica será mantida.',error);
-    setWarrantsUiMode('classic');frame(contentHtml);toast('A interface moderna de mandados não pôde ser carregada. A interface clássica foi mantida.');
+    console.error('Falha ao carregar o workspace React de mandados.',error);
+    frame(contentHtml);
+    toast('O módulo de mandados foi aberto no contêiner React de compatibilidade. Tente atualizar o aplicativo.');
   }
 }
 function authPage(error=''){document.body.classList.add('auth-mode');$('#drawer').hidden=true;$('#drawer').classList.remove('open');frame('<div class="auth-wrap"><section class="auth-card"><div class="auth-brand"><div class="brand-mark auth-mark"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 6 51 13v14c0 13-7.7 22.8-19 29C20.7 49.8 13 40 13 27V13L32 6Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="32" cy="24" r="6" fill="none" stroke="currentColor" stroke-width="3"/><path d="M21 43c1.5-6.5 5-9.5 11-9.5S41.5 36.5 43 43" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></div><div class="auth-brand-copy"><h1>Cadastro Criminal</h1><p>Indivíduos e veículos</p></div></div><p class="auth-caption">Entre com sua conta Google autorizada para acessar o banco de dados.</p>'+(error?'<div class="error-box">'+esc(error)+'</div>':'')+'<button class="google-login-button" id="googleLogin" type="button"><svg class="google-login-icon" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.25 5.48-4.73 7.18l7.64 5.93c4.46-4.12 7.13-10.2 7.13-17.58Z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.12.75-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.88.93 7.56 2.56 10.78l7.97-6.19Z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.87l-7.64-5.93c-2.12 1.42-4.83 2.27-8.27 2.27-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z"/></svg><span>Continuar com Google</span></button><p class="auth-access-note">Acesso disponível para contas Google autorizadas pelo administrador.</p>'+(state.session?'<button class="button secondary auth-submit" id="authSwitchAccount" type="button">Trocar conta Google</button>':'')+'<p class="auth-foot">Para instalar no celular, use o menu do navegador e escolha “Adicionar à tela inicial”.</p></section></div>');$('#googleLogin').onclick=async()=>{const {error}=await state.client.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:'select_account'}}});if(error)authPage('Não foi possível iniciar o login Google: '+msg(error))};if(state.session)$('#authSwitchAccount').onclick=async()=>{const {error}=await state.client.auth.signOut();if(error)authPage('Não foi possível trocar a conta: '+msg(error))}}
