@@ -15,7 +15,7 @@ function RecordCard({ entity, record, onOpen }) {
     : [record.make, record.model, record.color].filter(Boolean).join(' · ') || 'Dados complementares não informados';
   const cover = record.photos?.find(photo => photo.is_cover && photo.url) || record.photos?.find(photo => photo.url);
   return (
-    <button className={'react-record-card ' + (isPerson ? 'is-person' : 'is-vehicle')} type="button" onClick={() => onOpen(record.id)}>
+    <button className={'react-record-card ' + (isPerson ? 'is-person' : 'is-vehicle')} type="button" onClick={() => onOpen(record.id, entity)}>
       <span className="react-record-card-media">
         {cover?.url
           ? <img src={cover.url} alt={isPerson ? 'Foto de ' + title : 'Foto do veículo'} loading="lazy" />
