@@ -10,6 +10,10 @@
 .react-records-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .react-record-letters{display:flex;align-items:center;gap:6px;min-width:0;max-width:100%;padding:2px 1px 5px;overflow-x:auto;overflow-y:hidden;flex-wrap:nowrap;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x}
 .react-record-letters::-webkit-scrollbar{display:none}
+.react-record-letters{position:relative;padding-right:42px}
+.react-record-letters-scroll-cue{position:sticky;right:0;z-index:2;display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;margin-left:-38px;border:1px solid var(--line,#dfe3e5);border-radius:9px;background:var(--surface,#fff);color:var(--brand,#50595e);font-size:22px;font-weight:800;line-height:1;box-shadow:-8px 0 12px var(--surface,#fff);pointer-events:none;animation:react-record-scroll-nudge 1.8s ease-in-out infinite}
+@keyframes react-record-scroll-nudge{0%,100%{transform:translateX(0);opacity:.85}50%{transform:translateX(3px);opacity:1}}
+@media(prefers-reduced-motion:reduce){.react-record-letters-scroll-cue{animation:none}}
 .react-record-letters .ui-button{flex:0 0 auto;min-width:36px;min-height:34px;padding-inline:9px;scroll-snap-align:start}
 .react-record-page-size{display:flex;align-items:center;gap:7px;color:var(--muted,#687176);font-size:13px}
 .react-record-page-size select{min-height:36px;padding:0 8px;border:1px solid var(--line,#dfe3e5);border-radius:8px;background:var(--surface,#fff);color:inherit}
