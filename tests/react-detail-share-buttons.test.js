@@ -6,12 +6,17 @@ const [person, vehicle, styles, main] = await Promise.all([
   readFile(new URL('../src/react/PersonDetail.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/react/VehicleDetail.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/react/detail-actions.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8')
 ]);
 
 test('ficha do indivíduo possui botão compartilhar com ícone SVG acessível', () => {
   assert.match(person, /className="people-share-button"/);
-  assert.match(person, /data-record-pdf=\{'people:'/);
+  assert.match(person, /onShare\}\)/);
+  assert.match(person, /const sharePerson = async/);
+  assert.match(person, /await onShare\(person\.id\)/);
+  assert.match(person, /onClick=\{sharePerson\}/);
+  assert.match(main, /onShare:id=>generateRecordPdf\('people',id\)/);
   assert.match(person, /aria-label="Compartilhar ficha do indivíduo"/);
   assert.match(person, /className="detail-share-icon"/);
   assert.match(person, /people-share-button-label/);
