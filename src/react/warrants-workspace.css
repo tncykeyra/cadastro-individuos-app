@@ -1,0 +1,6 @@
+/* Camada de estilo do workspace React de Mandados */
+.warrants-react-shell .warrants-react-footnote{margin:16px 2px 0;padding:12px 14px;border-top:1px solid var(--line);color:var(--muted);font-size:.76rem;line-height:1.5}
+:root[data-theme="dark"] .warrants-react-shell .warrant-record,:root[data-theme="dark"] .warrants-react-shell .warrant-review-card,:root[data-theme="dark"] .warrants-react-shell .warrant-duplicate-review{background:var(--surface);color:var(--ink)}
+:root[data-theme="dark"] .warrants-react-shell .warrant-tabs .team-tab{background:var(--surface);color:var(--muted)}
+:root[data-theme="dark"] .warrants-react-shell .warrant-tabs .team-tab.active{background:var(--brand);color:#fff}
+:root[data-theme="dark"] .warrants-react-shell .warrant-tool-card,:root[data-theme="dark"] .warrants-react-shell .warrant-active-section{background:var(--surface)}
