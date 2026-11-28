@@ -56,8 +56,11 @@ test('menu lateral abre com gesto horizontal da borda esquerda no mobile', () =>
   assert.match(main, /openDrawer\(\)/);
 });
 
-test('cache e versão do app são atualizados para a nova interface', () => {
+test('cache, versão e seletor acessível de densidade são atualizados', () => {
   assert.match(index, /styles\.css\?v=169/);
-  assert.match(serviceWorker, /cadastro-app-shell-v147/);
-  assert.equal(JSON.parse(pkg).version, '2.52.9');
+  assert.match(serviceWorker, /cadastro-app-shell-v148/);
+  assert.equal(JSON.parse(pkg).version, '2.52.10');
+  assert.match(index, /data-card-density="large"/);
+  assert.match(index, /data-card-density="compact"/);
+  assert.match(index, /aria-pressed="true"/);
 });
