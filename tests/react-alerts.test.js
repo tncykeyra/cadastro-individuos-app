@@ -26,6 +26,15 @@ test('balões de pendências apresentam quantidade real e texto acessível no me
   assert.doesNotMatch(toast, /toastModeKey|setToastMode/);
 });
 
+test('alertas do menu são separados: alterações de indivíduos em Indivíduos e placas em Veículos', () => {
+  assert.match(main, /id==='people'&&admin\?Number\(state\.pendingIdentityCount\)\|\|0/);
+  assert.match(main, /id==='vehicles'&&admin\?Number\(state\.pendingVehiclePlateCount\)\|\|0/);
+  assert.match(main, /Sugestões de nome ou CPF pendentes/);
+  assert.match(main, /Sugestões de placa pendentes/);
+  assert.match(main, /refreshEntitySuggestionBadges\(\)/);
+  assert.match(main, /if\(isAdmin\(\)\)\{void refreshEntitySuggestionBadges\(\);void refreshPendingIdentitySuggestionPopup\(\);\}/);
+});
+
 test('todos os usuários recebem workspaces React sem preferência local para interface clássica', () => {
   assert.doesNotMatch(main, /getPeopleUiMode|getVehiclesUiMode|getWarrantsUiMode/);
   assert.doesNotMatch(main, /Interface clássica|warrant-enable-react/);
