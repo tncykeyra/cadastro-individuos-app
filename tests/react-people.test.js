@@ -29,7 +29,9 @@ test('ações existentes da ficha, pesquisa e associação permanecem preservada
 test('a interface moderna mantém paleta do aplicativo e adaptação para celular', () => {
   assert.match(styles, /--brand/);
   assert.match(styles, /@media\(max-width:700px\)/);
-  assert.match(styles, /person-relationships \\.section-heading>\\.button\\{[\\s\\S]*?width:100%/);
+  assert.match(styles, /association-section-heading \\.people-react-button-mount \\.button/);
+  assert.match(styles, /person-relationships \\.section-heading \\.people-react-button-mount \\.button/);
+  assert.match(styles, /width:100%/);
   assert.match(styles, /prefers-reduced-motion/);
 });
 
