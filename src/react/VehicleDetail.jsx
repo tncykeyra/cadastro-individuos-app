@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Button from './ui/Button.jsx';
+import './detail-actions.css';
 
 const cpf = value => {
   const digits = String(value || '').replace(/\D/g, '');
@@ -42,7 +43,7 @@ export default function VehicleDetail({ vehicle, photos, links, plateSuggestion,
         <h2>{vehicle.plate || 'Placa não informada'}</h2>
         <p>{[vehicle.make, vehicle.model, vehicle.color].filter(Boolean).join(' · ') || 'Dados complementares não informados'}</p>
         <div className="vehicle-native-actions">
-          <Button type="button" className="vehicle-detail-action vehicle-share-action" data-record-pdf={'vehicles:' + recordId} aria-label="Compartilhar ficha do veículo"><span className="vehicle-action-icon">↗</span><span className="vehicle-action-label">Compartilhar</span></Button>
+          <Button type="button" className="vehicle-detail-action vehicle-share-action" data-record-pdf={'vehicles:' + recordId} title="Compartilhar ficha do veículo" aria-label="Compartilhar ficha do veículo"><svg className="detail-share-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.7 6.6-4.4M8.7 13.3l6.6 4.4"/></svg><span className="vehicle-action-label">Compartilhar</span></Button>
           <Button type="button" className="vehicle-detail-action vehicle-edit-action" data-edit-vehicle={recordId}>✎ Editar</Button>
           {canDelete && <Button type="button" variant="danger" className="vehicle-detail-action vehicle-delete-action" data-delete-record={'vehicles:' + recordId}>Excluir</Button>}
         </div>
