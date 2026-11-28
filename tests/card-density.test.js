@@ -43,8 +43,8 @@ test('modo miniatura fica limitado aos cartões das duas abas', () => {
 });
 
 test('versão, cache e atualização do service worker acompanham a correção', () => {
-  assert.equal(JSON.parse(pkg).version, '2.52.14');
-  assert.match(worker, /cadastro-app-shell-v152/);
+  assert.equal(JSON.parse(pkg).version, '2.52.15');
+  assert.match(worker, /cadastro-app-shell-v153/);
   assert.match(main, /sw\.js\?v=119/);
   assert.match(index, /card-density\.css\?v=5/);
 });
@@ -57,4 +57,11 @@ test('listagem React efetiva controla densidade e amplia cards de veículos', ()
   assert.match(recordsCss, /react-records-module\[data-card-density="large"\] \.react-record-card\.is-vehicle/);
   assert.match(recordsCss, /aspect-ratio:3\/4/);
   assert.match(recordsCss, /react-records-module\[data-card-density="compact"\] \.react-record-card\.is-vehicle/);
+});
+
+
+test('modo miniatura reduz também os cartões de indivíduos na listagem React efetiva', () => {
+  assert.match(recordsCss, /react-records-module\\[data-card-density="compact"\\] \\.react-record-card\\.is-person/);
+  assert.match(recordsCss, /grid-template-columns:76px minmax\\(0,1fr\\)!important/);
+  assert.match(recordsCss, /width:58px!important;height:58px!important/);
 });
