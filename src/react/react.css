@@ -173,3 +173,11 @@
 @media (max-width: 360px) {
   .react-metrics { grid-template-columns: 1fr; }
 }
+
+/* Ícones SVG consistentes nas telas de pesquisa e consulta React. */
+.react-search-wrap{position:relative;display:flex;align-items:center;margin-bottom:0}
+.react-search-wrap>.react-dashboard-icon{position:absolute;left:13px;width:18px;height:18px;color:var(--react-muted);pointer-events:none}
+.react-search-wrap .react-search{padding-left:40px}
+.react-record-avatar .react-dashboard-icon,.react-record-arrow .react-dashboard-icon{width:19px;height:19px}
+.react-back{display:inline-flex;align-items:center;gap:8px}
+.react-back .react-dashboard-icon{width:17px;height:17px;transform:rotate(180deg)}
