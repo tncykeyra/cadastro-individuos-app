@@ -437,6 +437,7 @@ async function loadRelatedSearch(requestId,entity,query){try{const rpc=entity===
 async function loadRecords(requestId=state.searchRequest){state.serverPaged=false;state.listTotal=0;const query=state.query.trim();if(isUsefulSearch(query)){if(state.page==='people'){const {data,error}=await state.client.rpc('search_people_list',{search_term:query,result_limit:100});if(requestId!==state.searchRequest)return;if(error)throw error;state.people=data||[];state.vehicles=[];void loadRelatedSearch(requestId,'vehicles',query)}else if(state.page==='vehicles'){const {data,error}=await state.client.rpc('search_vehicles_list',{search_term:query,result_limit:100});if(requestId!==state.searchRequest)return;if(error)throw error;state.vehicles=data||[];state.people=[];void loadRelatedSearch(requestId,'people',query)}return}if(query){state.people=[];state.vehicles=[];return}if(state.page==='people'){state.people=await loadPagedActive('people','full_name');if(requestId!==state.searchRequest)return;state.vehicles=[]}else if(state.page==='vehicles'){state.vehicles=await loadPagedActive('vehicles','plate');if(requestId!==state.searchRequest)return;state.people=[]}}
 const warrantSearchResults = new Map();
 const warrantSearchRequests = new Map();
+const warrantSearchTimers = new Map();
 const warrantEditRecords = new Map();
 const warrantSelect = 'id,import_batch_id,warrant_number,full_name,cpf_digits,alias,mother_name,father_name,birth_date,source_agency,source_kind,source_reference,status,discharge_reported_at,discharge_reported_date,discharge_reference,discharge_confirmed_at,discharge_confirmed_date,discharge_confirmed_reference,created_at,updated_at';
 const warrantActiveStatuses = ['pending','discharge_reported'];
@@ -1175,10 +1176,15 @@ async function submitWarrantConfirmation(event){
 }
 async function findWarrantPerson(warrantId){
   if(!isAdmin())throw new Error('Apenas administradores podem revisar associações.');
-  const input=document.querySelector('[data-warrant-search-input="'+CSS.escape(warrantId)+'"]'),name=String(input?.value||'').trim();if(name.length<3)throw new Error('Digite pelo menos três letras do nome.');
+  const input=document.querySelector('[data-warrant-search-input="'+CSS.escape(warrantId)+'"]'),name=String(input?.value||'').trim(),container=input?.closest('.warrant-person-search')?.querySelector('.warrant-search-results');if(name.length<3){if(container)container.replaceChildren();return}
   const request=(warrantSearchRequests.get(warrantId)||0)+1;warrantSearchRequests.set(warrantId,request);
-  const results=await lookupSimilarPeople(name);if(warrantSearchRequests.get(warrantId)!==request||String(input?.value||'').trim()!==name)return;
-  warrantSearchResults.set(warrantId,results||[]);await renderWarrants();
+  if(container)container.innerHTML='<p class="muted">Pesquisando indivíduos…</p>';
+  try{
+    const results=await lookupSimilarPeople(name);
+    if(warrantSearchRequests.get(warrantId)!==request||String(input?.value||'').trim()!==name||!container?.isConnected)return;
+    warrantSearchResults.set(warrantId,results||[]);
+    container.innerHTML=results?.length?results.map(person=>'<div class="warrant-search-result"><span><strong>'+esc(formatPersonName(person.full_name))+'</strong><small>'+esc(person.birthday?'Nascimento: '+warrantDate(person.birthday):'Data de nascimento não cadastrada')+'</small></span><button type="button" class="button small" data-warrant-link="'+warrantId+'" data-warrant-person="'+person.id+'">Adicionar para revisão</button></div>').join(''):'<p class="muted">Nenhum indivíduo semelhante encontrado.</p>';
+  }catch(error){if(warrantSearchRequests.get(warrantId)===request&&container?.isConnected)container.innerHTML='<p class="muted">Não foi possível pesquisar agora. Tente novamente.</p>';throw error}
 }
 async function addWarrantCandidate(warrantId,personId){
   if(!isAdmin())throw new Error('Apenas administradores podem vincular registros.');
@@ -2273,7 +2279,7 @@ async function showLinkForm(entity,id){
       return true
     };
     search.addEventListener('input',()=>{
-      clearTimeout(associationSearchTimer);associationSearchRequest++;options=[];
+      clearTimeout(associationSearchTimer);associationSearchRequest++;options=[];vehicleMatches=[];
       search.value=search.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,7);
       target.value='';
       results.innerHTML=search.value?'<div class="association-search-hint">Pesquisa automática ao completar a placa…</div>':'<div class="association-search-hint">Digite uma placa para pesquisar.</div>';
@@ -2350,7 +2356,7 @@ async function showLinkForm(entity,id){
       clearTimeout(personSearchTimer);personSearchRequest++;options=[];target.value='';
       const term=search.value.trim();
       results.innerHTML=term?'<div class="association-search-hint">Pesquisando automaticamente…</div>':'<div class="association-search-hint">Digite nome, CPF ou RG para pesquisar.</div>';
-      if(term.length>=2||term.replace(/\\D/g,'').length>=2)personSearchTimer=setTimeout(()=>void renderPeopleResults(),300);
+      if(term.length>=2)personSearchTimer=setTimeout(()=>void renderPeopleResults(),300);
     });
     search.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();clearTimeout(personSearchTimer);void renderPeopleResults()}});
     d.querySelector('[data-search-associated-person]')?.addEventListener('click',()=>{clearTimeout(personSearchTimer);void renderPeopleResults()});
@@ -2601,7 +2607,17 @@ async function initialize(){if(!config.url||!config.key){frame('<div class="auth
 document.addEventListener('click',event=>{const button=event.target.closest('[data-record-pdf]');if(!button)return;const [entity,id]=button.dataset.recordPdf.split(':');if(['people','vehicles'].includes(entity)&&id)void generateRecordPdf(entity,id)});
 
 document.addEventListener('input',event=>{
-  const personSearch=event.target.closest?.('[data-warrant-search-input]');if(personSearch){const warrantId=personSearch.dataset.warrantSearchInput;warrantSearchRequests.set(warrantId,(warrantSearchRequests.get(warrantId)||0)+1);warrantSearchResults.delete(warrantId);personSearch.closest('.warrant-person-search')?.querySelector('.warrant-search-results')?.replaceChildren();return}
+  const personSearch=event.target.closest?.('[data-warrant-search-input]');if(personSearch){
+    const warrantId=personSearch.dataset.warrantSearchInput;
+    clearTimeout(warrantSearchTimers.get(warrantId));
+    warrantSearchRequests.set(warrantId,(warrantSearchRequests.get(warrantId)||0)+1);
+    warrantSearchResults.delete(warrantId);
+    const container=personSearch.closest('.warrant-person-search')?.querySelector('.warrant-search-results');
+    if(container)container.replaceChildren();
+    const term=personSearch.value.trim();
+    if(term.length>=3)warrantSearchTimers.set(warrantId,setTimeout(()=>{if(personSearch.isConnected&&personSearch.value.trim()===term)void findWarrantPerson(warrantId).catch(error=>console.warn('Falha na pesquisa de indivíduos para mandado.',error))},300));
+    return
+  }
   const input=event.target.closest?.('[data-warrant-pdf-batch-field]');if(!input)return;
   const index=Number(input.dataset.index),entry=warrantPdfBatch[index];if(!entry)return;
   entry.values=entry.values||{};entry.values[input.dataset.warrantPdfBatchField]=input.value;schedulePersistWarrantQueueEntry(entry);
