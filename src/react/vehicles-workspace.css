@@ -84,3 +84,32 @@
  .vehicles-react-content .vehicle-share-action{gap:7px;padding:6px 11px;font-size:.8rem}
  .vehicles-react-content .vehicle-share-icon{width:26px;height:26px;flex-basis:26px}
 }
+
+
+/* Ações da ficha do veículo renderizadas em React. */
+.vehicles-react-shell.is-detail .vehicle-detail-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:9px}
+.vehicles-react-shell.is-detail .vehicle-detail-action{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:44px;padding:9px 14px;border:1px solid var(--v-line);border-radius:12px;background:var(--v-bg);color:var(--v-ink);font:inherit;font-size:.82rem;font-weight:780;line-height:1;white-space:nowrap;cursor:pointer;transition:transform .16s,border-color .16s,background .16s,box-shadow .16s}
+.vehicles-react-shell.is-detail .vehicle-detail-action:hover{transform:translateY(-1px);border-color:#aab4b8;box-shadow:0 5px 13px #17212712}
+.vehicles-react-shell.is-detail .vehicle-detail-action:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
+.vehicles-react-shell.is-detail .vehicle-detail-action>svg{width:18px;height:18px;flex:0 0 18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.vehicles-react-shell.is-detail .vehicle-share-action{min-width:48px;padding:6px 13px;border-color:#168447;background:#168447;color:#fff}
+.vehicles-react-shell.is-detail .vehicle-share-action:hover{border-color:#116b38;background:#116b38}
+.vehicles-react-shell.is-detail .vehicle-action-icon{display:grid;place-items:center;width:32px;height:32px;flex:0 0 32px;border-radius:50%;background:#fff;color:#168447}
+.vehicles-react-shell.is-detail .vehicle-action-icon svg{display:block;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.vehicles-react-shell.is-detail .vehicle-edit-action{border-color:var(--v-line);background:var(--v-bg)}
+.vehicles-react-shell.is-detail .vehicle-delete-action{border-color:#e7b8b8;background:#fff8f8;color:#a52e2e}
+.vehicles-react-shell.is-detail .vehicle-back-action{margin:0 0 15px;background:var(--v-bg)}
+.vehicles-react-shell.is-detail .association-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.vehicles-react-shell.is-detail .association-section-heading h2{margin:0}
+.vehicles-react-shell.is-detail .vehicle-associate-action{min-height:40px;border-color:var(--brand,#50595e);background:var(--brand,#50595e);color:#fff}
+:root[data-theme="dark"] .vehicles-react-shell.is-detail .vehicle-delete-action{border-color:#754444;background:#342729;color:#ffbaba}
+@media(max-width:520px){
+ .vehicles-react-shell.is-detail .vehicle-detail-actions{display:flex;justify-content:flex-start;gap:8px;width:100%}
+ .vehicles-react-shell.is-detail .vehicle-detail-action{min-height:44px;padding:9px 12px;font-size:.78rem}
+ .vehicles-react-shell.is-detail .vehicle-share-action{width:46px;min-width:46px;height:46px;padding:0;border-radius:50%}
+ .vehicles-react-shell.is-detail .vehicle-share-action .vehicle-action-label{display:none}
+ .vehicles-react-shell.is-detail .vehicle-action-icon{width:36px;height:36px;flex-basis:36px;background:transparent;color:#fff}
+ .vehicles-react-shell.is-detail .vehicle-action-icon svg{width:21px;height:21px;stroke:#fff}
+ .vehicles-react-shell.is-detail .association-section-heading{align-items:flex-start;flex-direction:column}
+ .vehicles-react-shell.is-detail .vehicle-associate-action{width:100%}
+}
