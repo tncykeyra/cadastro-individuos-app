@@ -1,4 +1,5 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
+import Button from './ui/Button.jsx';
 import { createPortal } from 'react-dom';
 import './people-workspace.css';
 
@@ -69,7 +70,7 @@ function PeopleReactContent({ contentHtml }) {
   return <>
     <div ref={hostRef} className="people-react-content" dangerouslySetInnerHTML={{ __html: contentHtml }} />
     {portals.map(({ key, mount, props, markup }) => createPortal(
-      <button {...props} dangerouslySetInnerHTML={{ __html: markup }} />, mount, key
+      <Button {...props} dangerouslySetInnerHTML={{ __html: markup }} />, mount, key
     ))}
   </>;
 }
@@ -87,7 +88,7 @@ export default function PeopleWorkspace({ contentHtml, view = 'list', onSwitchCl
       </div>
       <div className="people-react-tools">
         <span className="people-react-context"><span className="people-react-context-dot" />{detail ? 'Registro selecionado' : 'Base municipal'}</span>
-        <button className="people-react-switch" type="button" onClick={onSwitchClassic}>Voltar à interface clássica</button>
+        <Button className="people-react-switch" type="button" onClick={onSwitchClassic}>Voltar à interface clássica</Button>
       </div>
     </header>
     <PeopleReactContent key={contentHtml} contentHtml={contentHtml} />
