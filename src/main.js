@@ -1652,27 +1652,27 @@ async function renderDashboardReact(){
   if(!cityId||!root)return renderDashboardClassic();
   if(cityDashboardRoot){cityDashboardRoot.unmount();cityDashboardRoot=null}
   releaseLegacyPageRoot();
-  root.innerHTML='<section class="dashboard-intro"><h1>Painel da cidade</h1><p>Preparando o painel moderno…</p></section><div class="city-react-loading" role="status">Carregando indicadores da cidade…</div>';
-  const cachedPhotoStats=dashboardPhotoStatsCacheCityId===cityId?dashboardPhotoStatsCache:null;
-  const stalePhotoStats=!cachedPhotoStats||Date.now()-dashboardPhotoStatsAt>30000;
-  const [peopleResult,cpfResult,vehicleResult,warrantResult,identityResult]=await Promise.all([
-    state.client.from('people').select('id',{count:'exact',head:true}).is('archived_at',null).eq('city_id',cityId),
-    state.client.from('people').select('id',{count:'exact',head:true}).is('archived_at',null).eq('city_id',cityId).not('cpf_digits','is',null).neq('cpf_digits',''),
-    state.client.from('vehicles').select('id',{count:'exact',head:true}).is('archived_at',null).eq('city_id',cityId),
-    state.client.rpc('count_active_arrest_warrants'),
-    isAdmin()?state.client.from('person_identity_change_proposals').select('id',{count:'exact',head:true}).eq('city_id',cityId).eq('status','pending'):Promise.resolve({count:0,error:null})
-  ]);
-  if(token!==dashboardRenderToken||state.page!=='dashboard'||state.activeCityId!==cityId)return;
-  if(isAdmin()){state.pendingIdentityCount=identityResult.error?null:Number(identityResult.count||0);nav()}
-  const failed=[peopleResult,cpfResult,vehicleResult,warrantResult].find(result=>result.error);
-  const stats={people:failed?null:Number(peopleResult.count||0),cpf:failed?null:Number(cpfResult.count||0),vehicles:failed?null:Number(vehicleResult.count||0),warrants:failed?null:Number(warrantResult.data||0)};
-  const dashboardCityName=state.cities.find(city=>city.id===cityId)?.name||'Cidade ativa';
-  const role=isMasterAdmin()?'Master':isAdmin()?'Administrador':state.cityRole==='operator'?'Operador':'Acesso autorizado';
+  root.replaceChildren();
   try{
-    const [{createRoot},{default:React},{default:CityDashboard}]=await Promise.all([import('react-dom/client'),import('react'),import('./react/CityDashboard.jsx')]);
+    const [{createRoot},{default:React},{default:CityDashboard,CityDashboardLoading}]=await Promise.all([import('react-dom/client'),import('react'),import('./react/CityDashboard.jsx')]);
     if(token!==dashboardRenderToken||state.page!=='dashboard'||state.activeCityId!==cityId)return;
-    if(cityDashboardRoot){cityDashboardRoot.unmount();cityDashboardRoot=null}
-    releaseLegacyPageRoot();cityDashboardRoot=createRoot(root);
+    const dashboardCityName=state.cities.find(city=>city.id===cityId)?.name||'Cidade ativa';
+    cityDashboardRoot=createRoot(root);
+    cityDashboardRoot.render(React.createElement(CityDashboardLoading,{cityName:dashboardCityName}));
+    const cachedPhotoStats=dashboardPhotoStatsCacheCityId===cityId?dashboardPhotoStatsCache:null;
+    const stalePhotoStats=!cachedPhotoStats||Date.now()-dashboardPhotoStatsAt>30000;
+    const [peopleResult,cpfResult,vehicleResult,warrantResult,identityResult]=await Promise.all([
+      state.client.from('people').select('id',{count:'exact',head:true}).is('archived_at',null).eq('city_id',cityId),
+      state.client.from('people').select('id',{count:'exact',head:true}).is('archived_at',null).eq('city_id',cityId).not('cpf_digits','is',null).neq('cpf_digits',''),
+      state.client.from('vehicles').select('id',{count:'exact',head:true}).is('archived_at',null).eq('city_id',cityId),
+      state.client.rpc('count_active_arrest_warrants'),
+      isAdmin()?state.client.from('person_identity_change_proposals').select('id',{count:'exact',head:true}).eq('city_id',cityId).eq('status','pending'):Promise.resolve({count:0,error:null})
+    ]);
+    if(token!==dashboardRenderToken||state.page!=='dashboard'||state.activeCityId!==cityId)return;
+    if(isAdmin()){state.pendingIdentityCount=identityResult.error?null:Number(identityResult.count||0);nav()}
+    const failed=[peopleResult,cpfResult,vehicleResult,warrantResult].find(result=>result.error);
+    const stats={people:failed?null:Number(peopleResult.count||0),cpf:failed?null:Number(cpfResult.count||0),vehicles:failed?null:Number(vehicleResult.count||0),warrants:failed?null:Number(warrantResult.data||0)};
+    const role=isMasterAdmin()?'Master':isAdmin()?'Administrador':state.cityRole==='operator'?'Operador':'Acesso autorizado';
     cityDashboardRoot.render(React.createElement(CityDashboard,{
       cityName:dashboardCityName,roleLabel:role,stats,photoStats:cachedPhotoStats,
       pendingIdentityCount:identityResult.error?state.pendingIdentityCount:identityResult.count,
