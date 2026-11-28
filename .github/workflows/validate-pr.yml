@@ -1,0 +1,26 @@
+name: Validação de alterações
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: ['fix/**']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+      - name: Executar testes
+        run: npm test
+      - name: Conferir sintaxe
+        run: node --check src/main.js && node --check src/domain.js && node --check src/intelligent-tools.js && node --check sw.js
+      - name: Gerar build
+        run: npm run build
