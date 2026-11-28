@@ -21,7 +21,7 @@ function Sidebar({ items = [], cities = [], activeCityId, activeCityName, showTo
       {items.map((item, index) => <Button key={item.id} className={'nav-item react-sidebar-item' + (item.active ? ' active' : '')} type="button" data-page={item.id} style={{'--sidebar-index': index}}>
         <IconMarkup html={item.iconHtml}/>
         <span className="react-sidebar-item-label">{item.name}</span>
-        {item.showAlert && <span className="nav-alert-badge" aria-label={item.alertLabel} title={item.alertLabel}>!</span>}
+        {item.showAlert && <span className="nav-alert-badge" aria-label={item.alertLabel + ': ' + item.alertCount} title={item.alertLabel}>{item.alertCount > 99 ? '99+' : item.alertCount}</span>}
         <span className="react-sidebar-item-arrow" aria-hidden="true">›</span>
       </Button>)}
     </div>
