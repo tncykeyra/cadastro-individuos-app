@@ -63,9 +63,9 @@ test('integração mantém ações e contratos de navegação e formulário exis
 });
 
 test('versão e cache foram atualizados e o plano de migração explicita as áreas restantes', () => {
-  assert.equal(JSON.parse(pkg).version, '2.52.4');
+  assert.equal(JSON.parse(pkg).version, '2.52.5');
   assert.match(index, /styles\.css\?v=168/);
-  assert.match(serviceWorker, /cadastro-app-shell-v143/);
+  assert.match(serviceWorker, /cadastro-app-shell-v144/);
   for (const module of ['Autenticação','Cadastro Inteligente','Usuários','Histórico','Veículos de interesse','Fiscalização','ponte de compatibilidade']) {
     assert.ok(roadmap.includes(module), 'área da migração documentada: ' + module);
   }
