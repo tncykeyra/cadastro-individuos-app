@@ -68,3 +68,25 @@
     flex-basis: 19px;
   }
 }
+
+/* Garante a renderização do símbolo mesmo sob regras globais de SVG/botões. */
+.people-share-button > .detail-share-icon {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  flex: 0 0 20px !important;
+  overflow: visible !important;
+  color: #fff !important;
+  fill: none !important;
+  stroke: #fff !important;
+}
+.people-share-button > .detail-share-icon circle,
+.people-share-button > .detail-share-icon path {
+  fill: none !important;
+  stroke: #fff !important;
+  stroke-width: 2 !important;
+}
