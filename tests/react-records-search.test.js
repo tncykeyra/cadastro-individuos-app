@@ -9,13 +9,13 @@ const [component, main, domain] = await Promise.all([
 ]);
 
 test('pesquisa React oferece botão explícito e acionamento por Enter', () => {
-  assert.match(component, /onClick=\{\(\) => onSearch\(searchValue\)\}/);
-  assert.match(component, /event\.key === 'Enter'[\s\S]*?onSearch\(searchValue\)/);
+  assert.match(component, /onClick=\{submitSearch\}/);
+  assert.match(component, /event\.key === 'Enter'[\s\S]*?submitSearch\(\)/);
   assert.match(component, /aria-label="Pesquisar"/);
 });
 
 test('pesquisa preserva limpeza automática, limite mínimo e orientação ao operador', () => {
-  assert.match(component, /if \(!nextValue\.trim\(\) && query\.trim\(\)\) onSearch\(''\)/);
+  assert.match(component, /setTimeout\(\(\) => onSearchRef\.current\(searchValue\), 300\)/);
   assert.match(component, /Digite ao menos 3 caracteres úteis/);
   assert.match(domain, /export function isUsefulSearch\(value, minimum = 3\)/);
   assert.match(main, /search_people_list/);
