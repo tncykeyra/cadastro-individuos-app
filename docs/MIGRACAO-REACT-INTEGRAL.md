@@ -51,11 +51,15 @@ Tornar React a arquitetura padrão de todos os módulos da aplicação, removend
 - Nenhuma tabela, RPC, política RLS, registro ou arquivo do Supabase foi alterado.
 - O fallback de erro mantém uma ação de retorno caso o carregamento do componente React falhe.
 
+### Em andamento
+- Os formulários de Indivíduos e Veículos passaram a ser montados por uma raiz React, com conversão dos templates atuais em elementos React reais. Os campos mantêm os nomes, IDs e atributos usados pelos validadores e manipuladores de gravação já existentes.
+- Esta etapa é uma ponte de compatibilidade: os templates e parte da lógica ainda são imperativos. Não deve ser considerada a conclusão dos formulários React declarativos/controlados. O próximo passo é substituir progressivamente os templates por componentes JSX específicos, sem perder validação de duplicidade, etapas, fotos, câmera, OCR e permissões.
+
 ### Ainda pendente
-- Formulários React nativos de indivíduos e veículos, incluindo validação de duplicidade, etapas, fotos, câmera e OCR.
+- Formulários React declarativos/controlados de indivíduos e veículos, incluindo validação de duplicidade, etapas, fotos, câmera e OCR.
 - Concluir a migração nativa das áreas de vínculos, sugestões, alertas de mandados e verificações entre cidades da ficha de Indivíduos; os blocos de conteúdo dessas áreas ainda usam a renderização compatível atual.
 - Migração integral de Mandados/OCR, Inteligência, Fiscalização, Veículos de interesse, Administração, Histórico e relatórios.
-- Testes funcionais em navegador desktop e mobile para esta nova ficha, além dos testes automatizados.
+- Testes funcionais em navegador desktop e mobile para a ficha e formulários, além dos testes automatizados.
 
 ## Estratégia de entrega
 Migrar por módulos em branches/PRs pequenos baseados na main atual. Manter cada etapa isolada e testável. Só concluir a migração e ativar o React como padrão depois que todos os critérios de aceite forem atendidos. O deploy final deve ser validado no GitHub Pages.
