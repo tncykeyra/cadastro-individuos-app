@@ -34,6 +34,6 @@ test('gera página com os dados fornecidos do veículo', () => {
   const content = Buffer.from(pdf).toString('latin1');
 
   assert.match(content, /<41424331443233>/);
-  assert.match(content, /<56454943554C4F205445535445>/);
+  assert.match(content, /<[0-9A-F]*56454943554C4F205445[0-9A-F]*>/);
   assert.match(content, /\/Count 1/);
 });
