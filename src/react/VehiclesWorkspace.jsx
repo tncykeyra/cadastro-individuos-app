@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
+import { Button } from './ui-system.jsx';
 import './vehicles-workspace.css';
 
 function ShareIcon() {
@@ -132,7 +133,7 @@ export default function VehiclesWorkspace({ contentHtml, view, onSwitchClassic, 
         </div>
         <div className="vehicles-react-tools">
           <span className="vehicles-react-context"><span aria-hidden="true" className="vehicles-react-context-dot" /> {detail ? 'Registro selecionado' : 'Base municipal'}</span>
-          <button className="vehicles-react-switch" type="button" onClick={onSwitchClassic}>Voltar à interface clássica</button>
+          <Button variant="secondary" size="sm" className="vehicles-react-switch" type="button" onClick={onSwitchClassic}>Voltar à interface clássica</Button>
         </div>
       </header>
       {detail
