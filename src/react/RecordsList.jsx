@@ -3,8 +3,8 @@ import Button from './ui/Button.jsx';
 import './RecordsList.jsx.css';
 
 const formatCpf = value => {
-  const digits = String(value || '').replace(/\\D/g, '');
-  return digits.length === 11 ? digits.replace(/(\\d{3})(\\d{3})(\\d{3})(\\d{2})/, '$1.$2.$3-$4') : value || '—';
+  const digits = String(value || '').replace(/\D/g, '');
+  return digits.length === 11 ? digits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : value || '—';
 };
 
 function RecordCard({ entity, record, onOpen }) {
