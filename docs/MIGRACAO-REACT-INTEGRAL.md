@@ -44,13 +44,15 @@ Tornar React a arquitetura padrão de todos os módulos da aplicação, removend
 ### Concluído nesta branch
 - Listagens de Indivíduos e Veículos em componentes React nativos.
 - Ficha de Veículo em JSX nativo: galeria de fotos, dados de identificação, aviso de sugestão de placa, pessoas associadas e ações de compartilhar, editar, excluir, associar e desativar vínculo.
+- Estrutura principal da ficha de Indivíduo em JSX nativo: galeria, identificação, CPF/RG, matrícula, vulgo, aniversário, endereços, anotações, informações de ocorrência e veículos associados.
+- A ficha nativa de Indivíduo recebe os dados e resultados das consultas já existentes. Mantém os fluxos atuais de edição, compartilhamento, exclusão autorizada, associações, alertas de mandados, sugestões de identidade e verificação entre cidades.
 - A ficha nativa reutiliza os serviços e as rotinas de negócio existentes. As ações continuam conectadas aos manipuladores atuais.
 - Nenhuma tabela, RPC, política RLS, registro ou arquivo do Supabase foi alterado.
 - O fallback de erro mantém uma ação de retorno caso o carregamento do componente React falhe.
 
 ### Ainda pendente
 - Formulários React nativos de indivíduos e veículos, incluindo validação de duplicidade, etapas, fotos, câmera e OCR.
-- Ficha completa de Indivíduos e seus vínculos, sugestões, alertas de mandados e verificações entre cidades.
+- Concluir a migração nativa das áreas de vínculos, sugestões, alertas de mandados e verificações entre cidades da ficha de Indivíduos; os blocos de conteúdo dessas áreas ainda usam a renderização compatível atual.
 - Migração integral de Mandados/OCR, Inteligência, Fiscalização, Veículos de interesse, Administração, Histórico e relatórios.
 - Testes funcionais em navegador desktop e mobile para esta nova ficha, além dos testes automatizados.
 
