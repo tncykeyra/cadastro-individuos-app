@@ -29,6 +29,13 @@ test('menu React mantém seletor de cidade, alertas e ação de ajuda', () => {
   assert.match(component, /Como usar/);
 });
 
+test('badge de sugestões fica no fluxo do menu e não é cortado pela borda do botão', () => {
+  assert.match(styles, /#sideNav \.react-sidebar-item\{overflow:visible;min-width:0\}/);
+  assert.match(styles, /#sideNav \.react-sidebar-item \.nav-alert-badge\{[\s\S]*?position:static/);
+  assert.match(styles, /flex:0 0 auto/);
+  assert.match(styles, /overflow-wrap:anywhere/);
+});
+
 test('menu lateral possui animações, responsividade e respeito à preferência de movimento reduzido', () => {
   assert.match(styles, /@keyframes sidebar-item-in/);
   assert.match(styles, /@keyframes sidebar-backdrop-in/);
