@@ -58,3 +58,10 @@ test('listagem React efetiva controla densidade e amplia cards de veículos', ()
   assert.match(recordsCss, /aspect-ratio:3\/4/);
   assert.match(recordsCss, /react-records-module\[data-card-density="compact"\] \.react-record-card\.is-vehicle/);
 });
+
+
+test('modo miniatura reduz também os cartões de indivíduos na listagem React efetiva', () => {
+  assert.match(recordsCss, /react-records-module\\[data-card-density="compact"\\] \\.react-record-card\\.is-person/);
+  assert.match(recordsCss, /grid-template-columns:76px minmax\\(0,1fr\\)!important/);
+  assert.match(recordsCss, /width:58px!important;height:58px!important/);
+});
