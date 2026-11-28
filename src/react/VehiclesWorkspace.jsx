@@ -64,7 +64,6 @@ function ReactButtonContent({ contentHtml }) {
   useEffect(() => {
     const roots = [];
     mountReactButtons(hostRef.current, roots);
-    mountReactButtons(host, roots);
     return () => roots.forEach(root => root.unmount());
   }, [contentHtml]);
   return <div ref={hostRef} className="vehicles-react-content" dangerouslySetInnerHTML={{ __html: contentHtml }} />;
@@ -112,6 +111,7 @@ function VehicleDetailActionMount({ contentHtml, recordId, canDelete }) {
         </button>
       </>
     );
+    mountReactButtons(host, roots);
     return () => roots.forEach(root => root.unmount());
   }, [contentHtml, recordId, canDelete]);
 
