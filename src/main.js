@@ -13,6 +13,7 @@ import { renderSystemTestsPanel, refreshSystemTestsPanel } from './system-tests-
 import { mountAssociationDialog } from './react/VehiclesWorkspace.jsx';
 import { renderSidebar } from './react/Sidebar.jsx';
 import './react/ui-system.css';
+import { mountToastViewport } from './react/ui/ToastViewport.jsx';
 
 let ocrEnginePromise;
 async function processOcrFiles(...args){
@@ -34,7 +35,8 @@ const shareIcon=()=>'<svg class="share-icon" viewBox="0 0 24 24" aria-hidden="tr
 const label={dashboard:'Painel da cidade',people:'Indivíduos',vehicles:'Veículos',warrants:'Mandados',vehicleInterest:'Veículos de interesse',fiscalization:'Fiscalização',team:'Usuários',history:'Histórico',smart:'Cadastro Inteligente',review:'Revisão Inteligente',maintenance:'Manutenção Inteligente',cities:'Cidades e acessos'};
 const photoUrls=new Map(),photoUrlExpiresAt=new Map(),photoCachedKeys=new Set(),photoBlobInflight=new Map();let photoDbPromise=null;let warrantImportPreview=null;const MAX_WARRANT_PDF_BATCH=50,MAX_WARRANT_PDF_FILE_BYTES=20*1024*1024,MAX_WARRANT_PDF_BATCH_BYTES=40*1024*1024;let warrantPdfBatch=[];let warrantPdfBatchSaving=false;let warrantPdfBatchReading=false;const warrantQueueDbName='cadastro-criminal-warrant-queue-v1';let warrantQueueDbPromise=null;const warrantQueueSaveTimers=new Map();
 const msg=e=>e?.message||'Não foi possível concluir. Tente novamente.';
-function toast(text){const el=$('#toast');el.textContent=text;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600)}
+function toast(text){window.dispatchEvent(new CustomEvent('app:toast',{detail:{message:String(text??'')}}))}
+mountToastViewport($('#toast'));
 const appearanceStorageKey='cadastro-criminal-appearance-v1';
 function setAppearance(theme){
   const selected=theme==='dark'?'dark':'light';
