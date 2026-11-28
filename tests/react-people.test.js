@@ -12,7 +12,7 @@ test('aba Indivíduos usa workspace React sem botão de retorno à interface cl�
   assert.doesNotMatch(main, /PEOPLE_UI_MODE_KEY|getPeopleUiMode|setPeopleUiMode/);
   assert.match(main, /async function renderPeopleWorkspace/);
   assert.match(main, /renderPeopleWorkspace\(pageContent,'list'\)/);
-  assert.match(main, /renderPeopleWorkspace\([\s\S]*?'detail',id\)/);
+  assert.match(main, /renderPeopleWorkspace\([\s\S]*?'detail',id(?:,|\))/);
   assert.doesNotMatch(main, /onSwitchClassic/);
   assert.doesNotMatch(component, /Voltar à interface clássica/);
   assert.match(component, /dangerouslySetInnerHTML/);
@@ -40,7 +40,7 @@ test('detalhes do indivíduo são montados no workspace React e compartilhar vir
   const detailStart = main.indexOf("async function openPerson");
   const detailEnd = main.indexOf("function crimesDisplayText", detailStart);
   const detailSource = main.slice(detailStart, detailEnd);
-  assert.match(detailSource, /renderPeopleWorkspace\([\s\S]*?'detail',id\)/);
+  assert.match(detailSource, /renderPeopleWorkspace\([\s\S]*?'detail',id(?:,|\))/);
   assert.match(detailSource, /people-share-button/);
   assert.match(detailSource, /aria-label="Compartilhar ficha do indivíduo"/);
   assert.match(component, /view === 'detail'/);
