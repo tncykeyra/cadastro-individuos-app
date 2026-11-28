@@ -1,0 +1,219 @@
+/* Sistema de interface compartilhado — Cadastro Criminal.
+   Mantém a geometria e as classes de cada módulo, mas unifica estados e acabamento. */
+:root {
+  --ui-radius-xs: 7px;
+  --ui-radius-sm: 9px;
+  --ui-radius-md: 12px;
+  --ui-radius-lg: 16px;
+  --ui-control-height: 42px;
+  --ui-control-height-touch: 46px;
+  --ui-motion-fast: 150ms;
+  --ui-motion-normal: 210ms;
+  --ui-focus-ring: 0 0 0 3px color-mix(in srgb, var(--brand) 22%, transparent);
+}
+
+.ui-button,
+button.ui-button {
+  -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
+  text-rendering: optimizeLegibility;
+  transition:
+    background-color var(--ui-motion-fast) ease,
+    color var(--ui-motion-fast) ease,
+    border-color var(--ui-motion-fast) ease,
+    box-shadow var(--ui-motion-fast) ease,
+    opacity var(--ui-motion-fast) ease,
+    transform var(--ui-motion-fast) ease,
+    filter var(--ui-motion-fast) ease;
+}
+
+.ui-button:focus-visible,
+button.button:focus-visible,
+button.nav-item:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus-ring);
+  position: relative;
+  z-index: 1;
+}
+
+.ui-button:disabled,
+button.button:disabled,
+button.nav-item:disabled {
+  cursor: not-allowed;
+  opacity: .58;
+  filter: saturate(.65);
+  transform: none;
+}
+
+.ui-button:not(:disabled):active,
+button.button:not(:disabled):active {
+  transform: translateY(1px) scale(.99);
+}
+
+.ui-button svg,
+button.button svg {
+  display: block;
+  flex: 0 0 auto;
+  width: 1.05em;
+  height: 1.05em;
+}
+
+button.button,
+.ui-button.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--ui-control-height);
+  padding: 9px 15px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  font-family: inherit;
+  font-size: .9rem;
+  font-weight: 680;
+  line-height: 1.25;
+  letter-spacing: -.012em;
+  box-shadow: 0 1px 2px #1118270a;
+}
+
+button.button:hover:not(:disabled),
+.ui-button.button:hover:not(:disabled) {
+  filter: brightness(.96);
+  box-shadow: 0 4px 12px #11182712;
+}
+
+button.button.small,
+.ui-button.button.small {
+  min-height: 36px;
+  padding: 7px 11px;
+  border-radius: 9px;
+  font-size: .84rem;
+}
+
+button.button.secondary,
+.ui-button.button.secondary {
+  background: var(--surface);
+  color: var(--brand-dark);
+  border-color: var(--line);
+  box-shadow: none;
+}
+
+button.button.secondary:hover:not(:disabled),
+.ui-button.button.secondary:hover:not(:disabled) {
+  background: var(--soft);
+  border-color: color-mix(in srgb, var(--brand) 28%, var(--line));
+  filter: none;
+}
+
+button.button.danger,
+.ui-button.button.danger {
+  background: #a8323b;
+  color: #fff;
+  border-color: #a8323b;
+}
+
+button.button.danger:hover:not(:disabled),
+.ui-button.button.danger:hover:not(:disabled) {
+  background: #8d2831;
+  border-color: #8d2831;
+  filter: none;
+}
+
+button.button.primary,
+.ui-button.button.primary {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+
+button.button.success,
+.ui-button.button.success {
+  background: #198754;
+  color: #fff;
+  border-color: #198754;
+}
+
+.ui-button--icon-only {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: var(--ui-control-height);
+  min-width: var(--ui-control-height);
+  min-height: var(--ui-control-height);
+  padding: 0;
+}
+
+.ui-button--loading {
+  cursor: progress;
+}
+
+#mainContent :is(.field input, .field select, .field textarea),
+#recordDialog :is(.field input, .field select, .field textarea),
+#mainContent input.search,
+#mainContent input[type="search"] {
+  border-radius: 10px;
+  transition: border-color var(--ui-motion-fast) ease, box-shadow var(--ui-motion-fast) ease, background-color var(--ui-motion-fast) ease;
+}
+
+#mainContent :is(.field input, .field select, .field textarea):focus,
+#recordDialog :is(.field input, .field select, .field textarea):focus,
+#mainContent input.search:focus,
+#mainContent input[type="search"]:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--brand) 55%, var(--line));
+  box-shadow: var(--ui-focus-ring);
+}
+
+#mainContent :is(.info-box, .site-card, .person-card, .list, .revision),
+#recordDialog .dialog-inner {
+  border-radius: var(--ui-radius-lg);
+}
+
+#mainContent :is(.page-intro, .section-heading) h1,
+#mainContent :is(.page-intro, .section-heading) h2 {
+  letter-spacing: -.025em;
+}
+
+#mainContent :is(.notice, .empty, .error-box, .success-box) {
+  border-radius: var(--ui-radius-md);
+}
+
+:root[data-theme="dark"] button.button.secondary,
+:root[data-theme="dark"] .ui-button.button.secondary {
+  background: #171b1e;
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+:root[data-theme="dark"] button.button.secondary:hover:not(:disabled),
+:root[data-theme="dark"] .ui-button.button.secondary:hover:not(:disabled) {
+  background: #242b2f;
+}
+
+@media (max-width: 700px) {
+  button.button,
+  .ui-button.button {
+    min-height: var(--ui-control-height-touch);
+    padding-inline: 13px;
+  }
+
+  button.button.small,
+  .ui-button.button.small {
+    min-height: 40px;
+    padding-inline: 10px;
+  }
+
+  .ui-button--icon-only {
+    width: var(--ui-control-height-touch);
+    min-width: var(--ui-control-height-touch);
+    min-height: var(--ui-control-height-touch);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-button,
+  button.ui-button,
+  button.button {
+    transition: none !important;
+  }
+}

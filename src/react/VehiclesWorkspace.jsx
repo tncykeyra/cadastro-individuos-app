@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import Button from './ui/Button.jsx';
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import './vehicles-workspace.css';
@@ -53,7 +54,7 @@ function mountReactButtons(host, roots) {
     button.replaceWith(mount);
     const root = createRoot(mount);
     flushSync(() => root.render(
-      <button {...props} dangerouslySetInnerHTML={{ __html: markup }} />
+      <Button {...props} dangerouslySetInnerHTML={{ __html: markup }} />
     ));
     roots.push(root);
   }
@@ -83,32 +84,32 @@ function VehicleDetailActionMount({ contentHtml, recordId, canDelete }) {
       roots.push(root);
     };
     mount('[data-vehicle-react-back]',
-      <button className="vehicle-detail-action vehicle-back-action" type="button" data-back data-react-owned="true">
+      <Button className="vehicle-detail-action vehicle-back-action" type="button" data-back data-react-owned="true">
         <BackIcon/><span>Voltar para veículos</span>
-      </button>
+      </Button>
     );
     mount('[data-vehicle-react-actions]',
       <div className="vehicle-detail-actions">
-        <button className="vehicle-detail-action vehicle-share-action" type="button" data-react-owned="true"
+        <Button className="vehicle-detail-action vehicle-share-action" type="button" data-react-owned="true"
           data-record-pdf={'vehicles:' + recordId} aria-label="Compartilhar ficha do veículo"
           title="Compartilhar ficha do veículo">
           <span className="vehicle-action-icon"><ShareIcon/></span>
           <span className="vehicle-action-label">Compartilhar</span>
-        </button>
-        <button className="vehicle-detail-action vehicle-edit-action" type="button" data-react-owned="true" data-edit-vehicle={recordId}>
+        </Button>
+        <Button className="vehicle-detail-action vehicle-edit-action" type="button" data-react-owned="true" data-edit-vehicle={recordId}>
           <EditIcon/><span>Editar</span>
-        </button>
-        {canDelete && <button className="vehicle-detail-action vehicle-delete-action" type="button" data-react-owned="true" data-delete-record={'vehicles:' + recordId}>
+        </Button>
+        {canDelete && <Button className="vehicle-detail-action vehicle-delete-action" type="button" data-react-owned="true" data-delete-record={'vehicles:' + recordId}>
           <DeleteIcon/><span>Excluir</span>
-        </button>}
+        </Button>}
       </div>
     );
     mount('[data-vehicle-react-association]',
       <>
         <h2>Pessoas associadas</h2>
-        <button className="vehicle-detail-action vehicle-associate-action" type="button" data-react-owned="true" data-link-vehicle={recordId}>
+        <Button className="vehicle-detail-action vehicle-associate-action" type="button" data-react-owned="true" data-link-vehicle={recordId}>
           <LinkIcon/><span>Associar pessoa</span>
-        </button>
+        </Button>
       </>
     );
     mountReactButtons(host, roots);
@@ -132,7 +133,7 @@ export default function VehiclesWorkspace({ contentHtml, view, onSwitchClassic, 
         </div>
         <div className="vehicles-react-tools">
           <span className="vehicles-react-context"><span aria-hidden="true" className="vehicles-react-context-dot" /> {detail ? 'Registro selecionado' : 'Base municipal'}</span>
-          <button className="vehicles-react-switch" type="button" onClick={onSwitchClassic}>Voltar à interface clássica</button>
+          <Button className="vehicles-react-switch" type="button" onClick={onSwitchClassic}>Voltar à interface clássica</Button>
         </div>
       </header>
       {detail
@@ -158,7 +159,7 @@ function AssociationDialogShell({ isPerson, targetFieldHtml, notesFieldHtml }) {
           <h2>{heading}</h2>
           <p>{description}</p>
         </div>
-        <button className="close association-react-close" type="button" data-close aria-label="Fechar">×</button>
+        <Button className="close association-react-close" type="button" data-close aria-label="Fechar">×</Button>
       </div>
       <form id="linkForm" className="association-react-form">
         <div className="association-react-search-panel">
@@ -179,8 +180,8 @@ function AssociationDialogShell({ isPerson, targetFieldHtml, notesFieldHtml }) {
         </div>
       </form>
       <div className="dialog-actions association-react-actions">
-        <button className="button secondary" data-close type="button">Cancelar</button>
-        <button className="button association-react-submit" type="submit" form="linkForm"><span aria-hidden="true">＋</span> Confirmar associação</button>
+        <Button className="button secondary" data-close type="button">Cancelar</Button>
+        <Button className="button association-react-submit" type="submit" form="linkForm"><span aria-hidden="true">＋</span> Confirmar associação</Button>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import React from 'react';
+import Button from './ui/Button.jsx';
 import './city-dashboard.css';
 
 const number = (value) => value === null || value === undefined ? '—' : Number(value || 0).toLocaleString('pt-BR');
@@ -45,7 +46,7 @@ export default function CityDashboard({
 
     <div className="city-react-heading">
       <div><span className="city-react-eyebrow">VISÃO GERAL</span><h2>Resumo operacional</h2><p>Indicadores dos registros ativos da unidade.</p></div>
-      <button className="city-react-refresh" type="button" onClick={onRefresh} disabled={busy}><Icon type="refresh"/>{busy ? 'Atualizando…' : 'Atualizar dados'}</button>
+      <Button className="city-react-refresh" type="button" onClick={onRefresh} disabled={busy}><Icon type="refresh"/>{busy ? 'Atualizando…' : 'Atualizar dados'}</Button>
     </div>
 
     <div className="city-react-metrics">
@@ -66,15 +67,15 @@ export default function CityDashboard({
 
       <section className="city-react-panel">
         <div className="city-react-panel-heading"><div><span className="city-react-eyebrow">NAVEGAÇÃO</span><h2>Acesso rápido</h2></div></div>
-        <div className="city-react-shortcuts">{shortcuts.map(item => <button key={item.key} className="city-react-shortcut" type="button" onClick={() => onNavigate(item.key)}><span className="city-react-shortcut-icon"><Icon type={item.icon}/></span><span><strong>{item.title}</strong><small>{item.description}</small></span><Icon type="arrow"/></button>)}</div>
+        <div className="city-react-shortcuts">{shortcuts.map(item => <Button key={item.key} className="city-react-shortcut" type="button" onClick={() => onNavigate(item.key)}><span className="city-react-shortcut-icon"><Icon type={item.icon}/></span><span><strong>{item.title}</strong><small>{item.description}</small></span><Icon type="arrow"/></Button>)}</div>
       </section>
     </div>
 
     {(Number(pendingIdentityCount) > 0 || Number(pendingVehiclePlateCount) > 0) && <section className="city-react-alerts" aria-label="Pendências administrativas">
-      {Number(pendingIdentityCount) > 0 && <button type="button" onClick={() => onNavigate('team','identity')}><span>!</span><span><strong>Sugestões de nome e CPF</strong><small>{number(pendingIdentityCount)} aguardando revisão administrativa</small></span><Icon type="arrow"/></button>}
-      {Number(pendingVehiclePlateCount) > 0 && <button type="button" onClick={() => onNavigate('team','identity')}><span>!</span><span><strong>Sugestões de placa de veículo</strong><small>{number(pendingVehiclePlateCount)} aguardando revisão administrativa</small></span><Icon type="arrow"/></button>}
+      {Number(pendingIdentityCount) > 0 && <Button type="button" onClick={() => onNavigate('team','identity')}><span>!</span><span><strong>Sugestões de nome e CPF</strong><small>{number(pendingIdentityCount)} aguardando revisão administrativa</small></span><Icon type="arrow"/></Button>}
+      {Number(pendingVehiclePlateCount) > 0 && <Button type="button" onClick={() => onNavigate('team','identity')}><span>!</span><span><strong>Sugestões de placa de veículo</strong><small>{number(pendingVehiclePlateCount)} aguardando revisão administrativa</small></span><Icon type="arrow"/></Button>}
     </section>}
 
-    <footer className="city-react-footer"><span>Os indicadores respeitam a cidade ativa e as permissões da sessão autenticada.</span><button type="button" onClick={onSwitchClassic}>Voltar ao painel clássico</button></footer>
+    <footer className="city-react-footer"><span>Os indicadores respeitam a cidade ativa e as permissões da sessão autenticada.</span><Button type="button" onClick={onSwitchClassic}>Voltar ao painel clássico</Button></footer>
   </div>;
 }
