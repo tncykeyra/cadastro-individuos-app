@@ -10,6 +10,7 @@ const files = [
   'Sidebar.jsx',
   'VehiclesWorkspace.jsx',
   'WarrantsWorkspace.jsx',
+  'CitiesWorkspace.jsx',
 ];
 const modules = await Promise.all(files.map(file =>
   readFile(new URL('../src/react/' + file, import.meta.url), 'utf8')
@@ -61,10 +62,19 @@ test('integração mantém ações e contratos de navegação e formulário exis
 });
 
 test('versão e cache foram atualizados e o plano de migração explicita as áreas restantes', () => {
-  assert.equal(JSON.parse(pkg).version, '2.45.0');
-  assert.match(index, /styles\.css\?v=161/);
-  assert.match(serviceWorker, /cadastro-app-shell-v115/);
+  assert.equal(JSON.parse(pkg).version, '2.46.0');
+  assert.match(index, /styles\.css\?v=162/);
+  assert.match(serviceWorker, /cadastro-app-shell-v116/);
   for (const module of ['Autenticação','Cadastro Inteligente','Usuários','Histórico','Veículos de interesse','Fiscalização','ponte de compatibilidade']) {
     assert.ok(roadmap.includes(module), 'área da migração documentada: ' + module);
   }
+});
+
+test('workspace de cidades mantém ações e retorno clássico em React', async () => {
+  const cities = await readFile(new URL('../src/react/CitiesWorkspace.jsx', import.meta.url), 'utf8');
+  assert.match(cities, /onActivate/);
+  assert.match(cities, /onCreate/);
+  assert.match(cities, /onAssign/);
+  assert.match(cities, /onRemove/);
+  assert.match(cities, /Usar interface clássica/);
 });
