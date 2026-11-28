@@ -19,6 +19,57 @@ function LinkIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>;
 }
 
+
+function reactButtonAttributes(button) {
+  const props = {};
+  for (const attribute of [...button.attributes]) {
+    const name = attribute.name;
+    const value = attribute.value;
+    if (name === 'class') props.className = value;
+    else if (name === 'tabindex') props.tabIndex = Number(value);
+    else if (name === 'autofocus') props.autoFocus = true;
+    else if (name === 'disabled' || name === 'hidden' || name === 'formnovalidate') {
+      props[name === 'formnovalidate' ? 'formNoValidate' : name] = true;
+    } else if (name === 'style') {
+      props.style = Object.fromEntries(value.split(';').map(rule => rule.trim()).filter(Boolean).map(rule => {
+        const separator = rule.indexOf(':');
+        const key = rule.slice(0, separator).trim().replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+        return [key, rule.slice(separator + 1).trim()];
+      }));
+    } else props[name] = value;
+  }
+  props['data-react-owned'] = 'true';
+  return props;
+}
+
+function mountReactButtons(host, roots) {
+  if (!host) return;
+  const buttons = [...host.querySelectorAll('button:not([data-react-owned])')];
+  for (const button of buttons) {
+    const props = reactButtonAttributes(button);
+    const markup = button.innerHTML;
+    const mount = document.createElement('span');
+    mount.className = 'react-button-mount';
+    button.replaceWith(mount);
+    const root = createRoot(mount);
+    flushSync(() => root.render(
+      <button {...props} dangerouslySetInnerHTML={{ __html: markup }} />
+    ));
+    roots.push(root);
+  }
+}
+
+function ReactButtonContent({ contentHtml }) {
+  const hostRef = useRef(null);
+  useEffect(() => {
+    const roots = [];
+    mountReactButtons(hostRef.current, roots);
+    mountReactButtons(host, roots);
+    return () => roots.forEach(root => root.unmount());
+  }, [contentHtml]);
+  return <div ref={hostRef} className="vehicles-react-content" dangerouslySetInnerHTML={{ __html: contentHtml }} />;
+}
+
 function VehicleDetailActionMount({ contentHtml, recordId, canDelete }) {
   const hostRef = useRef(null);
   useEffect(() => {
@@ -29,26 +80,26 @@ function VehicleDetailActionMount({ contentHtml, recordId, canDelete }) {
       const target = host.querySelector(selector);
       if (!target) return;
       const root = createRoot(target);
-      root.render(element);
+      flushSync(() => root.render(element));
       roots.push(root);
     };
     mount('[data-vehicle-react-back]',
-      <button className="vehicle-detail-action vehicle-back-action" type="button" data-back>
+      <button className="vehicle-detail-action vehicle-back-action" type="button" data-back data-react-owned="true">
         <BackIcon/><span>Voltar para veículos</span>
       </button>
     );
     mount('[data-vehicle-react-actions]',
       <div className="vehicle-detail-actions">
-        <button className="vehicle-detail-action vehicle-share-action" type="button"
+        <button className="vehicle-detail-action vehicle-share-action" type="button" data-react-owned="true"
           data-record-pdf={'vehicles:' + recordId} aria-label="Compartilhar ficha do veículo"
           title="Compartilhar ficha do veículo">
           <span className="vehicle-action-icon"><ShareIcon/></span>
           <span className="vehicle-action-label">Compartilhar</span>
         </button>
-        <button className="vehicle-detail-action vehicle-edit-action" type="button" data-edit-vehicle={recordId}>
+        <button className="vehicle-detail-action vehicle-edit-action" type="button" data-react-owned="true" data-edit-vehicle={recordId}>
           <EditIcon/><span>Editar</span>
         </button>
-        {canDelete && <button className="vehicle-detail-action vehicle-delete-action" type="button" data-delete-record={'vehicles:' + recordId}>
+        {canDelete && <button className="vehicle-detail-action vehicle-delete-action" type="button" data-react-owned="true" data-delete-record={'vehicles:' + recordId}>
           <DeleteIcon/><span>Excluir</span>
         </button>}
       </div>
@@ -56,7 +107,7 @@ function VehicleDetailActionMount({ contentHtml, recordId, canDelete }) {
     mount('[data-vehicle-react-association]',
       <>
         <h2>Pessoas associadas</h2>
-        <button className="vehicle-detail-action vehicle-associate-action" type="button" data-link-vehicle={recordId}>
+        <button className="vehicle-detail-action vehicle-associate-action" type="button" data-react-owned="true" data-link-vehicle={recordId}>
           <LinkIcon/><span>Associar pessoa</span>
         </button>
       </>
@@ -86,7 +137,7 @@ export default function VehiclesWorkspace({ contentHtml, view, onSwitchClassic, 
       </header>
       {detail
         ? <VehicleDetailActionMount contentHtml={contentHtml} recordId={recordId} canDelete={canDelete}/>
-        : <div className="vehicles-react-content" dangerouslySetInnerHTML={{ __html: contentHtml }} />}
+        : <ReactButtonContent contentHtml={contentHtml} />}
       <footer className="vehicles-react-footnote">Os dados exibidos respeitam a cidade ativa e as permissões da sua conta. A apresentação moderna não altera registros nem vínculos.</footer>
     </div>
   );
