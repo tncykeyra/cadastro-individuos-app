@@ -243,14 +243,20 @@ export function wireFiscalizationActions(client, canAdmin, refresh, notify) {
     const existing = [...form.querySelectorAll('[name="keep_image"]:checked')].map(input => input.value);
     if (existing.length + files.length > MAX_IMAGES) { notify('Cada material pode ter até ' + MAX_IMAGES + ' imagens.'); return; }
     if (files.some(file => !['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > MAX_IMAGE_BYTES)) { notify('Use JPEG, PNG ou WEBP de até 8 MB por imagem.'); return; }
+    if (form.dataset.submitting === 'true') return;
+    form.dataset.submitting = 'true';
     submit.disabled = true;
-    const payload = {
-      category: form.elements.category.value.trim(), title: form.elements.title.value.trim(),
-      summary: form.elements.summary.value.trim(), content: form.elements.content.value.trim(),
-      source_note: form.elements.source_note.value.trim(), reference_url: form.elements.reference_url.value.trim() || null,
-      image_paths: existing, updated_by: (await client.auth.getUser()).data.user?.id
-    };
     try {
+      const { data: authData, error: authError } = await client.auth.getUser();
+      if (authError) throw authError;
+      if (!authData?.user?.id) throw new Error('Sua sessão expirou. Entre novamente para salvar o material.');
+      const payload = {
+        category: form.elements.category.value.trim(), title: form.elements.title.value.trim(),
+        summary: form.elements.summary.value.trim(), content: form.elements.content.value.trim(),
+        source_note: form.elements.source_note.value.trim(), reference_url: form.elements.reference_url.value.trim() || null,
+        image_paths: existing, updated_by: authData.user.id
+      };
+      if (!payload.category || !payload.title || !payload.content) throw new Error('Preencha categoria, título e informações antes de salvar.');
       let result;
       if (form.dataset.guideId) result = await client.from('fiscalization_guides').update(payload).eq('id', id).select('id').single();
       else result = await client.from('fiscalization_guides').insert({...payload,id,created_by:payload.updated_by}).select('id').single();
@@ -280,6 +286,6 @@ export function wireFiscalizationActions(client, canAdmin, refresh, notify) {
       await refresh();
     } catch (error) {
       notify(error.message || 'Não foi possível salvar o material.');
-    } finally { submit.disabled = false; }
+    } finally { form.dataset.submitting = 'false'; if (submit?.isConnected) submit.disabled = false; }
   });
 }
