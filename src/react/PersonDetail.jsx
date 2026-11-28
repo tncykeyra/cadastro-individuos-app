@@ -72,7 +72,7 @@ export default function PersonDetail({person,photos=[],vehicles=[],canDelete=fal
                 <button className="copy-info-button" type="button" data-copy-info={name} data-copy-label="Nome" title="Copiar nome" aria-label="Copiar nome">⧉</button>
               </div>
               <div className="detail-actions">
-                <Button size="small" className="people-share-button" type="button" onClick={sharePerson} disabled={sharing} aria-busy={sharing} title="Compartilhar ficha do indivíduo" aria-label="Compartilhar ficha do indivíduo"><svg className="detail-share-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.7 6.6-4.4M8.7 13.3l6.6 4.4"/></svg><span className="people-share-button-label">Compartilhar</span></Button>
+                <Button size="small" className="people-share-button" type="button" onClick={sharePerson} disabled={sharing} aria-busy={sharing} title="Compartilhar ficha do indivíduo" aria-label="Compartilhar ficha do indivíduo"><svg className="detail-share-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.7 6.6-4.4M8.7 13.3l6.6 4.4"/></svg><span className="people-share-button-label">Compartilhar</span></Button>
                 <Button type="button" data-edit-person={person.id}>✎ Editar</Button>
                 {canDelete && <Button variant="danger" type="button" data-delete-record={'people:'+person.id}>Excluir</Button>}
               </div>
