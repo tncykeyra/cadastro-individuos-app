@@ -103,7 +103,6 @@ export default function WarrantsWorkspace({ contentHtml, stats, admin }) {
   return <div className="warrants-react-shell">
     <header className="warrants-react-hero">
       <div>
-        <span className="warrants-react-eyebrow">GESTÃO DE ORDENS JUDICIAIS</span>
         <h1>Mandados de prisão</h1>
         <p>Consulta, inclusão e revisão administrativa em uma área única. Confira a situação de cada registro na fonte oficial.</p>
       </div>
