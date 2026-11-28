@@ -129,7 +129,7 @@ export default function VehiclesWorkspace({ contentHtml, view, recordId, canDele
           <h1>{detail ? 'Ficha do veículo' : 'Veículos'}</h1>
           <p>{detail
             ? 'Consulte os dados de identificação, fotografias e vínculos registrados.'
-            : 'Consulte e gerencie os veículos cadastrados, com acesso rápido aos dados de identificação e às pessoas vinculadas.'}</p>
+            : 'Consulte e gerencie os registros, com acesso rápido aos dados de identificação e às pessoas vinculadas.'}</p>
         </div>
         <div className="vehicles-react-tools">
           {detail && <span className="vehicles-react-context"><span aria-hidden="true" className="vehicles-react-context-dot" />Registro selecionado</span>}
