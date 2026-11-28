@@ -2244,3 +2244,11 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
     font-size:.98rem;
   }
 }
+
+
+/* Família única de ícones da aplicação — exceto navegação lateral. */
+.app-icon{display:inline-block;width:1.12em;height:1.12em;flex:0 0 auto;vertical-align:-.18em;color:currentColor;stroke:currentColor}
+button .app-icon{width:1.05em;height:1.05em}
+.search-control .app-icon{width:18px;height:18px}
+.warrant-alert-icon .app-icon,.dashboard-icon .app-icon{width:22px;height:22px}
+.smart-bundle-thumb .app-icon,.duplicate-record-photo .app-icon,.smart-candidate-photo .app-icon{width:24px;height:24px}
