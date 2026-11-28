@@ -1,0 +1,64 @@
+.vehicles-react-shell{--v-bg:var(--surface,#fff);--v-line:var(--line,#e1e4e6);--v-muted:var(--muted,#687176);--v-ink:var(--ink,#252c30);color:var(--v-ink);max-width:1500px;margin:0 auto;padding:0 0 22px}
+.vehicles-react-shell .vehicles-react-hero{display:flex;align-items:flex-end;justify-content:space-between;gap:22px;margin:0 0 22px;padding:clamp(20px,3vw,30px);border:1px solid var(--v-line);border-radius:20px;background:linear-gradient(125deg,var(--v-bg),var(--page,#f2f4f4));box-shadow:0 10px 30px #20282d0a}
+.vehicles-react-eyebrow{display:inline-flex;align-items:center;gap:9px;color:var(--brand-dark,#3e474c);font-size:.68rem;font-weight:850;letter-spacing:.14em}
+.vehicles-react-eyebrow:before{content:"";width:22px;height:3px;border-radius:5px;background:var(--brand,#50595e)}
+.vehicles-react-heading h1{margin:9px 0 7px;font-size:clamp(1.7rem,4vw,2.35rem);line-height:1.05;letter-spacing:-.045em}
+.vehicles-react-heading p{max-width:660px;margin:0;color:var(--v-muted);font-size:.9rem;line-height:1.55}
+.vehicles-react-tools{display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex:0 0 auto}
+.vehicles-react-context{display:flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid var(--v-line);border-radius:99px;background:var(--v-bg);font-size:.72rem;font-weight:750}
+.vehicles-react-context-dot{width:7px;height:7px;border-radius:50%;background:#75847b;box-shadow:0 0 0 3px #75847b20}
+.vehicles-react-switch{padding:9px 12px;border:1px solid var(--v-line);border-radius:10px;color:var(--v-ink);background:var(--v-bg);font:inherit;font-size:.76rem;font-weight:750;cursor:pointer;transition:border-color .15s,transform .15s}
+.vehicles-react-switch:hover{border-color:var(--brand);transform:translateY(-1px)}
+.vehicles-react-content{min-width:0}
+.vehicles-react-content>.page-intro{align-items:center;margin:0 0 18px;padding:0 2px 16px;border-bottom:1px solid var(--v-line)}
+.vehicles-react-content>.page-intro h1{margin:0 0 5px;font-size:1.15rem;letter-spacing:-.02em}
+.vehicles-react-content>.page-intro p{color:var(--v-muted);font-size:.82rem}
+.vehicles-react-content .page-actions{display:flex;flex-wrap:wrap;gap:9px}
+.vehicles-react-content .page-actions .button{min-height:40px;border-radius:10px;font-weight:750}
+.vehicles-react-content .search-box{margin:0 0 17px;padding:13px;border:1px solid var(--v-line);border-radius:14px;background:var(--v-bg);box-shadow:0 4px 16px #20282d08}
+.vehicles-react-content .search-box input{min-height:44px;border-radius:10px}
+.vehicles-react-content .search-box button{min-width:44px;min-height:44px;border-radius:10px}
+.vehicles-react-content .page-size-control{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin:0 0 15px;color:var(--v-muted);font-size:.75rem}
+.vehicles-react-content .vehicle-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,265px),1fr));gap:15px}
+.vehicles-react-content .vehicle-card{display:flex;flex-direction:column;min-width:0;overflow:hidden;border:1px solid var(--v-line);border-radius:16px;background:var(--v-bg);box-shadow:0 5px 18px #20282d08;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s}
+.vehicles-react-content .vehicle-card:hover{transform:translateY(-3px);border-color:#aab2b6;box-shadow:0 13px 28px #20282d14}
+.vehicles-react-content .vehicle-card:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
+.vehicles-react-content .vehicle-card .card-photo-gallery,.vehicles-react-content .vehicle-card .vehicle-placeholder{width:100%;height:166px;min-height:166px;border:0;border-radius:0;background:var(--page,#f3f5f5)}
+.vehicles-react-content .vehicle-card .vehicle-placeholder{display:grid;place-items:center}
+.vehicles-react-content .vehicle-card .vehicle-placeholder .car-icon{width:72px;height:48px;opacity:.45}
+.vehicles-react-content .vehicle-card-copy{display:grid;gap:6px;padding:15px 16px 17px}
+.vehicles-react-content .vehicle-card-copy h3{margin:0;font-size:1.05rem;font-weight:850;letter-spacing:.055em}
+.vehicles-react-content .vehicle-card-copy p{margin:0;color:var(--v-muted);font-size:.78rem;line-height:1.45}
+.vehicles-react-content .pagination{margin-top:20px}
+.vehicles-react-shell.is-detail .vehicles-react-content>[data-back]{margin:0 0 15px}
+.vehicles-react-shell.is-detail .vehicles-react-content .detail-hero{display:grid;grid-template-columns:minmax(250px,.8fr) minmax(0,1.2fr);gap:clamp(20px,4vw,38px);align-items:center;margin:0 0 20px;padding:clamp(18px,3vw,28px);border:1px solid var(--v-line);border-radius:19px;background:var(--v-bg);box-shadow:0 7px 22px #20282d08}
+.vehicles-react-shell.is-detail .vehicles-react-content .detail-hero>div:first-child{min-width:0}
+.vehicles-react-shell.is-detail .vehicles-react-content .detail-hero .record-gallery-detail{max-width:440px;margin:0 auto}
+.vehicles-react-shell.is-detail .vehicles-react-content .detail-title{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:13px}
+.vehicles-react-shell.is-detail .vehicles-react-content .detail-title h1{margin:0;font-size:clamp(1.8rem,4vw,2.8rem);letter-spacing:.035em;line-height:1.1}
+.vehicles-react-shell.is-detail .vehicles-react-content .detail-actions{display:flex;flex-wrap:wrap;gap:8px}
+.vehicles-react-shell.is-detail .vehicles-react-content .detail-actions .button{min-height:38px;border-radius:10px;font-weight:750}
+.vehicles-react-shell.is-detail .vehicles-react-content .detail-hero .muted{display:flex;align-items:center;gap:9px;margin:14px 0 0;color:var(--v-muted);font-size:.9rem}
+.vehicles-react-shell.is-detail .vehicles-react-content .detail-hero .car-icon{width:24px;height:17px;opacity:.8}
+.vehicles-react-shell.is-detail .vehicles-react-content .identity-suggestion-sent{margin:0 0 18px;border-radius:13px}
+.vehicles-react-shell.is-detail .vehicles-react-content .detail-sections{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:0 0 25px}
+.vehicles-react-shell.is-detail .vehicles-react-content .detail-sections>.info{min-width:0;padding:15px 16px;border:1px solid var(--v-line);border-radius:13px;background:var(--v-bg)}
+.vehicles-react-shell.is-detail .vehicles-react-content .detail-sections>.info:last-child{grid-column:1/-1}
+.vehicles-react-shell.is-detail .vehicles-react-content .detail-sections .info-label{display:block;margin-bottom:7px;color:var(--v-muted);font-size:.68rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+.vehicles-react-shell.is-detail .vehicles-react-content .detail-sections .info-value{font-size:.9rem;font-weight:650;line-height:1.5;overflow-wrap:anywhere}
+.vehicles-react-shell.is-detail .vehicles-react-content .association-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px}
+.vehicles-react-shell.is-detail .vehicles-react-content .association-section-heading h2{margin:0;font-size:1.08rem;letter-spacing:-.02em}
+.vehicles-react-shell.is-detail .vehicles-react-content .association-section-heading .button{border-radius:10px}
+.vehicles-react-shell.is-detail .vehicles-react-content>.list{display:grid;gap:9px}
+.vehicles-react-shell.is-detail .vehicles-react-content>.list .list-row{min-height:76px;padding:11px 14px;border:1px solid var(--v-line);border-radius:13px;background:var(--v-bg);transition:border-color .15s,transform .15s}
+.vehicles-react-shell.is-detail .vehicles-react-content>.list .list-row:hover{transform:translateY(-1px);border-color:#aab2b6}
+.vehicles-react-shell .vehicle-classic-switch{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:12px;color:var(--v-muted);font-size:.72rem}
+.vehicles-react-shell .vehicle-classic-switch button{border-radius:9px}
+:root[data-theme="dark"] .vehicles-react-shell{--v-bg:var(--surface,#242a2e);--v-line:var(--line,#41494e);--v-muted:var(--muted,#aeb5b9);--v-ink:var(--ink,#f0f2f3)}
+:root[data-theme="dark"] .vehicles-react-shell .vehicles-react-hero{background:linear-gradient(125deg,var(--surface),var(--page));box-shadow:none}
+:root[data-theme="dark"] .vehicles-react-content .vehicle-card,:root[data-theme="dark"] .vehicles-react-content .detail-hero,:root[data-theme="dark"] .vehicles-react-content .detail-sections>.info,:root[data-theme="dark"] .vehicles-react-content>.list .list-row{background:var(--v-bg);color:var(--v-ink);box-shadow:none}
+:root[data-theme="dark"] .vehicles-react-content .vehicle-card .vehicle-placeholder{background:var(--page)}
+:root[data-theme="dark"] .vehicles-react-shell .vehicles-react-switch{background:var(--v-bg);color:var(--v-ink)}
+@media(max-width:760px){.vehicles-react-shell .vehicles-react-hero{align-items:stretch;flex-direction:column;padding:18px;border-radius:16px}.vehicles-react-shell .vehicles-react-tools{align-items:flex-start}.vehicles-react-content>.page-intro{align-items:flex-start;flex-direction:column}.vehicles-react-content .page-actions{width:100%}.vehicles-react-content .page-actions .button{flex:1}.vehicles-react-shell.is-detail .vehicles-react-content .detail-hero{grid-template-columns:1fr;padding:16px}.vehicles-react-shell.is-detail .vehicles-react-content .detail-hero .record-gallery-detail{max-width:100%;width:min(100%,460px)}}
+@media(max-width:520px){.vehicles-react-content .vehicle-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.vehicles-react-content .vehicle-card .card-photo-gallery,.vehicles-react-content .vehicle-card .vehicle-placeholder{height:122px;min-height:122px}.vehicles-react-content .vehicle-card-copy{padding:12px}.vehicles-react-content .vehicle-card-copy h3{font-size:.9rem}.vehicles-react-content .vehicle-card-copy p{font-size:.69rem}.vehicles-react-shell.is-detail .vehicles-react-content .detail-sections{grid-template-columns:1fr}.vehicles-react-shell.is-detail .vehicles-react-content .detail-sections>.info:last-child{grid-column:auto}.vehicles-react-shell.is-detail .vehicles-react-content .detail-title{align-items:flex-start;flex-direction:column}.vehicles-react-shell.is-detail .vehicles-react-content .detail-actions{width:100%}.vehicles-react-shell.is-detail .vehicles-react-content .detail-actions .button{flex:1}.vehicles-react-shell.is-detail .vehicles-react-content .association-section-heading{align-items:flex-start;flex-direction:column}.vehicles-react-shell .vehicle-classic-switch{justify-content:flex-start}}
+@media(prefers-reduced-motion:reduce){.vehicles-react-content .vehicle-card,.vehicles-react-content>.list .list-row,.vehicles-react-shell .vehicles-react-switch{transition:none}}
