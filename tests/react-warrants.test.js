@@ -9,7 +9,8 @@ const [main, component, styles] = await Promise.all([
 ]);
 
 test('aba Mandados usa workspace React sem botão de retorno à interface clássica', () => {
-  assert.match(main, /WARRANTS_UI_MODE_KEY/);
+  assert.doesNotMatch(main, /WARRANTS_UI_MODE_KEY|getWarrantsUiMode|setWarrantsUiMode/);
+  assert.match(main, /async function renderWarrantWorkspace/);
   assert.match(main, /renderWarrantWorkspace\(pageHtml,warrantStats,admin\)/);
   assert.doesNotMatch(main, /onSwitchClassic/);
   assert.doesNotMatch(component, /Voltar à interface clássica/);
