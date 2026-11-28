@@ -74,7 +74,7 @@ export default function RecordsList({
       <div className="react-records-search-wrap">
         <label className="react-records-search">
           <span aria-hidden="true">⌕</span>
-          <input type="search" value={searchValue}
+          <input type="text" inputMode="search" enterKeyHint="search" autoComplete="off" autoCorrect="off" spellCheck={false} value={searchValue}
             onChange={event => {
               const nextValue = event.target.value;
               setSearchValue(nextValue);
