@@ -37,8 +37,20 @@ test('menu lateral possui animações, responsividade e respeito à preferência
   assert.match(styles, /\.react-sidebar-item\.active/);
 });
 
+test('menu lateral abre com gesto horizontal da borda esquerda no mobile', () => {
+  assert.match(main, /supportsMobileDrawerSwipe/);
+  assert.match(main, /touchstart/);
+  assert.match(main, /touchmove/);
+  assert.match(main, /touchend/);
+  assert.match(main, /touch\.clientX>32/);
+  assert.match(main, /dx>=72/);
+  assert.match(main, /event\.preventDefault\(\)/);
+  assert.match(main, /input,textarea,select,\[contenteditable="true"\],\[data-no-drawer-swipe\]/);
+  assert.match(main, /openDrawer\(\)/);
+});
+
 test('cache e versão do app são atualizados para a nova interface', () => {
-  assert.match(index, /styles\.css\?v=164/);
-  assert.match(serviceWorker, /cadastro-app-shell-v118/);
-  assert.equal(JSON.parse(pkg).version, '2.48.0');
+  assert.match(index, /styles\.css\?v=165/);
+  assert.match(serviceWorker, /cadastro-app-shell-v119/);
+  assert.equal(JSON.parse(pkg).version, '2.49.0');
 });
