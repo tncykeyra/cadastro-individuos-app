@@ -1,5 +1,7 @@
 name: Verificações diárias do aplicativo
 on:
+  push:
+    branches: [deploy-react-performance-20261128]
   schedule:
     - cron: '17 8 * * *'
   workflow_dispatch:
