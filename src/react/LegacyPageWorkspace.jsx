@@ -59,13 +59,11 @@ export default function LegacyPageWorkspace({ contentHtml, pageTitle }) {
     };
 
     mountButtons(host);
-    const dialog = document.getElementById('recordDialog');
-    mountButtons(dialog);
     const observer = new MutationObserver(records => {
       for (const record of records) {
         for (const node of record.addedNodes) {
           if (node.nodeType !== Node.ELEMENT_NODE) continue;
-          if (host.contains(node) || node === host || dialog?.contains(node) || node === dialog) mountButtons(node);
+          if (host.contains(node) || node === host) mountButtons(node);
         }
       }
     });
