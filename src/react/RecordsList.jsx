@@ -10,8 +10,7 @@ const formatCpf = value => {
 function RecordCard({ entity, record, onOpen }) {
   const isPerson = entity === 'people';
   const title = isPerson ? record.full_name || 'Nome não informado' : record.plate || 'Placa não informada';
-  const cpf = String(record.cpf_digits || '').replace(/\\D/g, '');
-  const formattedCpf = cpf.length === 11 ? cpf.replace(/(\\d{3})(\\d{3})(\\d{3})(\\d{2})/, '$1.$2.$3-$4') : record.cpf_digits || '—';
+  const formattedCpf = formatCpf(record.cpf_digits);
   const cover = record.photos?.find(photo => photo.is_cover && photo.url) || record.photos?.find(photo => photo.url);
   const metadata = isPerson
     ? [record.alias ? 'Vulgo: ' + record.alias : null, record.rg ? 'RG: ' + record.rg : null].filter(Boolean)
@@ -72,12 +71,35 @@ export default function RecordsList({
         </div>
       </header>
 
-      <label className="react-records-search">
-        <span aria-hidden="true">⌕</span>
-        <input type="search" value={searchValue} onChange={event => { setSearchValue(event.target.value); onSearch(event.target.value); }}
-          placeholder={people ? 'Buscar indivíduo, endereço, CPF ou placa' : 'Buscar placa, modelo, pessoa, CPF ou endereço'}
-          aria-label={people ? 'Pesquisar indivíduos' : 'Pesquisar veículos'} />
-      </label>
+      <div className="react-records-search-wrap">
+        <label className="react-records-search">
+          <span aria-hidden="true">⌕</span>
+          <input type="search" value={searchValue}
+            onChange={event => {
+              const nextValue = event.target.value;
+              setSearchValue(nextValue);
+              if (!nextValue.trim() && query.trim()) onSearch('');
+            }}
+            onKeyDown={event => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                onSearch(searchValue);
+              }
+            }}
+            placeholder={people ? 'Buscar indivíduo, endereço, CPF ou placa' : 'Buscar placa, modelo, pessoa, CPF ou endereço'}
+            aria-label={people ? 'Pesquisar indivíduos' : 'Pesquisar veículos'} />
+          <Button className="react-record-search-button" aria-label="Pesquisar" title="Pesquisar" onClick={() => onSearch(searchValue)}>
+            <span aria-hidden="true">⌕</span><span>Pesquisar</span>
+          </Button>
+        </label>
+        {searchValue.trim() && <p className="react-record-search-hint" role="status" aria-live="polite">
+          {searchValue.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-z0-9]/gi, '').length < 3
+            ? 'Digite ao menos 3 caracteres úteis.'
+            : searchValue.trim() === query.trim()
+              ? 'Pesquisa concluída.'
+              : 'Pressione Enter ou toque em Pesquisar para consultar.'}
+        </p>}
+      </div>
 
       <div className="react-records-toolbar">
         {people && <div className="react-record-letters" aria-label="Filtrar por inicial">
