@@ -63,7 +63,7 @@ test('integração mantém ações e contratos de navegação e formulário exis
 });
 
 test('versão e cache foram atualizados e o plano de migração explicita as áreas restantes', () => {
-  assert.equal(JSON.parse(pkg).version, '2.52.14');
+  assert.equal(JSON.parse(pkg).version, '2.52.16');
   assert.match(index, /styles\.css\?v=169/);
   assert.match(serviceWorker, /cadastro-app-shell-v154/);
   for (const module of ['Autenticação','Cadastro Inteligente','Usuários','Histórico','Veículos de interesse','Fiscalização','ponte de compatibilidade']) {
