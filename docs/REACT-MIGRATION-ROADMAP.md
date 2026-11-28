@@ -4,9 +4,10 @@
 
 Migrar a interface do Cadastro Criminal para React por etapas verificáveis, sem substituir os fluxos operacionais por uma segunda implementação incompleta. O React deve assumir progressivamente a apresentação e os componentes visuais; os serviços, regras de negócio, consultas e gravações existentes continuam como fonte de verdade até a migração específica de cada módulo.
 
-## Base de interface compartilhada — versão 2.44.0
+## Base de interface compartilhada — versão 2.44.1
 
 - Componente único `src/react/ui/Button.jsx`, com suporte a atributos HTML, eventos, referências, conteúdo renderizado e estados de carregamento.
+- Notificações globais montadas em React por `src/react/ui/ToastViewport.jsx`, com fila limitada, leitura acessível e descarte automático. A API `toast()` existente passa a emitir eventos para o viewport React.
 - Sistema visual compartilhado em `src/react/ui-system.css`: foco acessível, estados desabilitados, transições, tamanhos, variantes, campos e acabamento consistente.
 - Componentes React existentes atualizados para usar o botão compartilhado: menu lateral, painel React, indivíduos, veículos, mandados e prévia React.
 - Classes e atributos `data-*` existentes foram mantidos. O CSS não altera os seletores de delegação de eventos.
@@ -45,4 +46,4 @@ A aplicação ainda possui fluxos de apresentação imperativa em `src/main.js` 
 
 ## Estado
 
-Esta versão entrega a base compartilhada de interface e padroniza os controles React existentes. Ela não declara concluída a migração estrutural de todas as telas. A migração restante deve seguir os lotes acima, evitando uma troca ampla que possa interromper o serviço.
+A versão 2.44.1 inicia a migração transversal com o viewport global de notificações em React. Os diálogos, galerias, formulários, importações e exportações ainda exigem migração por fluxo, com validação própria. Esta entrega não declara concluída a etapa 6 nem a migração estrutural de todas as telas. A migração restante deve seguir os lotes acima, evitando uma troca ampla que possa interromper o serviço.
