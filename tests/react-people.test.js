@@ -47,3 +47,8 @@ test('detalhes do indivíduo são montados no workspace React e compartilhar vir
   assert.match(styles, /@media\(max-width:700px\)[\s\S]*?people-share-button-label\{display:none\}/);
   assert.match(styles, /people-share-button \.share-icon\{[^}]*stroke:#fff/);
 });
+
+test('seções de pessoas e veículos associados usam o mesmo quadro visual', () => {
+  assert.match(main, /person-relationships vehicle-relationships/);
+  assert.match(styles, /\.people-react-content \.person-relationships\\s*\\{/);
+});
