@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Button from './ui/Button.jsx';
 import './RecordsList.jsx.css';
 
@@ -53,7 +53,17 @@ export default function RecordsList({
 }) {
   const people = entity === 'people';
   const [searchValue, setSearchValue] = useState(query);
+  const searchTimer = useRef(null);
   useEffect(() => setSearchValue(query), [query]);
+  useEffect(() => {
+    if (searchValue === query) return undefined;
+    searchTimer.current = setTimeout(() => onSearch(searchValue), 300);
+    return () => clearTimeout(searchTimer.current);
+  }, [searchValue, query, onSearch]);
+  const submitSearch = () => {
+    clearTimeout(searchTimer.current);
+    onSearch(searchValue);
+  };
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   return (
     <section className="react-records-module">
@@ -78,17 +88,16 @@ export default function RecordsList({
             onChange={event => {
               const nextValue = event.target.value;
               setSearchValue(nextValue);
-              if (!nextValue.trim() && query.trim()) onSearch('');
             }}
             onKeyDown={event => {
               if (event.key === 'Enter') {
                 event.preventDefault();
-                onSearch(searchValue);
+                submitSearch();
               }
             }}
             placeholder={people ? 'Buscar indivíduo, endereço, CPF ou placa' : 'Buscar placa, modelo, pessoa, CPF ou endereço'}
             aria-label={people ? 'Pesquisar indivíduos' : 'Pesquisar veículos'} />
-          <Button className="react-record-search-button" aria-label="Pesquisar" title="Pesquisar" onClick={() => onSearch(searchValue)}>
+          <Button className="react-record-search-button" aria-label="Pesquisar" title="Pesquisar" onClick={submitSearch}>
             <span aria-hidden="true">⌕</span><span>Pesquisar</span>
           </Button>
         </label>
@@ -97,7 +106,7 @@ export default function RecordsList({
             ? 'Digite ao menos 3 caracteres úteis.'
             : searchValue.trim() === query.trim()
               ? 'Pesquisa concluída.'
-              : 'Pressione Enter ou toque em Pesquisar para consultar.'}
+              : 'Os resultados serão atualizados automaticamente.'}
         </p>}
       </div>
 
