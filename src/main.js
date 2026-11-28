@@ -334,7 +334,7 @@ async function renderPeopleWorkspace(contentHtml,view='list',recordId=null,detai
     const [{createRoot},{flushSync},{default:React},{default:PeopleWorkspace},{default:PersonDetail}]=await Promise.all([import('react-dom/client'),import('react-dom'),import('react'),import('./react/PeopleWorkspace.jsx'),import('./react/PersonDetail.jsx')]);
     if(peopleReactRoot){peopleReactRoot.unmount();peopleReactRoot=null}
     releaseLegacyPageRoot();peopleReactRoot=createRoot(root);
-    flushSync(()=>peopleReactRoot.render(detailData?React.createElement(PersonDetail,detailData):React.createElement(PeopleWorkspace,{contentHtml,view})));
+    flushSync(()=>peopleReactRoot.render(detailData?React.createElement(PersonDetail,{...detailData,onShare:id=>generateRecordPdf('people',id)}):React.createElement(PeopleWorkspace,{contentHtml,view})));
     root.focus({preventScroll:true});
     settleLoadedCardPhotos(root);
   }catch(error){
@@ -2632,7 +2632,7 @@ document.addEventListener('click',async e=>{const button=e.target.closest('[data
   window.addEventListener('focus',()=>{void checkForAppUpdate();applyAvailableUpdate()});
   document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('close',applyAvailableUpdate));
   new MutationObserver(applyAvailableUpdate).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
-  const registerAppWorker=()=>navigator.serviceWorker.register(import.meta.env.BASE_URL+'sw.js?v=121',{updateViaCache:'none'}).then(registration=>registration.update()).catch(()=>{});
+  const registerAppWorker=()=>navigator.serviceWorker.register(import.meta.env.BASE_URL+'sw.js?v=122',{updateViaCache:'none'}).then(registration=>registration.update()).catch(()=>{});
   void registerAppWorker();
   window.addEventListener('online',()=>{void checkForAppUpdate()});
   window.addEventListener('pageshow',()=>{void checkForAppUpdate()});
