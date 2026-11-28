@@ -7,8 +7,6 @@
 .warrants-react-shell .warrants-react-hero p{max-width:650px;margin:0;color:var(--warrant-card-muted);line-height:1.55;font-size:.92rem}
 .warrants-react-shell .warrants-react-hero-side{display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex:0 0 auto}
 .warrants-react-shell .warrants-react-role{padding:7px 11px;border:1px solid var(--warrant-card-border);border-radius:999px;background:var(--warrant-card-bg);font-size:.72rem;font-weight:750}
-.warrants-react-shell .warrants-react-switch{border:1px solid var(--warrant-card-border);border-radius:10px;background:var(--warrant-card-bg);color:var(--warrant-card-ink);padding:9px 12px;font:inherit;font-size:.78rem;font-weight:700;cursor:pointer}
-.warrants-react-shell .warrants-react-switch:hover{border-color:var(--brand);transform:translateY(-1px)}
 .warrants-react-shell .warrants-react-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 24px}
 .warrants-react-shell .warrants-react-metric{position:relative;display:flex;flex-direction:column;gap:7px;min-width:0;min-height:126px;padding:17px 18px;border:1px solid var(--warrant-card-border);border-radius:17px;background:var(--warrant-card-bg);box-shadow:0 5px 18px #20282d08;overflow:hidden}
 .warrants-react-shell .warrants-react-metric:after{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--brand,#50595e)}
@@ -57,7 +55,7 @@
 :root[data-theme="dark"] .warrants-react-shell .warrants-react-hero{background:linear-gradient(125deg,var(--surface),var(--page));box-shadow:none}
 :root[data-theme="dark"] .warrants-react-shell .warrants-react-metric,:root[data-theme="dark"] .warrants-react-shell .warrant-record,:root[data-theme="dark"] .warrants-react-shell .warrant-review-card,:root[data-theme="dark"] .warrants-react-shell .warrant-duplicate-review{background:var(--warrant-card-bg);color:var(--warrant-card-ink);box-shadow:none}
 :root[data-theme="dark"] .warrants-react-shell .warrant-source,:root[data-theme="dark"] .warrants-react-shell .warrant-review-tag,:root[data-theme="dark"] .warrants-react-shell .warrant-confidence,:root[data-theme="dark"] .warrants-react-shell .warrant-linked-people,:root[data-theme="dark"] .warrants-react-shell .warrant-review-person,:root[data-theme="dark"] .warrants-react-shell .warrant-search-result,:root[data-theme="dark"] .warrants-react-shell .warrant-duplicate-facts>span{background:var(--page);color:var(--warrant-card-ink)}
-:root[data-theme="dark"] .warrants-react-shell .warrants-react-switch,:root[data-theme="dark"] .warrants-react-shell .warrant-linked-person{background:var(--surface);color:var(--warrant-card-ink)}
+:root[data-theme="dark"] .warrants-react-shell .warrant-linked-person{background:var(--surface);color:var(--warrant-card-ink)}
 :root[data-theme="dark"] .warrants-react-shell .warrant-status.pending{background:#453a22;border-color:#77643b;color:#f0d99f}
 :root[data-theme="dark"] .warrants-react-shell .warrant-status.reported,:root[data-theme="dark"] .warrants-react-shell .warrant-status.closed{background:#343b40;border-color:#525b60;color:#d5dadd}
 :root[data-theme="dark"] .warrants-react-shell .warrant-alert-item{background:var(--warrant-card-bg)}
