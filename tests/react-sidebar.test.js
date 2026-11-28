@@ -58,8 +58,8 @@ test('menu lateral abre com gesto horizontal da borda esquerda no mobile', () =>
 
 test('cache, versão e seletor acessível de densidade são atualizados', () => {
   assert.match(index, /styles\.css\?v=169/);
-  assert.match(serviceWorker, /cadastro-app-shell-v148/);
-  assert.equal(JSON.parse(pkg).version, '2.52.10');
+  assert.match(serviceWorker, /cadastro-app-shell-v149/);
+  assert.equal(JSON.parse(pkg).version, '2.52.11');
   assert.match(index, /data-card-density="large"/);
   assert.match(index, /data-card-density="compact"/);
   assert.match(index, /aria-pressed="true"/);
