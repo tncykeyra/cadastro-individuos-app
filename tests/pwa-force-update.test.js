@@ -24,5 +24,5 @@ test('clientes instalados solicitam a nova versão do service worker sem cache H
 });
 
 test('nova versão pública do aplicativo é identificada na interface', () => {
-  assert.equal(JSON.parse(pkg).version, '2.52.14');
+  assert.equal(JSON.parse(pkg).version, '2.52.16');
 });
