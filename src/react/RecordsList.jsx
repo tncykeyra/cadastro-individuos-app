@@ -107,6 +107,7 @@ export default function RecordsList({
         {people && <nav className="react-record-letters" aria-label="Filtrar indivíduos pela inicial">
           <Button size="small" variant={letter === 'all' ? 'primary' : 'secondary'} onClick={() => onLetterChange('all')}>Todas</Button>
           {letters.map(item => <Button key={item} size="small" variant={letter === item ? 'primary' : 'secondary'} onClick={() => onLetterChange(item)}>{item}</Button>)}
+          <span className="react-record-letters-scroll-cue" aria-hidden="true" title="Deslize para ver as outras letras">→</span>
         </nav>}
         {searchValue.trim() && <p className="react-record-search-hint" role="status" aria-live="polite">
           {searchValue.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/gi, '').length < 3
