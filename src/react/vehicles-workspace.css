@@ -177,3 +177,29 @@
 /* Botões da aba Veículos renderizados e controlados pelo React. */
 .react-button-mount{display:contents}
 .vehicles-react-content button:focus-visible{outline:3px solid color-mix(in srgb,var(--brand,#50595e) 38%,transparent);outline-offset:3px}
+
+
+/* Botões de associação com dimensões consistentes em desktop e mobile. */
+.vehicles-react-shell.is-detail .vehicles-react-content .vehicle-associate-action {
+  width: auto;
+  min-width: 0;
+  min-height: 38px;
+  padding: 8px 13px;
+  border-radius: 10px;
+  font-size: .84rem;
+  line-height: 1.2;
+}
+@media(max-width:520px) {
+  .vehicles-react-shell.is-detail .vehicles-react-content .association-section-heading {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  .vehicles-react-shell.is-detail .vehicles-react-content .vehicle-associate-action {
+    width: auto;
+    min-height: 38px;
+    padding: 8px 12px;
+    font-size: .8rem;
+  }
+}
