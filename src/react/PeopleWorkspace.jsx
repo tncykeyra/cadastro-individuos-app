@@ -91,6 +91,5 @@ export default function PeopleWorkspace({ contentHtml, view = 'list' }) {
       </div>
     </header>
     <PeopleReactContent key={contentHtml} contentHtml={contentHtml} />
-    <footer className="people-react-footnote">Os dados e vínculos exibidos respeitam a cidade ativa e as permissões da conta. Esta atualização altera a apresentação, sem modificar registros ou regras de acesso.</footer>
   </div>;
 }
