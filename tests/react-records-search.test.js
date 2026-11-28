@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [component, main, domain] = await Promise.all([
+const [component, main, domain, css] = await Promise.all([
   readFile(new URL('../src/react/RecordsList.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
-  readFile(new URL('../src/domain.js', import.meta.url), 'utf8')
+  readFile(new URL('../src/domain.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/react/RecordsList.jsx.css', import.meta.url), 'utf8')
 ]);
 
 test('pesquisa React oferece botão explícito e acionamento por Enter', () => {
