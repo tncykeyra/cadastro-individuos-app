@@ -1,39 +1,10 @@
-.react-toast-host {
-  position: fixed;
-  z-index: 30;
-  inset: auto 16px 88px;
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-}
-.react-toast-stack {
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  width: min(100%, 560px);
-}
-.react-toast-item {
-  width: fit-content;
-  max-width: 100%;
-  padding: 12px 17px;
-  border: 1px solid #ffffff1c;
-  border-radius: 13px;
-  background: #20282c;
-  color: #fff;
-  box-shadow: 0 8px 28px #10171935;
-  font-size: .9rem;
-  line-height: 1.4;
-  text-align: center;
-  overflow-wrap: anywhere;
-  animation: react-toast-enter 180ms ease-out both;
-}
-@keyframes react-toast-enter {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@media (min-width: 900px) {
-  .react-toast-host { inset: auto 24px 24px; justify-content: flex-end; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .react-toast-item { animation: none; }
-}
+.react-toast-host{position:fixed;z-index:1200;inset:auto 14px calc(88px + env(safe-area-inset-bottom)) 14px;display:flex;justify-content:center;pointer-events:none}
+.react-toast-stack{display:grid;justify-items:center;gap:9px;width:min(100%,560px)}
+.react-toast-item{display:flex;align-items:center;gap:11px;width:min(100%,560px);min-width:0;padding:12px 13px;border:1px solid #ffffff24;border-left:4px solid #75b99a;border-radius:14px;background:#20282c;color:#fff;box-shadow:0 12px 34px #10171945;font-size:.9rem;line-height:1.45;text-align:left;overflow-wrap:anywhere;pointer-events:auto;animation:react-toast-enter 180ms ease-out both}
+.react-toast-indicator{display:grid;place-items:center;width:25px;height:25px;flex:0 0 25px;border-radius:50%;background:#236b4c;color:#fff;font-size:.86rem;font-weight:900}
+.react-toast-message{min-width:0;flex:1}
+.react-toast-dismiss{display:grid;place-items:center;width:30px;height:30px;flex:0 0 30px;padding:0;border:0;border-radius:8px;background:#ffffff12;color:#fff;font-size:1.25rem;line-height:1;cursor:pointer}
+.react-toast-dismiss:hover{background:#ffffff25}
+@keyframes react-toast-enter{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(min-width:900px){.react-toast-host{inset:auto 24px 24px auto;justify-content:flex-end}}
+@media(prefers-reduced-motion:reduce){.react-toast-item{animation:none}}
