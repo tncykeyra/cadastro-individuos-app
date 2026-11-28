@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Button from './ui/Button.jsx';
+import CardDensityControl, { getCardDensity, saveCardDensity } from './CardDensityControl.jsx';
 import './RecordsList.jsx.css';
 
 const formatCpf = value => {
@@ -52,6 +53,8 @@ export default function RecordsList({
   onOpen, onPageChange, onPageSizeChange, onLetterChange,
 }) {
   const people = entity === 'people';
+  const [density, setDensity] = useState(getCardDensity);
+  const changeDensity = value => setDensity(saveCardDensity(value));
   const [searchValue, setSearchValue] = useState(query);
   const searchTimer = useRef(null);
   const onSearchRef = useRef(onSearch);
@@ -68,7 +71,7 @@ export default function RecordsList({
   };
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   return (
-    <section className="react-records-module">
+    <section className="react-records-module" data-card-density={density}>
       <header className="react-records-heading">
         <div>
           <span className="react-records-eyebrow">CONSULTA OPERACIONAL</span>
@@ -78,6 +81,7 @@ export default function RecordsList({
             : 'Localize registros por placa, modelo, pessoa ou endereço. Consulte a ficha e as pessoas associadas.'}</p>
         </div>
         <div className="react-records-actions">
+          <CardDensityControl value={density} onChange={changeDensity} />
           <Button variant="secondary" onClick={onExport}>Exportar planilha</Button>
           <Button onClick={onAdd}>＋ Adicionar</Button>
         </div>
