@@ -2166,3 +2166,36 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 [data-theme="dark"] .warrant-crosscheck-excluded-list{background:#202628;border-color:#596267}
 [data-theme="dark"] .warrant-crosscheck-excluded-list>summary{color:#d0d6d8}
 [data-theme="dark"] .warrant-crosscheck-excluded{border-color:#d69a53;background:#392b1a}
+
+/* Mandados — experiência React com a identidade visual original */
+.warrants-react-shell{--wr-ink:var(--ink);--wr-muted:var(--muted);--wr-line:var(--line);--wr-surface:var(--surface);--wr-soft:var(--soft);display:block;max-width:1180px;margin:0 auto;padding:18px 18px 36px;min-width:0;color:var(--wr-ink)}
+.warrants-react-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:24px 26px;margin:0 0 18px;border:1px solid var(--wr-line);border-radius:22px;background:linear-gradient(135deg,var(--surface),var(--soft));box-shadow:0 8px 28px #1721270a}
+.warrants-react-eyebrow{display:block;margin:0 0 7px;color:var(--wr-muted);font-size:.72rem;font-weight:800;letter-spacing:.12em}
+.warrants-react-hero h1{margin:0;font-size:clamp(1.55rem,3vw,2.1rem);line-height:1.15;letter-spacing:-.035em}
+.warrants-react-hero p{margin:9px 0 0;color:var(--wr-muted);line-height:1.5;max-width:660px}
+.warrants-react-hero-side{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.warrants-react-role{display:inline-flex;align-items:center;border:1px solid var(--wr-line);border-radius:999px;padding:7px 11px;color:var(--wr-muted);font-size:.76rem;font-weight:750;white-space:nowrap}
+.warrants-react-switch{border:1px solid var(--wr-line);border-radius:10px;padding:9px 12px;background:var(--surface);color:var(--wr-ink);font:inherit;font-size:.8rem;font-weight:700;cursor:pointer}
+.warrants-react-switch:hover{background:var(--wr-soft)}
+.warrants-react-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 20px}
+.warrants-react-metric{min-width:0;padding:16px 17px;border:1px solid var(--wr-line);border-radius:16px;background:var(--wr-surface);box-shadow:0 4px 16px #17212708}
+.warrants-react-metric span{display:block;color:var(--wr-muted);font-size:.78rem;font-weight:700;line-height:1.35}
+.warrants-react-metric strong{display:block;margin-top:7px;font-size:1.65rem;line-height:1.1;font-variant-numeric:tabular-nums;letter-spacing:-.035em}
+.warrants-react-metric small{display:block;margin-top:5px;color:var(--wr-muted);font-size:.72rem;line-height:1.4}
+.warrants-react-content>.warrants-page{max-width:none;margin:0;padding:0}
+.warrants-react-shell .warrant-page-header{display:none}
+.warrants-react-shell .warrant-tabs{display:flex;gap:8px;overflow-x:auto;padding:5px 2px 12px;margin:0 0 12px;border-bottom:1px solid var(--wr-line);scrollbar-width:thin}
+.warrants-react-shell .warrant-tabs .team-tab{flex:0 0 auto;border:1px solid var(--wr-line);border-radius:11px;background:var(--wr-surface);padding:10px 13px;color:var(--wr-muted);font-weight:700}
+.warrants-react-shell .warrant-tabs .team-tab.active{background:var(--brand);border-color:var(--brand);color:#fff}
+.warrants-react-shell .warrant-tool-card,.warrants-react-shell .warrant-active-section{border-radius:17px;box-shadow:0 5px 22px #17212709}
+.warrants-react-shell .warrant-record,.warrants-react-shell .warrant-review-card,.warrants-react-shell .warrant-duplicate-review{border-radius:15px;box-shadow:0 3px 12px #17212708}
+.warrants-react-shell .warrant-record{padding:18px}
+.warrants-react-shell .warrant-record h3{font-size:1.06rem}
+.warrants-react-shell .warrant-list-search{max-width:760px}
+.warrants-react-shell .warrant-search-control input{min-height:46px;border-radius:12px}
+.warrants-react-shell .warrant-section-title{align-items:flex-start}
+.warrants-react-shell button:focus-visible,.warrants-react-shell input:focus-visible,.warrants-react-shell summary:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
+.warrant-mode-switch{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 18px;padding:12px 14px;border:1px solid var(--line);border-radius:13px;background:var(--surface);color:var(--muted);font-size:.82rem;font-weight:700}
+.warrant-mode-switch-classic{max-width:1180px;margin:0 auto 16px}
+@media(max-width:760px){.warrants-react-shell{padding:12px 12px 28px}.warrants-react-hero{padding:19px;flex-direction:column}.warrants-react-hero-side{width:100%;align-items:flex-start;flex-direction:row;flex-wrap:wrap;justify-content:space-between}.warrants-react-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.warrants-react-metric{padding:13px}.warrants-react-metric strong{font-size:1.45rem}.warrants-react-shell .warrant-tabs{margin-right:-4px}.warrants-react-shell .warrant-tool-card,.warrants-react-shell .warrant-active-section{padding:15px}.warrant-mode-switch{align-items:flex-start;flex-direction:column}}
+@media(prefers-reduced-motion:no-preference){.warrants-react-metric,.warrants-react-shell .warrant-record{transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}.warrants-react-metric:hover,.warrants-react-shell .warrant-record:hover{border-color:#9aa3a7;box-shadow:0 8px 24px #17212710}}
