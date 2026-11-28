@@ -1977,7 +1977,68 @@ async function exportRecords(entity,button){
  }catch(error){toast('Não foi possível concluir a exportação completa: '+msg(error))}
  finally{exportInProgress=false;document.querySelector('[data-export-progress]')?.remove();if(button?.isConnected){button.disabled=false;button.textContent=oldText||'⇩ Exportar planilha'}}
 }
-async function renderRecords(){const people=state.page==='people',source=(people?state.people:state.vehicles).slice();const cmp=new Intl.Collator('pt-BR',{sensitivity:'base',numeric:true});source.sort((a,b)=>cmp.compare(people?a.full_name||'':a.plate||'',people?b.full_name||'':b.plate||''));let filtered=source;if(people&&state.letter!=='all'&&!state.serverPaged)filtered=source.filter(p=>foldName(p.full_name).startsWith(state.letter));const total=state.serverPaged?state.listTotal:filtered.length;const pages=Math.max(1,Math.ceil(total/state.listPageSize));state.listPage=Math.min(state.listPage,pages-1);const start=state.listPage*state.listPageSize,visible=state.serverPaged?source:filtered.slice(start,start+state.listPageSize);const relatedRecords=isUsefulSearch(state.query)?(people?state.vehicles.slice(0,8):state.people.slice(0,8)):[];const related=isUsefulSearch(state.query)?people?'<div class="section-heading"><h2>Veículos relacionados ('+state.vehicles.length+')</h2></div><div class="cards vehicle-cards">'+(relatedRecords.length?relatedRecords.map(vehicleRow).join(''):'<div class="empty">Nenhum veículo encontrado para esta pesquisa.</div>')+'</div>':'<div class="section-heading"><h2>Pessoas encontradas ('+state.people.length+')</h2></div><div class="cards individual-cards">'+(relatedRecords.length?relatedRecords.map(personCard).join(''):'<div class="empty">Nenhuma pessoa encontrada.</div>')+'</div>':'';const subtitle=people?'Localize registros por nome, CPF, RG ou endereço. Utilize a pesquisa para refinar os resultados.':'Localize veículos por placa, modelo, pessoa ou endereço. Refine a pesquisa para encontrar o registro desejado.';const records='<div class="cards '+(people?'individual-cards':'vehicle-cards')+'">'+(visible.length?visible.map(people?personCard:vehicleRow).join(''):'<div class="empty">'+(state.query.length>0&&!isUsefulSearch(state.query)?'Digite ao menos 3 caracteres úteis.':people?'Nenhum indivíduo encontrado nesta letra.':'Nenhum veículo encontrado.')+'</div>')+'</div>';const searchElement=$('#search'),restoreSearchFocus=!!searchElement&&document.activeElement===searchElement,searchCursor=restoreSearchFocus?{start:searchElement.selectionStart,end:searchElement.selectionEnd,direction:searchElement.selectionDirection}:null;const pageContent='<div class="page-intro"><div><p>'+subtitle+'</p></div><div class="page-actions"><button class="button secondary export-records-button" type="button" data-export-records="'+(people?'people':'vehicles')+'">'+uiIcon('download')+' Exportar planilha</button><button class="button" data-add="'+(people?'person':'vehicle')+'">'+uiIcon('add')+' Adicionar</button></div></div>'+searchBox(people?'Buscar indivíduo, endereço, CPF ou placa':'Buscar placa, modelo, pessoa, CPF ou endereço')+(people?'<div class="alphabet-toolbar">'+alphabetBar()+pageSizeControl(state.listPageSize)+'</div>':pageSizeControl(state.listPageSize))+(isUsefulSearch(state.query)?'<h2 class="result-heading">'+(people?'Indivíduos':'Veículos')+' encontrados ('+filtered.length+')</h2>':'')+records+paginationMarkup(total,state.listPage,state.listPageSize)+related+'';if(people)await renderPeopleWorkspace(pageContent,'list');else await renderVehicleWorkspace(pageContent,'list');if(searchCursor){const restored=$('#search');if(restored){restored.focus({preventScroll:true});restored.setSelectionRange(searchCursor.start,searchCursor.end,searchCursor.direction)}}wireSearch();wireCarousels();void Promise.all([hydrateCardGalleries(people?'people':'vehicles',visible),hydrateCardGalleries(people?'vehicles':'people',relatedRecords)]);if(people)void hydrateWarrantCardBadges(visible)}
+async function renderRecordsNative(){
+ const people=state.page==='people',entity=people?'people':'vehicles',root=$('#mainContent');
+ const source=(people?state.people:state.vehicles).slice();
+ const cmp=new Intl.Collator('pt-BR',{sensitivity:'base',numeric:true});
+ source.sort((a,b)=>cmp.compare(people?a.full_name||'':a.plate||'',people?b.full_name||'':b.plate||''));
+ let filtered=source;
+ if(people&&state.letter!=='all'&&!state.serverPaged)filtered=source.filter(record=>foldName(record.full_name).startsWith(state.letter));
+ const total=state.serverPaged?state.listTotal:filtered.length;
+ const pages=Math.max(1,Math.ceil(total/state.listPageSize));
+ state.listPage=Math.min(state.listPage,pages-1);
+ const start=state.listPage*state.listPageSize;
+ const visible=state.serverPaged?source:filtered.slice(start,start+state.listPageSize);
+ const relatedRecords=isUsefulSearch(state.query)?(people?state.vehicles.slice(0,8):state.people.slice(0,8)):[];
+ try{
+  await Promise.all([galleryPhotosForRecords(entity,visible),galleryPhotosForRecords(people?'vehicles':'people',relatedRecords)]);
+ }catch(photoError){console.warn('Não foi possível preparar as fotos da listagem React.',photoError)}
+ const [{createRoot},{default:React},{default:RecordsList}]=await Promise.all([import('react-dom/client'),import('react'),import('./react/RecordsList.jsx')]);
+ if(peopleReactRoot){peopleReactRoot.unmount();peopleReactRoot=null}
+ if(vehicleReactRoot){vehicleReactRoot.unmount();vehicleReactRoot=null}
+ releaseLegacyPageRoot();
+ const renderRoot=createRoot(root);
+ if(people)peopleReactRoot=renderRoot;else vehicleReactRoot=renderRoot;
+ const onSearch=value=>{
+  state.searchInput=value;
+  clearTimeout(state.searchTimer);
+  state.searchTimer=setTimeout(async()=>{
+   state.query=String(value||'').trim();state.listPage=0;state.letter='all';
+   const request=++state.searchRequest;
+   if(state.query&&!isUsefulSearch(state.query)){
+    state.serverPaged=false;state.listTotal=0;state.people=[];state.vehicles=[];
+    await renderRecords();return;
+   }
+   try{await loadRecords(request);if(request===state.searchRequest)await renderRecords()}
+   catch(error){if(request===state.searchRequest)toast(msg(error))}
+  },250);
+ };
+ const onPageChange=async nextPage=>{
+  state.listPage=Math.max(0,Number(nextPage)||0);
+  if(state.serverPaged){const request=++state.searchRequest;try{await loadRecords(request)}catch(error){toast(msg(error));return}}
+  await renderRecords();
+ };
+ const onPageSizeChange=async size=>{
+  state.listPageSize=Math.max(1,Math.min(100,Number(size)||30));state.listPage=0;
+  if(state.serverPaged){const request=++state.searchRequest;try{await loadRecords(request)}catch(error){toast(msg(error));return}}
+  await renderRecords();
+ };
+ const onLetterChange=async nextLetter=>{
+  state.letter=nextLetter;state.listPage=0;
+  if(state.serverPaged){const request=++state.searchRequest;try{await loadRecords(request)}catch(error){toast(msg(error));return}}
+  await renderRecords();
+ };
+ renderRoot.render(React.createElement(RecordsList,{
+  entity,records:visible,relatedRecords,total,page:state.listPage,pageSize:state.listPageSize,
+  query:state.searchInput||state.query,letter:state.letter,serverPaged:state.serverPaged,
+  onSearch,onAdd:()=>void showForm(people?'person':'vehicle'),
+  onExport:()=>void exportRecords(entity,null),
+  onOpen:(id,recordEntity)=>recordEntity==='people'?void openPerson(id):void openVehicle(id),
+  onPageChange,onPageSizeChange,onLetterChange,
+ }));
+ root.focus({preventScroll:true});
+}
+async function renderRecords(){return renderRecordsNative();const people=state.page==='people',source=(people?state.people:state.vehicles).slice();const cmp=new Intl.Collator('pt-BR',{sensitivity:'base',numeric:true});source.sort((a,b)=>cmp.compare(people?a.full_name||'':a.plate||'',people?b.full_name||'':b.plate||''));let filtered=source;if(people&&state.letter!=='all'&&!state.serverPaged)filtered=source.filter(p=>foldName(p.full_name).startsWith(state.letter));const total=state.serverPaged?state.listTotal:filtered.length;const pages=Math.max(1,Math.ceil(total/state.listPageSize));state.listPage=Math.min(state.listPage,pages-1);const start=state.listPage*state.listPageSize,visible=state.serverPaged?source:filtered.slice(start,start+state.listPageSize);const relatedRecords=isUsefulSearch(state.query)?(people?state.vehicles.slice(0,8):state.people.slice(0,8)):[];const related=isUsefulSearch(state.query)?people?'<div class="section-heading"><h2>Veículos relacionados ('+state.vehicles.length+')</h2></div><div class="cards vehicle-cards">'+(relatedRecords.length?relatedRecords.map(vehicleRow).join(''):'<div class="empty">Nenhum veículo encontrado para esta pesquisa.</div>')+'</div>':'<div class="section-heading"><h2>Pessoas encontradas ('+state.people.length+')</h2></div><div class="cards individual-cards">'+(relatedRecords.length?relatedRecords.map(personCard).join(''):'<div class="empty">Nenhuma pessoa encontrada.</div>')+'</div>':'';const subtitle=people?'Localize registros por nome, CPF, RG ou endereço. Utilize a pesquisa para refinar os resultados.':'Localize veículos por placa, modelo, pessoa ou endereço. Refine a pesquisa para encontrar o registro desejado.';const records='<div class="cards '+(people?'individual-cards':'vehicle-cards')+'">'+(visible.length?visible.map(people?personCard:vehicleRow).join(''):'<div class="empty">'+(state.query.length>0&&!isUsefulSearch(state.query)?'Digite ao menos 3 caracteres úteis.':people?'Nenhum indivíduo encontrado nesta letra.':'Nenhum veículo encontrado.')+'</div>')+'</div>';const searchElement=$('#search'),restoreSearchFocus=!!searchElement&&document.activeElement===searchElement,searchCursor=restoreSearchFocus?{start:searchElement.selectionStart,end:searchElement.selectionEnd,direction:searchElement.selectionDirection}:null;const pageContent='<div class="page-intro"><div><p>'+subtitle+'</p></div><div class="page-actions"><button class="button secondary export-records-button" type="button" data-export-records="'+(people?'people':'vehicles')+'">'+uiIcon('download')+' Exportar planilha</button><button class="button" data-add="'+(people?'person':'vehicle')+'">'+uiIcon('add')+' Adicionar</button></div></div>'+searchBox(people?'Buscar indivíduo, endereço, CPF ou placa':'Buscar placa, modelo, pessoa, CPF ou endereço')+(people?'<div class="alphabet-toolbar">'+alphabetBar()+pageSizeControl(state.listPageSize)+'</div>':pageSizeControl(state.listPageSize))+(isUsefulSearch(state.query)?'<h2 class="result-heading">'+(people?'Indivíduos':'Veículos')+' encontrados ('+filtered.length+')</h2>':'')+records+paginationMarkup(total,state.listPage,state.listPageSize)+related+'';if(people)await renderPeopleWorkspace(pageContent,'list');else await renderVehicleWorkspace(pageContent,'list');if(searchCursor){const restored=$('#search');if(restored){restored.focus({preventScroll:true});restored.setSelectionRange(searchCursor.start,searchCursor.end,searchCursor.direction)}}wireSearch();wireCarousels();void Promise.all([hydrateCardGalleries(people?'people':'vehicles',visible),hydrateCardGalleries(people?'vehicles':'people',relatedRecords)]);if(people)void hydrateWarrantCardBadges(visible)}
 function foldName(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleUpperCase('pt-BR')}
 function formatCpf(cpf){const d=String(cpf||'').replace(/\D/g,'');return d.length===11?d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6,9)+'-'+d.slice(9):d}
 function wireSearch(){const input=$('#search');if(!input)return;const run=async()=>{state.searchInput=input.value;state.query=input.value.trim();state.listPage=0;state.letter='all';const key=state.page+'|'+state.query;if(key===state.lastSearchKey){state.searchLoading=false;return}const request=++state.searchRequest;state.searchLoading=true;const hint=$('#searchHint');if(hint)hint.textContent=state.query&&!isUsefulSearch(state.query)?'Digite ao menos 3 caracteres úteis.':state.query?'Buscando…':'';if(state.query&&!isUsefulSearch(state.query)){state.lastSearchKey=key;state.searchLoading=false;state.serverPaged=false;state.listTotal=0;state.people=[];state.vehicles=[];await renderRecords();return}const searchButton=$('#searchButton');if(searchButton)searchButton.disabled=true;try{await loadRecords(request);if(request!==state.searchRequest)return;state.lastSearchKey=key;await renderRecords()}catch(error){if(request===state.searchRequest){state.searchLoading=false;const status=$('#searchHint');if(status)status.textContent='Não foi possível concluir a pesquisa. Tente novamente.';toast(msg(error))}}finally{if(request===state.searchRequest){state.searchLoading=false;const active=$('#searchButton');if(active)active.disabled=false;const status=$('#searchHint');if(status)status.textContent=state.query&&!isUsefulSearch(state.query)?'Digite ao menos 3 caracteres úteis.':state.query?'Pesquisa concluída.':''}}};input.addEventListener('input',()=>{state.searchInput=input.value;const hint=$('#searchHint');if(hint)hint.textContent=input.value.trim()?(isUsefulSearch(input.value)?'Toque na lupa ou pressione Enter para pesquisar.':'Digite ao menos 3 caracteres úteis.'):'Digite um nome, CPF, RG ou placa e toque na lupa.';if(!input.value.trim()&&(state.query.trim()||state.searchLoading||state.lastSearchKey!==state.page+'|'))void run()});input.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();void run()}});state.runVehicleSearch=run}
