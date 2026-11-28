@@ -20,7 +20,7 @@ function readButtonProps(button) {
     const key = names[name] || name;
     if (['disabled', 'hidden', 'formNoValidate'].includes(key)) props[key] = true;
     else if (name === 'style') {
-      props.style = Object.fromEntries(value.split(';').map(rule => rule.trim()).filter(Boolean).map(rule => {
+      props.style = Object.fromEntries(attribute.value.split(';').map(rule => rule.trim()).filter(Boolean).map(rule => {
         const separator = rule.indexOf(':');
         const cssName = rule.slice(0, separator).trim().replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
         return [cssName, rule.slice(separator + 1).trim()];
