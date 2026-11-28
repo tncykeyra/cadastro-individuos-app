@@ -45,3 +45,18 @@
   .people-react-content .detail-actions .people-share-button .share-icon{width:20px;height:20px;flex:0 0 20px}
   .people-react-content .detail-actions .people-share-button .people-share-button-label{display:none}
 }
+
+
+/* Padroniza a largura dos dois botões de associação na ficha individual em telas móveis. */
+@media(max-width:620px){
+  .people-react-content .person-relationships .section-heading>.button{
+    align-self:stretch;
+    width:100%;
+    min-height:46px;
+    white-space:normal;
+  }
+  .people-react-content .person-relationships .section-heading>h2{
+    width:100%;
+    text-align:center;
+  }
+}
