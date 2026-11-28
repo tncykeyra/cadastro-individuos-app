@@ -1,4 +1,5 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
+import Button from './ui/Button.jsx';
 import { createPortal } from 'react-dom';
 import './warrants-workspace.css';
 
@@ -91,7 +92,7 @@ function WarrantsReactContent({ contentHtml }) {
   return <>
     <div ref={hostRef} className="warrants-react-content" dangerouslySetInnerHTML={{ __html: contentHtml }} />
     {buttonPortals.map(({ key, mount, props, markup }) => createPortal(
-      <button {...props} dangerouslySetInnerHTML={{ __html: markup }} />,
+      <Button {...props} dangerouslySetInnerHTML={{ __html: markup }} />,
       mount,
       key
     ))}
@@ -108,7 +109,7 @@ export default function WarrantsWorkspace({ contentHtml, stats, admin, onSwitchC
       </div>
       <div className="warrants-react-hero-side">
         <span className="warrants-react-role">{admin ? 'Área administrativa' : 'Consulta operacional'}</span>
-        <button className="warrants-react-switch" type="button" onClick={onSwitchClassic}>Voltar à interface clássica</button>
+        <Button className="warrants-react-switch" type="button" onClick={onSwitchClassic}>Voltar à interface clássica</Button>
       </div>
     </header>
 
