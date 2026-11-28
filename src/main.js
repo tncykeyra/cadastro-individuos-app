@@ -63,6 +63,10 @@ const photoUrls=new Map(),photoUrlExpiresAt=new Map(),photoCachedKeys=new Set(),
 const msg=e=>e?.message||'Não foi possível concluir. Tente novamente.';
 function toast(text){const message=String(text??'');let classic=false;try{classic=localStorage.getItem('cadastro-criminal-toast-mode-v1')==='classic'}catch{}if(classic){const el=$('#toast');if(el){el.textContent=message;el.classList.add('show');clearTimeout(el._classicToastTimer);el._classicToastTimer=setTimeout(()=>el.classList.remove('show'),2600)}return}window.dispatchEvent(new CustomEvent('app:toast',{detail:{message}}))}
 mountToastViewport($('#toast'));
+const cardDensityStorageKey='cadastro-criminal-card-density-v1';
+function setCardDensity(value){const density=value==='compact'?'compact':'large';document.documentElement.dataset.cardDensity=density;try{localStorage.setItem(cardDensityStorageKey,density)}catch{}const control=$('#cardDensitySelect');if(control)control.value=density}
+setCardDensity((()=>{try{return localStorage.getItem(cardDensityStorageKey)||'large'}catch{return'large'}})());
+const cardDensityControl=$('#cardDensitySelect');if(cardDensityControl)cardDensityControl.addEventListener('change',event=>setCardDensity(event.target.value));
 const appearanceStorageKey='cadastro-criminal-appearance-v1';
 function setAppearance(theme){
   const selected=theme==='dark'?'dark':'light';
