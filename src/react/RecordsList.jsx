@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Button from './ui/Button.jsx';
 import './RecordsList.jsx.css';
 
@@ -49,6 +49,8 @@ export default function RecordsList({
   onOpen, onPageChange, onPageSizeChange, onLetterChange,
 }) {
   const people = entity === 'people';
+  const [searchValue, setSearchValue] = useState(query);
+  useEffect(() => setSearchValue(query), [query]);
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   return (
     <section className="react-records-module">
@@ -68,13 +70,13 @@ export default function RecordsList({
 
       <label className="react-records-search">
         <span aria-hidden="true">⌕</span>
-        <input type="search" value={query} onChange={event => onSearch(event.target.value)}
+        <input type="search" value={searchValue} onChange={event => { setSearchValue(event.target.value); onSearch(event.target.value); }}
           placeholder={people ? 'Buscar indivíduo, endereço, CPF ou placa' : 'Buscar placa, modelo, pessoa, CPF ou endereço'}
           aria-label={people ? 'Pesquisar indivíduos' : 'Pesquisar veículos'} />
       </label>
 
       <div className="react-records-toolbar">
-        {people && !serverPaged && <div className="react-record-letters" aria-label="Filtrar por inicial">
+        {people && <div className="react-record-letters" aria-label="Filtrar por inicial">
           <Button size="small" variant={letter === 'all' ? 'primary' : 'secondary'} onClick={() => onLetterChange('all')}>Todas</Button>
           {letters.map(item => <Button key={item} size="small" variant={letter === item ? 'primary' : 'secondary'} onClick={() => onLetterChange(item)}>{item}</Button>)}
         </div>}
