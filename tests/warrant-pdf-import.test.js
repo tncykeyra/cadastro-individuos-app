@@ -33,6 +33,11 @@ test('PDF OCR form values use recognized values only when an edit control is abs
   );
 });
 
+test('extracts CNJ process number when the PDF labels the field simply as PROCESSO:', () => {
+  const parsed = extractWarrantPersonSuggestions('PROCESSO: 1000000-00.2024.8.26.0000\\nNOME DA PESSOA: ANA DE SOUZA');
+  assert.equal(parsed.process_reference, '1000000-00.2024.8.26.0000');
+});
+
 test('recognizes a number following the Brazilian arrest warrant heading', () => {
   const parsed = extractWarrantPersonSuggestions('MANDADO DE PRISÃO Nº: BNMP12345\nNOME DA PESSOA: ANA DE SOUZA');
   assert.equal(parsed.warrant_number, 'BNMP12345');
