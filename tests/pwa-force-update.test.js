@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const [worker, main, pkg] = await Promise.all([
-  readFile(new URL('../sw.js', import.meta.url), 'utf8'),
+  readFile(new URL('../public/sw.js', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
   readFile(new URL('../package.json', import.meta.url), 'utf8')
 ]);
