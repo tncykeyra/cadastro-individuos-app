@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Button } from './ui-system.jsx';
 import './warrants-workspace.css';
 
 const format = value => Number(value || 0).toLocaleString('pt-BR');
@@ -108,7 +109,7 @@ export default function WarrantsWorkspace({ contentHtml, stats, admin, onSwitchC
       </div>
       <div className="warrants-react-hero-side">
         <span className="warrants-react-role">{admin ? 'Área administrativa' : 'Consulta operacional'}</span>
-        <button className="warrants-react-switch" type="button" onClick={onSwitchClassic}>Voltar à interface clássica</button>
+        <Button variant="secondary" size="sm" className="warrants-react-switch" type="button" onClick={onSwitchClassic}>Voltar à interface clássica</Button>
       </div>
     </header>
 
