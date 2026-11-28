@@ -138,3 +138,51 @@
     height:20px;
   }
 }
+
+
+/* Nome em destaque na ficha e nos cartões da área de indivíduos. */
+.people-react-content .person-card h3{
+  color:var(--ink,#20272b);
+  font-size:1.22rem;
+  font-weight:820;
+  line-height:1.28;
+  letter-spacing:-.025em;
+  overflow-wrap:anywhere;
+}
+.people-react-content .detail-title{
+  align-items:flex-start;
+}
+.people-react-content .detail-name-copy{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  min-width:0;
+  flex:1 1 auto;
+}
+.people-react-content .detail-name-copy h1{
+  margin:0;
+  color:var(--ink,#20272b);
+  font-size:clamp(1.9rem,4vw,2.65rem);
+  font-weight:850;
+  line-height:1.12;
+  letter-spacing:-.04em;
+  overflow-wrap:anywhere;
+  text-wrap:pretty;
+}
+.people-react-content .detail-name-copy .copy-info-button{
+  flex:0 0 auto;
+  margin-top:3px;
+}
+@media(max-width:700px){
+  .people-react-content .person-card h3{
+    font-size:1.13rem;
+    line-height:1.3;
+  }
+  .people-react-content .detail-name-copy h1{
+    font-size:clamp(1.7rem,7vw,2.15rem);
+    line-height:1.15;
+  }
+  .people-react-content .detail-title{
+    align-items:flex-start;
+  }
+}
