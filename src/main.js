@@ -291,7 +291,7 @@ async function renderVehicleWorkspace(contentHtml,view='list',recordId=null,vehi
     const [{createRoot},{flushSync},{default:React},{default:VehiclesWorkspace}]=await Promise.all([import('react-dom/client'),import('react-dom'),import('react'),import('./react/VehiclesWorkspace.jsx')]);
     if(vehicleReactRoot){vehicleReactRoot.unmount();vehicleReactRoot=null}
     releaseLegacyPageRoot();vehicleReactRoot=createRoot(root);
-    flushSync(()=>vehicleReactRoot.render(React.createElement(VehiclesWorkspace,{contentHtml,view,recordId,canDelete:Boolean(vehicleOptions.canDelete)})));
+    flushSync(()=>vehicleReactRoot.render(React.createElement(VehiclesWorkspace,{contentHtml,view,recordId,canDelete:Boolean(vehicleOptions.canDelete),detailData:vehicleOptions.detailData||null})));
     root.focus({preventScroll:true});
     settleLoadedCardPhotos(root);
   }catch(error){
