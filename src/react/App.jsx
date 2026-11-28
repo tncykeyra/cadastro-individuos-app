@@ -126,7 +126,8 @@ export default function App() {
 
   const isAdmin = ['admin', 'master'].includes(activeCity?.role) || ['admin', 'master'].includes(profile?.role);
   const displayName = profile?.display_name || session?.user?.user_metadata?.full_name || session?.user?.email || 'Usuário';
-  const roleLabel = ({ operator: 'Operador', admin: 'Administrador', master: 'Master' })[activeCity?.role] || 'Acesso autorizado';
+  const effectiveRole = ['master', 'admin'].includes(profile?.role) ? profile.role : activeCity?.role;
+  const roleLabel = ({ operator: 'Operador', admin: 'Administrador', master: 'Master' })[effectiveRole] || 'Acesso autorizado';
 
   const loadUser = useCallback(async (currentSession) => {
     setLoading(true);
