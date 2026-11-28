@@ -121,3 +121,55 @@
 .vehicles-react-content .vehicle-card .card-photo-thumbnail img{display:block;width:100%;height:100%;object-fit:cover}
 .vehicles-react-content .vehicle-card .card-photo-more{z-index:2;bottom:47px;right:10px}
 @media(max-width:520px){.vehicles-react-content .vehicle-card .card-photo-thumbnails{flex-basis:25px;gap:3px}.vehicles-react-content .vehicle-card .card-photo-thumbnail{height:25px;border-radius:5px}.vehicles-react-content .vehicle-card .card-photo-more{bottom:36px;right:8px}}
+
+
+/* Associação de pessoas e veículos: formulário React responsivo. */
+.association-react-dialog{width:min(100%,650px);max-width:650px;padding:0;overflow:hidden}
+.association-react-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:24px 26px 20px;background:linear-gradient(135deg,#f2f7f6 0%,#fff 78%);border-bottom:1px solid var(--line)}
+.association-react-heading-copy{min-width:0}
+.association-react-eyebrow{display:block;margin-bottom:7px;color:var(--brand);font-size:.69rem;font-weight:800;letter-spacing:.11em}
+.association-react-heading h2{margin:0;color:var(--ink);font-size:1.35rem;line-height:1.25}
+.association-react-heading p{max-width:490px;margin:7px 0 0;color:var(--muted);font-size:.88rem;line-height:1.5}
+.association-react-close{flex:0 0 36px;width:36px;height:36px;border-radius:11px;background:#fff;border:1px solid var(--line);color:var(--ink)}
+.association-react-form{display:grid;gap:0;padding:20px 26px 8px}
+.association-react-search-panel,.association-react-details{min-width:0}
+.association-react-step{display:flex;align-items:center;gap:11px;margin:0 0 15px}
+.association-react-step>span{display:grid;place-items:center;flex:0 0 29px;width:29px;height:29px;border-radius:9px;background:var(--brand);color:#fff;font-size:.8rem;font-weight:800}
+.association-react-step>div{display:grid;gap:2px}
+.association-react-step strong{font-size:.9rem;color:var(--ink)}
+.association-react-step small{font-size:.77rem;color:var(--muted)}
+.association-react-form .field{margin:0 0 13px}
+.association-react-form .field label{display:block;margin-bottom:6px;font-size:.82rem;font-weight:700;color:var(--ink)}
+.association-react-form input,.association-react-form select,.association-react-form textarea{width:100%;min-width:0;border-radius:11px}
+.association-react-form .plate-input-row{display:flex;gap:8px}
+.association-react-form .plate-input-row input{flex:1}
+.association-react-form .search-button{flex:0 0 44px;width:44px;height:44px;border-radius:11px}
+.association-react-form .association-search-results{display:grid;gap:7px;max-height:250px;overflow:auto;margin-top:10px}
+.association-react-form .association-search-option{width:100%;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff;text-align:left;transition:border-color .15s,background .15s}
+.association-react-form .association-search-option:focus-visible,.association-react-form .association-search-option:hover{border-color:var(--brand);background:#f7faf9}
+.association-react-form .association-result-row{display:flex;align-items:center;gap:11px;min-width:0}
+.association-react-form .association-result-thumb{flex:0 0 46px;width:46px;height:46px;border-radius:10px;overflow:hidden;background:#edf2f1}
+.association-react-form .association-result-thumb img{width:100%;height:100%;object-fit:cover}
+.association-react-form .association-result-copy{display:grid;gap:4px;min-width:0}
+.association-react-form .association-result-copy strong{font-size:.88rem;color:var(--ink)}
+.association-react-form .association-result-copy>span{font-size:.76rem;color:var(--muted)}
+.association-react-form .association-search-selected{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--brand);border-radius:12px;background:#f3f8f6}
+.association-react-form .association-search-selected .button{margin-left:auto;flex:0 0 auto}
+.association-react-form .association-search-hint,.association-react-form .association-search-empty{padding:11px 12px;border-radius:10px;background:#f5f7f7;color:var(--muted);font-size:.8rem;line-height:1.45}
+.association-react-form .association-search-create{margin-top:9px}
+.association-react-details{margin-top:20px;padding-top:19px;border-top:1px solid var(--line)}
+.association-react-relation select{height:44px;padding:0 12px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+.association-react-actions{display:flex;justify-content:flex-end;gap:9px;padding:15px 26px 22px;margin:0;border-top:1px solid var(--line);background:#fff}
+.association-react-submit{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.association-react-submit>span{font-size:1.1rem;line-height:1}
+@media(max-width:620px){
+ .association-react-dialog{width:100%;max-width:none}
+ .association-react-heading{padding:19px 17px 16px}
+ .association-react-heading h2{font-size:1.16rem}
+ .association-react-form{padding:17px 17px 6px}
+ .association-react-step{gap:9px}
+ .association-react-step small{font-size:.73rem}
+ .association-react-form .association-search-results{max-height:220px}
+ .association-react-actions{position:sticky;bottom:0;padding:13px 17px calc(13px + env(safe-area-inset-bottom));display:grid;grid-template-columns:1fr 1.4fr}
+ .association-react-actions .button{min-height:44px;padding-inline:10px;font-size:.84rem}
+}

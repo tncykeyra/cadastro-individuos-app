@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
+import { flushSync } from 'react-dom';
 import './vehicles-workspace.css';
 
 function ShareIcon() {
@@ -89,4 +90,53 @@ export default function VehiclesWorkspace({ contentHtml, view, onSwitchClassic, 
       <footer className="vehicles-react-footnote">Os dados exibidos respeitam a cidade ativa e as permissões da sua conta. A apresentação moderna não altera registros nem vínculos.</footer>
     </div>
   );
+}
+
+
+function AssociationDialogShell({ isPerson, targetFieldHtml, notesFieldHtml }) {
+  const heading = isPerson ? 'Associar veículo à pessoa' : 'Associar pessoa ao veículo';
+  const eyebrow = isPerson ? 'VÍNCULO DE VEÍCULO' : 'VÍNCULO DE PESSOA';
+  const description = isPerson
+    ? 'Pesquise pela placa e selecione o veículo que será vinculado a este cadastro.'
+    : 'Localize a pessoa pelo nome, CPF ou RG antes de confirmar o vínculo.';
+  return (
+    <div className="dialog-inner association-react-dialog">
+      <div className="association-react-heading">
+        <div className="association-react-heading-copy">
+          <span className="association-react-eyebrow">{eyebrow}</span>
+          <h2>{heading}</h2>
+          <p>{description}</p>
+        </div>
+        <button className="close association-react-close" type="button" data-close aria-label="Fechar">×</button>
+      </div>
+      <form id="linkForm" className="association-react-form">
+        <div className="association-react-search-panel">
+          <div className="association-react-step"><span>1</span><div><strong>Localizar cadastro</strong><small>Selecione um registro já existente na base.</small></div></div>
+          <div dangerouslySetInnerHTML={{ __html: targetFieldHtml }} />
+        </div>
+        <div className="association-react-details">
+          <div className="association-react-step"><span>2</span><div><strong>Definir vínculo</strong><small>Informe a natureza da relação e, se necessário, uma observação.</small></div></div>
+          <div className="field association-react-relation">
+            <label htmlFor="relation">Tipo de relação</label>
+            <select id="relation" name="relation" defaultValue="driver">
+              <option value="driver">Condutor</option>
+              <option value="owner">Proprietário</option>
+              <option value="associated">Associado</option>
+            </select>
+          </div>
+          <div dangerouslySetInnerHTML={{ __html: notesFieldHtml }} />
+        </div>
+      </form>
+      <div className="dialog-actions association-react-actions">
+        <button className="button secondary" data-close type="button">Cancelar</button>
+        <button className="button association-react-submit" type="submit" form="linkForm"><span aria-hidden="true">＋</span> Confirmar associação</button>
+      </div>
+    </div>
+  );
+}
+
+export function mountAssociationDialog(dialog, props) {
+  const root = createRoot(dialog);
+  flushSync(() => root.render(<AssociationDialogShell {...props} />));
+  return root;
 }
