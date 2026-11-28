@@ -42,3 +42,14 @@ test('Estilos preservam a paleta institucional e oferecem layout responsivo', as
   assert.ok(dashboardCss.includes('@media(max-width:700px)'));
   assert.ok(dashboardCss.includes('var(--ink'));
 });
+
+
+test('Painel moderno é padrão para todos os usuários, ignorando preferência clássica antiga', async () => {
+  const main = await readFile(mainUrl, 'utf8');
+  const dashboardEntry = main.slice(main.indexOf('async function renderDashboard(){'), main.indexOf('async function renderDashboardReact(){'));
+  assert.ok(dashboardEntry.includes('return renderDashboardReact()'));
+  assert.ok(!dashboardEntry.includes('localStorage'));
+  assert.ok(!main.includes('cadastro-painel-cidade-mode-v1'));
+  assert.ok(!main.includes('Experimentar painel moderno'));
+  assert.ok(!main.includes("setCityDashboardMode('classic')"));
+});
