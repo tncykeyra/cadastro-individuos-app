@@ -125,14 +125,14 @@ export default function VehiclesWorkspace({ contentHtml, view, recordId, canDele
     <div className={'vehicles-react-shell ' + (detail ? 'is-detail' : 'is-list')}>
       <header className="vehicles-react-hero">
         <div className="vehicles-react-heading">
-          <span className="vehicles-react-eyebrow">{detail ? 'CONSULTA INDIVIDUAL' : 'GESTÃO DE FROTA CADASTRADA'}</span>
+          {detail && <span className="vehicles-react-eyebrow">CONSULTA DE VEÍCULO</span>}
           <h1>{detail ? 'Ficha do veículo' : 'Veículos'}</h1>
           <p>{detail
             ? 'Consulte os dados de identificação, fotografias e vínculos registrados.'
-            : 'Localize, confira e mantenha os registros de veículos da cidade em uma área organizada.'}</p>
+            : 'Consulte e gerencie os veículos cadastrados, com acesso rápido aos dados de identificação e às pessoas vinculadas.'}</p>
         </div>
         <div className="vehicles-react-tools">
-          <span className="vehicles-react-context"><span aria-hidden="true" className="vehicles-react-context-dot" /> {detail ? 'Registro selecionado' : 'Base municipal'}</span>
+          {detail && <span className="vehicles-react-context"><span aria-hidden="true" className="vehicles-react-context-dot" />Registro selecionado</span>}
         </div>
       </header>
       {detail
