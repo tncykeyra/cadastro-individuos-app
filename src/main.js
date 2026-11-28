@@ -1635,6 +1635,7 @@ async function renderDashboardReact(){
   const token=++dashboardRenderToken,cityId=state.activeCityId,root=$('#mainContent');
   if(!cityId||!root)return renderDashboardClassic();
   if(cityDashboardRoot){cityDashboardRoot.unmount();cityDashboardRoot=null}
+  releaseLegacyPageRoot();
   root.innerHTML='<section class="dashboard-intro"><h1>Painel da cidade</h1><p>Preparando o painel moderno…</p></section><div class="city-react-loading" role="status">Carregando indicadores da cidade…</div>';
   const cachedPhotoStats=dashboardPhotoStatsCacheCityId===cityId?dashboardPhotoStatsCache:null;
   const stalePhotoStats=!cachedPhotoStats||Date.now()-dashboardPhotoStatsAt>30000;
