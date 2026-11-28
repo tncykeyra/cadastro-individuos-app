@@ -41,7 +41,14 @@ function Info({label,value,wide=false,copy}) {
   </section>;
 }
 
-export default function PersonDetail({person,photos=[],vehicles=[],canDelete=false,identityHtml='',warrantHtml='',crossCityHtml='',relationshipsHtml=''}) {
+export default function PersonDetail({person,photos=[],vehicles=[],canDelete=false,identityHtml='',warrantHtml='',crossCityHtml='',relationshipsHtml='',onShare}) {
+  const [sharing,setSharing] = useState(false);
+  const sharePerson = async () => {
+    if (sharing || typeof onShare !== 'function') return;
+    setSharing(true);
+    try { await onShare(person.id); }
+    finally { setSharing(false); }
+  };
   const name = person?.full_name || 'Nome não informado';
   const addresses = [person?.address_primary,person?.address_secondary,...(Array.isArray(person?.additional_addresses)?person.additional_addresses:[])].map(value=>String(value||'').trim()).filter(Boolean);
   return <div className="people-react-shell is-detail">
@@ -65,7 +72,7 @@ export default function PersonDetail({person,photos=[],vehicles=[],canDelete=fal
                 <button className="copy-info-button" type="button" data-copy-info={name} data-copy-label="Nome" title="Copiar nome" aria-label="Copiar nome">⧉</button>
               </div>
               <div className="detail-actions">
-                <Button size="small" className="people-share-button" type="button" data-record-pdf={'people:'+person.id} title="Compartilhar ficha do indivíduo" aria-label="Compartilhar ficha do indivíduo"><svg className="detail-share-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.7 6.6-4.4M8.7 13.3l6.6 4.4"/></svg><span className="people-share-button-label">Compartilhar</span></Button>
+                <Button size="small" className="people-share-button" type="button" onClick={sharePerson} disabled={sharing} aria-busy={sharing} title="Compartilhar ficha do indivíduo" aria-label="Compartilhar ficha do indivíduo"><svg className="detail-share-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.7 10.7 6.6-4.4M8.7 13.3l6.6 4.4"/></svg><span className="people-share-button-label">Compartilhar</span></Button>
                 <Button type="button" data-edit-person={person.id}>✎ Editar</Button>
                 {canDelete && <Button variant="danger" type="button" data-delete-record={'people:'+person.id}>Excluir</Button>}
               </div>
