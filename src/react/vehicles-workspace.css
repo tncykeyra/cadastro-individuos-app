@@ -62,3 +62,25 @@
 @media(max-width:760px){.vehicles-react-shell .vehicles-react-hero{align-items:stretch;flex-direction:column;padding:18px;border-radius:16px}.vehicles-react-shell .vehicles-react-tools{align-items:flex-start}.vehicles-react-content>.page-intro{align-items:flex-start;flex-direction:column}.vehicles-react-content .page-actions{width:100%}.vehicles-react-content .page-actions .button{flex:1}.vehicles-react-shell.is-detail .vehicles-react-content .detail-hero{grid-template-columns:1fr;padding:16px}.vehicles-react-shell.is-detail .vehicles-react-content .detail-hero .record-gallery-detail{max-width:100%;width:min(100%,460px)}}
 @media(max-width:520px){.vehicles-react-content .vehicle-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.vehicles-react-content .vehicle-card .card-photo-gallery,.vehicles-react-content .vehicle-card .vehicle-placeholder{height:122px;min-height:122px}.vehicles-react-content .vehicle-card-copy{padding:12px}.vehicles-react-content .vehicle-card-copy h3{font-size:.9rem}.vehicles-react-content .vehicle-card-copy p{font-size:.69rem}.vehicles-react-shell.is-detail .vehicles-react-content .detail-sections{grid-template-columns:1fr}.vehicles-react-shell.is-detail .vehicles-react-content .detail-sections>.info:last-child{grid-column:auto}.vehicles-react-shell.is-detail .vehicles-react-content .detail-title{align-items:flex-start;flex-direction:column}.vehicles-react-shell.is-detail .vehicles-react-content .detail-actions{width:100%}.vehicles-react-shell.is-detail .vehicles-react-content .detail-actions .button{flex:1}.vehicles-react-shell.is-detail .vehicles-react-content .association-section-heading{align-items:flex-start;flex-direction:column}.vehicles-react-shell .vehicle-classic-switch{justify-content:flex-start}}
 @media(prefers-reduced-motion:reduce){.vehicles-react-content .vehicle-card,.vehicles-react-content>.list .list-row,.vehicles-react-shell .vehicles-react-switch{transition:none}}
+
+
+/* Galeria dos cards: foto principal e miniaturas em áreas independentes. */
+.vehicles-react-content .vehicle-card .card-photo-gallery{display:flex;flex-direction:column;gap:6px;padding:8px;box-sizing:border-box;height:166px;min-height:166px;overflow:hidden}
+.vehicles-react-content .vehicle-card .card-photo-cover{flex:1 1 auto;min-height:0;width:100%;height:auto;aspect-ratio:auto;border-radius:9px}
+.vehicles-react-content .vehicle-card .card-photo-thumbnails{display:flex;flex:0 0 30px;gap:6px;width:100%;height:30px;margin:0;padding:0 1px;overflow:hidden}
+.vehicles-react-content .vehicle-card .card-photo-thumbnail{flex:1 1 0;height:30px;min-width:0;aspect-ratio:auto;border-radius:6px}
+.vehicles-react-content .vehicle-card .card-photo-more{position:absolute;right:10px;bottom:44px;margin:0;padding:3px 7px;border-radius:6px;background:#172127c9;color:#fff;font-size:.65rem}
+.vehicles-react-content .vehicle-card .card-photo-gallery{position:relative}
+.vehicles-react-content .vehicle-share-action{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:42px;padding:7px 14px;border:1px solid #168447;background:#168447;color:#fff;border-radius:999px;font-weight:750;white-space:nowrap}
+.vehicles-react-content .vehicle-share-action:hover{background:#116b38;border-color:#116b38}
+.vehicles-react-content .vehicle-share-icon{display:grid;place-items:center;width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:#fff;color:#168447}
+.vehicles-react-content .vehicle-share-icon .share-icon{display:block;width:16px;height:16px;margin:0;fill:none;stroke:#168447;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
+:root[data-theme="dark"] .vehicles-react-content .vehicle-share-action{background:#168447;color:#fff;border-color:#168447}
+@media(max-width:520px){
+ .vehicles-react-content .vehicle-card .card-photo-gallery{height:122px;min-height:122px;padding:6px;gap:4px}
+ .vehicles-react-content .vehicle-card .card-photo-thumbnails{flex-basis:24px;height:24px;gap:4px}
+ .vehicles-react-content .vehicle-card .card-photo-thumbnail{height:24px}
+ .vehicles-react-content .vehicle-card .card-photo-more{right:8px;bottom:34px}
+ .vehicles-react-content .vehicle-share-action{gap:7px;padding:6px 11px;font-size:.8rem}
+ .vehicles-react-content .vehicle-share-icon{width:26px;height:26px;flex-basis:26px}
+}
