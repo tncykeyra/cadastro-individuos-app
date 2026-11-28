@@ -14,20 +14,21 @@ const [index, main, densityCss, vehiclesCss, people, vehicles, control, pkg, wor
   readFile(new URL('../public/sw.js', import.meta.url), 'utf8'),
 ]);
 
-test('seletor de densidade aparece apenas nas listas de indivíduos e veículos', () => {
+test('seletor controlado aparece apenas nas listas de indivíduos e veículos', () => {
   assert.doesNotMatch(index, /card-density-control/);
-  assert.match(people, /!detail && <CardDensityControl \/>/);
-  assert.match(vehicles, /!detail && <CardDensityControl \/>/);
+  assert.match(people, /!detail && <CardDensityControl value=\{density\} onChange=\{changeDensity\} \/>/);
+  assert.match(vehicles, /!detail && <CardDensityControl value=\{density\} onChange=\{changeDensity\} \/>/);
   assert.match(control, /data-card-density="large"/);
   assert.match(control, /data-card-density="compact"/);
-  assert.match(control, /aria-pressed/);
+  assert.match(control, /onClick=\{\(\) => onChange\('large'\)\}/);
+  assert.match(control, /onClick=\{\(\) => onChange\('compact'\)\}/);
+  assert.match(vehicles, /useState\(getCardDensity\)/);
   assert.match(main, /\.people-react-shell,\.vehicles-react-shell/);
-  assert.doesNotMatch(main, /document\.documentElement\.dataset\.cardDensity/);
 });
 
-test('modo grande de veículos usa a proporção 3:4 e a mesma grade dos indivíduos', () => {
+test('modo grande de veículos usa cards ampliados e proporção 3:4', () => {
   assert.match(densityCss, /vehicles-react-shell\[data-card-density="large"\]/);
-  assert.match(densityCss, /grid-template-columns:repeat\(auto-fill,minmax\(min\(100%,240px\),1fr\)\)/);
+  assert.match(densityCss, /grid-template-columns:repeat\(auto-fill,minmax\(min\(100%,280px\),1fr\)\)/);
   assert.match(densityCss, /aspect-ratio:3\/4/);
   assert.match(vehiclesCss, /vehicle-cards/);
 });
@@ -40,8 +41,8 @@ test('modo miniatura fica limitado aos cartões das duas abas', () => {
 });
 
 test('versão, cache e atualização do service worker acompanham a correção', () => {
-  assert.equal(JSON.parse(pkg).version, '2.52.12');
-  assert.match(worker, /cadastro-app-shell-v150/);
-  assert.match(main, /sw\.js\?v=117/);
-  assert.match(index, /card-density\.css\?v=3/);
+  assert.equal(JSON.parse(pkg).version, '2.52.13');
+  assert.match(worker, /cadastro-app-shell-v151/);
+  assert.match(main, /sw\.js\?v=118/);
+  assert.match(index, /card-density\.css\?v=4/);
 });
