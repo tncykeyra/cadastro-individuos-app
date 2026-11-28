@@ -2008,11 +2008,17 @@ async function renderRecordsNative(){
   await Promise.all([galleryPhotosForRecords(entity,visible),galleryPhotosForRecords(people?'vehicles':'people',relatedRecords)]);
  }catch(photoError){console.warn('Não foi possível preparar as fotos da listagem React.',photoError)}
  const [{createRoot},{default:React},{default:RecordsList}]=await Promise.all([import('react-dom/client'),import('react'),import('./react/RecordsList.jsx')]);
- if(peopleReactRoot){peopleReactRoot.unmount();peopleReactRoot=null}
- if(vehicleReactRoot){vehicleReactRoot.unmount();vehicleReactRoot=null}
+ // Reutiliza a raiz React da listagem. Desmontá-la a cada atualização recriava
+ // o input de pesquisa e fazia o teclado mobile perder o foco.
+ if(people){
+  if(vehicleReactRoot){vehicleReactRoot.unmount();vehicleReactRoot=null}
+  if(!peopleReactRoot)peopleReactRoot=createRoot(root);
+ }else{
+  if(peopleReactRoot){peopleReactRoot.unmount();peopleReactRoot=null}
+  if(!vehicleReactRoot)vehicleReactRoot=createRoot(root);
+ }
  releaseLegacyPageRoot();
- const renderRoot=createRoot(root);
- if(people)peopleReactRoot=renderRoot;else vehicleReactRoot=renderRoot;
+ const renderRoot=people?peopleReactRoot:vehicleReactRoot;
  const onSearch=value=>{
   state.searchInput=value;
   clearTimeout(state.searchTimer);
@@ -2050,7 +2056,7 @@ async function renderRecordsNative(){
   onOpen:(id,recordEntity)=>recordEntity==='people'?void openPerson(id):void openVehicle(id),
   onPageChange,onPageSizeChange,onLetterChange,
  }));
- root.focus({preventScroll:true});
+ // Não transferir o foco para o container: o campo pode estar em edição.
 }
 async function renderRecords(){return renderRecordsNative();const people=state.page==='people',source=(people?state.people:state.vehicles).slice();const cmp=new Intl.Collator('pt-BR',{sensitivity:'base',numeric:true});source.sort((a,b)=>cmp.compare(people?a.full_name||'':a.plate||'',people?b.full_name||'':b.plate||''));let filtered=source;if(people&&state.letter!=='all'&&!state.serverPaged)filtered=source.filter(p=>foldName(p.full_name).startsWith(state.letter));const total=state.serverPaged?state.listTotal:filtered.length;const pages=Math.max(1,Math.ceil(total/state.listPageSize));state.listPage=Math.min(state.listPage,pages-1);const start=state.listPage*state.listPageSize,visible=state.serverPaged?source:filtered.slice(start,start+state.listPageSize);const relatedRecords=isUsefulSearch(state.query)?(people?state.vehicles.slice(0,8):state.people.slice(0,8)):[];const related=isUsefulSearch(state.query)?people?'<div class="section-heading"><h2>Veículos relacionados ('+state.vehicles.length+')</h2></div><div class="cards vehicle-cards">'+(relatedRecords.length?relatedRecords.map(vehicleRow).join(''):'<div class="empty">Nenhum veículo encontrado para esta pesquisa.</div>')+'</div>':'<div class="section-heading"><h2>Pessoas encontradas ('+state.people.length+')</h2></div><div class="cards individual-cards">'+(relatedRecords.length?relatedRecords.map(personCard).join(''):'<div class="empty">Nenhuma pessoa encontrada.</div>')+'</div>':'';const subtitle=people?'Localize registros por nome, CPF, RG ou endereço. Utilize a pesquisa para refinar os resultados.':'Localize veículos por placa, modelo, pessoa ou endereço. Refine a pesquisa para encontrar o registro desejado.';const records='<div class="cards '+(people?'individual-cards':'vehicle-cards')+'">'+(visible.length?visible.map(people?personCard:vehicleRow).join(''):'<div class="empty">'+(state.query.length>0&&!isUsefulSearch(state.query)?'Digite ao menos 3 caracteres úteis.':people?'Nenhum indivíduo encontrado nesta letra.':'Nenhum veículo encontrado.')+'</div>')+'</div>';const searchElement=$('#search'),restoreSearchFocus=!!searchElement&&document.activeElement===searchElement,searchCursor=restoreSearchFocus?{start:searchElement.selectionStart,end:searchElement.selectionEnd,direction:searchElement.selectionDirection}:null;const pageContent='<div class="page-intro"><div><p>'+subtitle+'</p></div><div class="page-actions"><button class="button secondary export-records-button" type="button" data-export-records="'+(people?'people':'vehicles')+'">'+uiIcon('download')+' Exportar planilha</button><button class="button" data-add="'+(people?'person':'vehicle')+'">'+uiIcon('add')+' Adicionar</button></div></div>'+searchBox(people?'Buscar indivíduo, endereço, CPF ou placa':'Buscar placa, modelo, pessoa, CPF ou endereço')+(people?'<div class="alphabet-toolbar">'+alphabetBar()+pageSizeControl(state.listPageSize)+'</div>':pageSizeControl(state.listPageSize))+(isUsefulSearch(state.query)?'<h2 class="result-heading">'+(people?'Indivíduos':'Veículos')+' encontrados ('+filtered.length+')</h2>':'')+records+paginationMarkup(total,state.listPage,state.listPageSize)+related+'';if(people)await renderPeopleWorkspace(pageContent,'list');else await renderVehicleWorkspace(pageContent,'list');if(searchCursor){const restored=$('#search');if(restored){restored.focus({preventScroll:true});restored.setSelectionRange(searchCursor.start,searchCursor.end,searchCursor.direction)}}wireSearch();wireCarousels();void Promise.all([hydrateCardGalleries(people?'people':'vehicles',visible),hydrateCardGalleries(people?'vehicles':'people',relatedRecords)]);if(people)void hydrateWarrantCardBadges(visible)}
 function foldName(value){return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleUpperCase('pt-BR')}
