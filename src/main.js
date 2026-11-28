@@ -2443,12 +2443,8 @@ async function openVehicle(id,restoring=false){
 }
 async function copyToClipboard(value,message){try{await navigator.clipboard.writeText(value);toast(message)}catch{const input=document.createElement('textarea');input.value=value;input.setAttribute('readonly','');input.style.position='fixed';input.style.opacity='0';document.body.append(input);input.select();const copied=document.execCommand('copy');input.remove();toast(copied?message:'Não foi possível copiar automaticamente.')}} 
 function generateTemporaryPassword(){const groups=['ABCDEFGHJKLMNPQRSTUVWXYZ','abcdefghijkmnopqrstuvwxyz','23456789','!@#$%'];const alphabet=groups.join('');const bytes=crypto.getRandomValues(new Uint8Array(36));const chars=groups.map((group,index)=>group[bytes[index]%group.length]);for(let i=4;i<20;i++)chars.push(alphabet[bytes[i]%alphabet.length]);for(let i=chars.length-1;i>0;i--){const j=bytes[20+(i%(bytes.length-20))]%(i+1);[chars[i],chars[j]]=[chars[j],chars[i]]}return chars.join('')}
-const CITIES_UI_MODE_KEY='cadastro-cidades-interface-v1';
-function getCitiesUiMode(){try{return localStorage.getItem(CITIES_UI_MODE_KEY)==='classic'?'classic':'react'}catch{return'react'}}
-function setCitiesUiMode(mode){try{localStorage.setItem(CITIES_UI_MODE_KEY,mode==='classic'?'classic':'react')}catch{}}
 async function renderCities(){
  if(!isMasterAdmin()){frame('<div class="error-box">Acesso exclusivo ao administrador master.</div>');return}
- if(getCitiesUiMode()==='classic')return renderCitiesClassic();
  const [{data:cities,error:cityError},{data:profiles,error:profileError},{data:members,error:memberError}]=await Promise.all([
   state.client.rpc('master_list_city_catalog'),
   state.client.from('profiles').select('id,email,display_name,role,created_at').order('created_at',{ascending:false}).limit(500),
