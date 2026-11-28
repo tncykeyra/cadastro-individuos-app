@@ -12,6 +12,8 @@ const [main, records, interest, fiscalization] = await Promise.all([
 test('indivíduos e veículos pesquisam automaticamente após debounce sem recriar o campo', () => {
   assert.match(records, /setTimeout\(\(\) => onSearchRef\.current\(searchValue\), 300\)/);
   assert.match(records, /const submitSearch = \(\) =>/);
+  assert.match(records, /onSearchInput\?\.\(nextValue\)/);
+  assert.match(main, /onSearchInput:value=>\{state\.searchInput=String\(value\?\?''\);clearTimeout\(state\.searchTimer\);state\.searchRequest\+\+\}/);
   assert.match(main, /const onSearch=async value=>/);
   assert.match(main, /if\(!peopleReactRoot\)peopleReactRoot=createRoot\(root\)/);
   assert.match(main, /if\(!vehicleReactRoot\)vehicleReactRoot=createRoot\(root\)/);
