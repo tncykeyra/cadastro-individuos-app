@@ -358,3 +358,21 @@
   .vehicles-react-shell.is-detail .vehicle-native-actions > .ui-button,
   .vehicles-react-shell.is-detail .vehicle-detail-actions > .vehicle-detail-action { font-size: .7rem; padding-inline: 3px; }
 }
+
+
+/* Ficha de veículos alinhada à hierarquia visual da ficha de indivíduos. */
+.vehicles-react-shell.is-detail .vehicle-native-detail{gap:20px}
+.vehicles-react-shell.is-detail .vehicle-native-identity{grid-template-columns:minmax(220px,360px) minmax(0,1fr);gap:24px;align-items:center;padding:clamp(15px,2.4vw,24px);border:1px solid var(--v-line);border-radius:18px;background:var(--v-bg);box-shadow:0 8px 24px #20282d08}
+.vehicles-react-shell.is-detail .vehicle-native-title{gap:10px}
+.vehicles-react-shell.is-detail .vehicle-native-eyebrow{display:none}
+.vehicles-react-shell.is-detail .vehicle-native-title h2{margin:0;color:var(--v-ink);font-size:clamp(1.9rem,4vw,2.65rem);font-weight:850;line-height:1.12;letter-spacing:-.04em;overflow-wrap:anywhere}
+.vehicles-react-shell.is-detail .vehicle-native-title p{font-size:.9rem;line-height:1.5}
+.vehicles-react-shell.is-detail .vehicle-native-section{gap:14px;padding:18px;border:1px solid var(--v-line);border-radius:16px;background:var(--v-bg);box-shadow:0 4px 16px #20282d06}
+.vehicles-react-shell.is-detail .vehicle-native-section h3{font-size:1.08rem;font-weight:800;letter-spacing:-.02em}
+.vehicles-react-shell.is-detail .vehicle-native-info{padding:13px 15px;border:1px solid var(--v-line);border-radius:12px;background:var(--v-bg)}
+.vehicles-react-shell.is-detail .vehicle-native-info span{font-size:.72rem;font-weight:650}
+.vehicles-react-shell.is-detail .vehicle-native-info strong{font-size:.86rem;line-height:1.5}
+.vehicles-react-shell.is-detail .vehicle-native-link{padding:10px 12px;border:1px solid var(--v-line);border-radius:13px;background:var(--v-bg)}
+.vehicles-react-shell.is-detail .vehicle-native-person strong{font-size:.86rem;font-weight:750}
+.vehicles-react-shell.is-detail .vehicle-native-person small{font-size:.74rem}
+@media(max-width:700px){.vehicles-react-shell.is-detail .vehicles-react-hero{align-items:stretch;flex-direction:column;gap:14px;padding:18px;margin-bottom:17px}.vehicles-react-shell.is-detail .vehicles-react-tools{align-items:flex-start;flex-direction:row;justify-content:space-between;flex-wrap:wrap}.vehicles-react-shell.is-detail .vehicles-react-heading h1{font-size:1.75rem}.vehicles-react-shell.is-detail .vehicle-native-identity{grid-template-columns:minmax(0,1fr);gap:15px;padding:15px}.vehicles-react-shell.is-detail .vehicle-native-title h2{font-size:clamp(1.7rem,7vw,2.15rem)}.vehicles-react-shell.is-detail .vehicle-native-section{padding:14px}}
