@@ -104,6 +104,10 @@ export default function RecordsList({
             <span aria-hidden="true">⌕</span><span>Pesquisar</span>
           </Button>
         </label>
+        {people && <nav className="react-record-letters" aria-label="Filtrar indivíduos pela inicial">
+          <Button size="small" variant={letter === 'all' ? 'primary' : 'secondary'} onClick={() => onLetterChange('all')}>Todas</Button>
+          {letters.map(item => <Button key={item} size="small" variant={letter === item ? 'primary' : 'secondary'} onClick={() => onLetterChange(item)}>{item}</Button>)}
+        </nav>}
         {searchValue.trim() && <p className="react-record-search-hint" role="status" aria-live="polite">
           {searchValue.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/gi, '').length < 3
             ? 'Digite ao menos 3 caracteres úteis.'
@@ -114,10 +118,6 @@ export default function RecordsList({
       </div>
 
       <div className="react-records-toolbar">
-        {people && <div className="react-record-letters" aria-label="Filtrar por inicial">
-          <Button size="small" variant={letter === 'all' ? 'primary' : 'secondary'} onClick={() => onLetterChange('all')}>Todas</Button>
-          {letters.map(item => <Button key={item} size="small" variant={letter === item ? 'primary' : 'secondary'} onClick={() => onLetterChange(item)}>{item}</Button>)}
-        </div>}
         <label className="react-record-page-size">Exibir
           <select value={pageSize} onChange={event => onPageSizeChange(Number(event.target.value))}>
             {[15, 30, 50, 100].map(size => <option key={size} value={size}>{size}</option>)}

@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const [component, main, domain] = await Promise.all([
+const [component, main, domain, css] = await Promise.all([
   readFile(new URL('../src/react/RecordsList.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
-  readFile(new URL('../src/domain.js', import.meta.url), 'utf8')
+  readFile(new URL('../src/domain.js', import.meta.url), 'utf8'),
+  readFile(new URL('../src/react/RecordsList.jsx.css', import.meta.url), 'utf8')
 ]);
 
 test('pesquisa React oferece botão explícito e acionamento por Enter', () => {
@@ -35,4 +36,15 @@ test('pesquisa mantém a raiz React e não rouba o foco durante atualizações',
   assert.doesNotMatch(main, /if\(peopleReactRoot\)\{peopleReactRoot\.unmount\(\);peopleReactRoot=null\}[\s\S]{0,160}const renderRoot=createRoot\(root\)/);
   assert.doesNotMatch(main, /root\.focus\(\{preventScroll:true\}\);\s*}\s*async function renderRecords\(\)/);
   assert.match(component, /type="text" inputMode="search" enterKeyHint="search"/);
+});
+
+
+test('alfabeto fica logo abaixo da pesquisa em uma faixa horizontal deslizável', () => {
+  assert.match(component, /react-records-search-wrap[\s\S]*?react-records-search[\s\S]*?react-record-letters/);
+  assert.match(component, /aria-label="Filtrar indivíduos pela inicial"/);
+  assert.match(component, /letters\.map\(item => <Button/);
+  assert.doesNotMatch(component, /react-records-toolbar[\s\S]{0,220}react-record-letters/);
+  assert.match(css, /react-record-letters\{[^}]*overflow-x:auto[^}]*flex-wrap:nowrap/);
+  assert.match(css, /-webkit-overflow-scrolling:touch/);
+  assert.match(css, /react-record-letters \.ui-button\{flex:0 0 auto/);
 });
