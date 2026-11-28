@@ -1,0 +1,7 @@
+.legacy-react-workspace{min-width:0;width:100%;animation:legacy-react-enter .18s ease-out}
+.legacy-react-workspace-indicator{display:flex;align-items:center;gap:8px;margin:0 0 12px;color:var(--muted,#68747a);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.legacy-react-workspace-indicator span{width:7px;height:7px;border-radius:50%;background:var(--success,#27845d);box-shadow:0 0 0 3px color-mix(in srgb,var(--success,#27845d) 14%,transparent)}
+.legacy-react-content{min-width:0}
+.legacy-react-button-mount{display:contents}
+@keyframes legacy-react-enter{from{opacity:.72;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.legacy-react-workspace{animation:none}}

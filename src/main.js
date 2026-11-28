@@ -1,5 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import packageJson from '../package.json';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { flushSync } from 'react-dom';
+import LegacyPageWorkspace from './react/LegacyPageWorkspace.jsx';
 import { isUsefulSearch, normalizePlate, isValidPlate, dedupePhotoSources, formatPersonName, normalizeRecordPhotos } from './domain.js';
 import { buildRecordPdf } from './pdf.js';
 import { isValidCpf, mergeFiliationIntoNotes } from './ocr-domain.js';
@@ -235,7 +239,8 @@ window.addEventListener('focus',()=>{if(state.warrantPdfPickerActive){clearTimeo
 function consumeWarrantPdfPickerResume(userId){try{const pending=JSON.parse(localStorage.getItem(warrantPickerResumeKey)||'null'),valid=Boolean(pending&&pending.userId===userId&&pending.tab==='include'&&isAdmin()&&Date.now()-Number(pending.createdAt)<10*60*1000);clearWarrantPdfPickerResume();return valid}catch{clearWarrantPdfPickerResume();return false}}
 function saveLastView(){const userId=state.session?.user?.id;if(!userId)return;try{localStorage.setItem(lastViewKey(userId),JSON.stringify({page:state.page,selected:state.selected,listPage:state.listPage,letter:state.letter,query:state.query,searchInput:state.searchInput,listPageSize:state.listPageSize,warrantTab:state.warrantTab,warrantQuery:state.warrantQuery,teamPage:state.teamPage}))}catch{}}
 function getLastView(userId){try{const value=JSON.parse(localStorage.getItem(lastViewKey(userId))||'null');if(!value||!['dashboard','people','vehicles','warrants','vehicleInterest','team','history','smart','review','maintenance'].includes(value.page))return null;if(['team','history','review','maintenance'].includes(value.page)&&!isAdmin())return null;return {page:value.page,selected:typeof value.selected==='string'?value.selected:null,listPage:Math.max(0,Number(value.listPage)||0),letter:typeof value.letter==='string'?value.letter:'all',query:typeof value.query==='string'?value.query:'',searchInput:typeof value.searchInput==='string'?value.searchInput:'',listPageSize:Math.max(1,Number(value.listPageSize)||30),warrantTab:['list','include','review'].includes(value.warrantTab)?value.warrantTab:'list',warrantQuery:typeof value.warrantQuery==='string'?value.warrantQuery:'',teamPage:typeof value.teamPage==='string'?value.teamPage:'authorize'}}catch{return null}}
-let loadingProgressTimer=null,warrantReactRoot=null,vehicleReactRoot=null,peopleReactRoot=null;
+let loadingProgressTimer=null,warrantReactRoot=null,vehicleReactRoot=null,peopleReactRoot=null,legacyPageRoot=null;
+function releaseLegacyPageRoot(){if(legacyPageRoot){legacyPageRoot.unmount();legacyPageRoot=null}}
 const PEOPLE_UI_MODE_KEY='cadastro-individuos-interface-v1';
 function getPeopleUiMode(){try{return localStorage.getItem(PEOPLE_UI_MODE_KEY)==='classic'?'classic':'react'}catch{return'react'}}
 function setPeopleUiMode(mode){try{localStorage.setItem(PEOPLE_UI_MODE_KEY,mode==='classic'?'classic':'react')}catch{}}
@@ -246,7 +251,7 @@ const WARRANTS_UI_MODE_KEY='cadastro-mandados-interface-v1';
 function getWarrantsUiMode(){try{return localStorage.getItem(WARRANTS_UI_MODE_KEY)==='classic'?'classic':'react'}catch{return'react'}}
 function setWarrantsUiMode(mode){try{localStorage.setItem(WARRANTS_UI_MODE_KEY,mode==='classic'?'classic':'react')}catch{}}
 function settleLoadedCardPhotos(root){root?.querySelectorAll?.('.card-photo-cover img,.card-photo-thumbnail img').forEach(image=>{const holder=image.closest('.card-photo-cover,.card-photo-thumbnail');if(!holder)return;const settle=()=>{holder.classList.remove('is-photo-loading');holder.classList.toggle('is-photo-error',image.naturalWidth<=0)};image.addEventListener('load',settle,{once:true});image.addEventListener('error',settle,{once:true});if(image.complete)settle()})}
-function frame(content){const root=$('#mainContent');if(warrantReactRoot){warrantReactRoot.unmount();warrantReactRoot=null}if(vehicleReactRoot){vehicleReactRoot.unmount();vehicleReactRoot=null}if(peopleReactRoot){peopleReactRoot.unmount();peopleReactRoot=null}if(loadingProgressTimer){clearInterval(loadingProgressTimer);loadingProgressTimer=null}root.innerHTML=content;settleLoadedCardPhotos(root);root.focus({preventScroll:true});}
+function frame(content){const root=$('#mainContent');if(warrantReactRoot){warrantReactRoot.unmount();warrantReactRoot=null}if(vehicleReactRoot){vehicleReactRoot.unmount();vehicleReactRoot=null}if(peopleReactRoot){peopleReactRoot.unmount();peopleReactRoot=null}if(typeof cityDashboardRoot!=='undefined'&&cityDashboardRoot){cityDashboardRoot.unmount();cityDashboardRoot=null}releaseLegacyPageRoot();if(loadingProgressTimer){clearInterval(loadingProgressTimer);loadingProgressTimer=null}legacyPageRoot=createRoot(root);flushSync(()=>legacyPageRoot.render(React.createElement(LegacyPageWorkspace,{contentHtml:content,pageTitle:label[state.page]||'Cadastro Criminal'})));settleLoadedCardPhotos(root);root.focus({preventScroll:true});}
 async function renderVehicleWorkspace(contentHtml,view='list',recordId=null,vehicleOptions={}){
   const root=$('#mainContent');
   const renderClassic=()=>{
@@ -262,7 +267,7 @@ async function renderVehicleWorkspace(contentHtml,view='list',recordId=null,vehi
   try{
     const [{createRoot},{flushSync},{default:React},{default:VehiclesWorkspace}]=await Promise.all([import('react-dom/client'),import('react-dom'),import('react'),import('./react/VehiclesWorkspace.jsx')]);
     if(vehicleReactRoot){vehicleReactRoot.unmount();vehicleReactRoot=null}
-    vehicleReactRoot=createRoot(root);
+    releaseLegacyPageRoot();vehicleReactRoot=createRoot(root);
     flushSync(()=>vehicleReactRoot.render(React.createElement(VehiclesWorkspace,{
       contentHtml,view,recordId,canDelete:Boolean(vehicleOptions.canDelete),
       onSwitchClassic:()=>{setVehiclesUiMode('classic');if(vehicleReactRoot){vehicleReactRoot.unmount();vehicleReactRoot=null}if(view==='detail')void openVehicle(recordId,true);else void renderRecords()}
@@ -290,7 +295,7 @@ async function renderPeopleWorkspace(contentHtml,view='list',recordId=null){
   try{
     const [{createRoot},{flushSync},{default:React},{default:PeopleWorkspace}]=await Promise.all([import('react-dom/client'),import('react-dom'),import('react'),import('./react/PeopleWorkspace.jsx')]);
     if(peopleReactRoot){peopleReactRoot.unmount();peopleReactRoot=null}
-    peopleReactRoot=createRoot(root);
+    releaseLegacyPageRoot();peopleReactRoot=createRoot(root);
     flushSync(()=>peopleReactRoot.render(React.createElement(PeopleWorkspace,{
       contentHtml,view,
       onSwitchClassic:()=>{setPeopleUiMode('classic');if(peopleReactRoot){peopleReactRoot.unmount();peopleReactRoot=null}if(view==='detail')void openPerson(recordId,true);else void renderRecords()}
@@ -315,7 +320,7 @@ async function renderWarrantWorkspace(contentHtml,stats,admin){
   try{
     const [{createRoot},{flushSync},{default:React},{default:WarrantsWorkspace}]=await Promise.all([import('react-dom/client'),import('react-dom'),import('react'),import('./react/WarrantsWorkspace.jsx')]);
     if(warrantReactRoot){warrantReactRoot.unmount();warrantReactRoot=null}
-    warrantReactRoot=createRoot(root);
+    releaseLegacyPageRoot();warrantReactRoot=createRoot(root);
     flushSync(()=>warrantReactRoot.render(React.createElement(WarrantsWorkspace,{
       contentHtml,stats,admin,
       onSwitchClassic:()=>{setWarrantsUiMode('classic');if(warrantReactRoot){warrantReactRoot.unmount();warrantReactRoot=null}void renderWarrants()}
@@ -1650,7 +1655,7 @@ async function renderDashboardReact(){
     const [{createRoot},{default:React},{default:CityDashboard}]=await Promise.all([import('react-dom/client'),import('react'),import('./react/CityDashboard.jsx')]);
     if(token!==dashboardRenderToken||state.page!=='dashboard'||state.activeCityId!==cityId)return;
     if(cityDashboardRoot){cityDashboardRoot.unmount();cityDashboardRoot=null}
-    cityDashboardRoot=createRoot(root);
+    releaseLegacyPageRoot();cityDashboardRoot=createRoot(root);
     cityDashboardRoot.render(React.createElement(CityDashboard,{
       cityName:dashboardCityName,roleLabel:role,stats,photoStats:cachedPhotoStats,
       pendingIdentityCount:identityResult.error?state.pendingIdentityCount:identityResult.count,
