@@ -2,6 +2,7 @@ import React, { useLayoutEffect, useRef, useState } from 'react';
 import Button from './ui/Button.jsx';
 import { createPortal } from 'react-dom';
 import './people-workspace.css';
+import CardDensityControl, { getCardDensity } from './CardDensityControl.jsx';
 
 function buttonPropsFromMarkup(button) {
   const props = {};
@@ -77,7 +78,7 @@ function PeopleReactContent({ contentHtml }) {
 
 export default function PeopleWorkspace({ contentHtml, view = 'list' }) {
   const detail = view === 'detail';
-  return <div className={'people-react-shell ' + (detail ? 'is-detail' : 'is-list')}>
+  return <div className={'people-react-shell ' + (detail ? 'is-detail' : 'is-list')} data-card-density={getCardDensity()}>
     <header className="people-react-hero">
       <div className="people-react-heading">
         {detail && <span className="people-react-eyebrow">CONSULTA INDIVIDUAL</span>}
@@ -88,6 +89,7 @@ export default function PeopleWorkspace({ contentHtml, view = 'list' }) {
       </div>
       <div className="people-react-tools">
         {detail && <span className="people-react-context"><span className="people-react-context-dot" />Registro selecionado</span>}
+        {!detail && <CardDensityControl />}
       </div>
     </header>
     <PeopleReactContent key={contentHtml} contentHtml={contentHtml} />
