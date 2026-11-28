@@ -60,3 +60,27 @@
     text-align:center;
   }
 }
+
+
+/* Os botões são montados em portais React dentro de .people-react-button-mount.
+   O seletor precisa alcançar o botão dentro desse mount (não como filho direto). */
+@media(max-width:700px){
+  .people-react-content .association-section-heading .people-react-button-mount .button,
+  .people-react-content .person-relationships .section-heading .people-react-button-mount .button{
+    display:flex;
+    box-sizing:border-box;
+    width:100%;
+    min-width:0;
+    min-height:46px;
+    align-items:center;
+    justify-content:center;
+    white-space:normal;
+    text-align:center;
+  }
+  .people-react-content .association-section-heading .people-react-button-mount,
+  .people-react-content .person-relationships .section-heading .people-react-button-mount{
+    display:block;
+    width:100%;
+    min-width:0;
+  }
+}
