@@ -1,5 +1,5 @@
 /* Seletor reutilizado somente nas abas Indivíduos e Veículos. */
-.card-density-control{display:flex;align-items:center;gap:5px;padding:4px;border:1px solid var(--line,#dfe3e5);border-radius:12px;background:var(--surface,#fff);box-shadow:0 2px 8px #1721270a;color:var(--muted,#687176);font-size:11px;font-weight:700;white-space:nowrap}
+.card-density-control{display:flex!important;visibility:visible!important;opacity:1!important;width:max-content;max-width:100%;position:relative;z-index:2;align-items:center;gap:5px;padding:4px;border:1px solid var(--line,#dfe3e5);border-radius:12px;background:var(--surface,#fff);box-shadow:0 2px 8px #1721270a;color:var(--muted,#687176);font-size:11px;font-weight:700;white-space:nowrap}
 .card-density-label{padding:0 5px 0 7px;letter-spacing:.02em}
 .card-density-option{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:6px 9px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--muted,#687176);font:inherit;font-size:11px;font-weight:750;cursor:pointer;transition:background .16s,border-color .16s,color .16s,box-shadow .16s}
 .card-density-option svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
@@ -27,8 +27,8 @@
 .vehicles-react-shell[data-card-density="compact"] .vehicles-react-content .vehicle-card-copy p{font-size:.68rem!important;line-height:1.3!important;overflow-wrap:anywhere}
 
 /* Cards grandes de veículos seguem as mesmas proporções dos cards de indivíduos. */
-.vehicles-react-shell[data-card-density="large"] .vehicles-react-content .vehicle-cards{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr))!important;gap:16px!important}
-.vehicles-react-shell[data-card-density="large"] .vehicles-react-content .vehicle-card{display:flex!important;flex-direction:column!important;align-items:stretch!important;min-width:0!important;min-height:0!important;padding:12px!important;border-radius:17px!important;overflow:hidden!important}
+.vehicles-react-shell[data-card-density="large"] .vehicles-react-content .vehicle-cards{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr))!important;gap:18px!important;align-items:stretch!important}
+.vehicles-react-shell[data-card-density="large"] .vehicles-react-content .vehicle-card{display:flex!important;flex-direction:column!important;align-items:stretch!important;width:100%!important;min-width:0!important;min-height:0!important;padding:12px!important;border-radius:17px!important;overflow:hidden!important}
 .vehicles-react-shell[data-card-density="large"] .vehicles-react-content .vehicle-card .card-photo-gallery{width:100%!important;height:auto!important;min-height:0!important;padding:0!important}
 .vehicles-react-shell[data-card-density="large"] .vehicles-react-content .vehicle-card .card-photo-cover,
 .vehicles-react-shell[data-card-density="large"] .vehicles-react-content .vehicle-card .vehicle-placeholder{width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;aspect-ratio:3/4!important;border-radius:12px!important;box-sizing:border-box!important}
@@ -38,6 +38,7 @@
 .vehicles-react-shell[data-card-density="large"] .vehicles-react-content .vehicle-card-copy h3{margin:5px 0!important;font-size:1.05rem!important;line-height:1.3!important}
 .vehicles-react-shell[data-card-density="large"] .vehicles-react-content .vehicle-card-copy p{margin:3px 0!important;font-size:.9rem!important;line-height:1.4!important}
 @media(max-width:620px){
+ .vehicles-react-shell .vehicles-react-tools{display:flex!important;align-items:center!important;justify-content:flex-start!important;flex-wrap:wrap!important;width:100%!important}
  .card-density-control{gap:2px;padding:3px}
  .card-density-label{display:none}
  .card-density-option{gap:4px;min-height:32px;padding:5px 8px;font-size:10px}
