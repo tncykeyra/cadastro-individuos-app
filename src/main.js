@@ -2305,7 +2305,7 @@ document.addEventListener('click',async e=>{const button=e.target.closest('[data
     if(!navigator.serviceWorker.controller)return;
     state.appUpdatePending=true;
     applyAvailableUpdate();
-  },{once:true});
+  });
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible'){void checkForAppUpdate();applyAvailableUpdate()}
   });
