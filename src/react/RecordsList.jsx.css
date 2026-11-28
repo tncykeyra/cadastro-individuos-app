@@ -84,3 +84,48 @@
  .react-records-module[data-card-density="compact"] .react-record-card.is-vehicle .react-record-card-copy strong{font-size:10px!important}
  .react-records-module[data-card-density="compact"] .react-record-card.is-vehicle .react-record-card-copy small{font-size:9px!important}
 }
+
+
+/* Miniaturas de indivíduos: o modo compacto também deve reduzir a foto e o cartão. */
+.react-records-module[data-card-density="compact"] .react-record-card.is-person{
+ display:grid!important;
+ grid-template-columns:76px minmax(0,1fr)!important;
+ flex-direction:row!important;
+ align-items:center!important;
+ gap:9px!important;
+ min-height:92px!important;
+ padding:8px!important;
+ border-radius:12px!important;
+}
+.react-records-module[data-card-density="compact"] .react-record-card.is-person .react-record-card-media{
+ width:76px!important;
+ height:76px!important;
+ min-width:76px!important;
+ min-height:76px!important;
+ max-height:76px!important;
+ flex:0 0 76px!important;
+ aspect-ratio:1/1!important;
+ border-radius:9px!important;
+}
+.react-records-module[data-card-density="compact"] .react-record-card.is-person .react-record-card-media img{
+ width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 20%!important;
+}
+.react-records-module[data-card-density="compact"] .react-record-card.is-person .react-record-card-copy{
+ min-width:0!important;padding:4px 18px 4px 0!important;
+}
+.react-records-module[data-card-density="compact"] .react-record-card.is-person .react-record-card-copy strong{font-size:12px!important}
+.react-records-module[data-card-density="compact"] .react-record-card.is-person .react-record-card-copy small{font-size:10px!important}
+.react-records-module[data-card-density="compact"] .react-record-card.is-person .react-record-card-arrow{
+ top:50%!important;right:10px!important;bottom:auto!important;transform:translateY(-50%)!important;
+}
+@media(max-width:700px){
+ .react-records-module[data-card-density="compact"] .react-record-card.is-person{
+  grid-template-columns:58px minmax(0,1fr)!important;gap:5px!important;min-height:72px!important;padding:5px!important;
+ }
+ .react-records-module[data-card-density="compact"] .react-record-card.is-person .react-record-card-media{
+  width:58px!important;height:58px!important;min-width:58px!important;min-height:58px!important;max-height:58px!important;flex-basis:58px!important;
+ }
+ .react-records-module[data-card-density="compact"] .react-record-card.is-person .react-record-card-copy{padding:4px 14px 4px 0!important}
+ .react-records-module[data-card-density="compact"] .react-record-card.is-person .react-record-card-copy strong{font-size:10px!important}
+ .react-records-module[data-card-density="compact"] .react-record-card.is-person .react-record-card-copy small{font-size:9px!important}
+}
