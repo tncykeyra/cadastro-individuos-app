@@ -1,0 +1,70 @@
+/* Ação de compartilhamento padronizada nas fichas de indivíduos e veículos. */
+.people-share-button,
+.vehicle-share-action {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 42px;
+  padding: 9px 14px;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  color: #fff !important;
+  background: #198754 !important;
+  border: 1px solid #198754 !important;
+  line-height: 1;
+}
+.people-share-button:hover:not(:disabled),
+.vehicle-share-action:hover:not(:disabled) {
+  color: #fff !important;
+  background: #157347 !important;
+  border-color: #157347 !important;
+}
+.people-share-button:focus-visible,
+.vehicle-share-action:focus-visible {
+  outline: 3px solid #19875455;
+  outline-offset: 2px;
+}
+.detail-share-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.people-share-button-label,
+.vehicle-action-label {
+  display: inline-block;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+@media (max-width: 620px) {
+  .people-share-button,
+  .vehicle-share-action {
+    width: 42px;
+    min-width: 42px;
+    max-width: 42px;
+    height: 42px;
+    min-height: 42px;
+    padding: 0;
+    gap: 0;
+  }
+  .people-share-button-label,
+  .vehicle-action-label {
+    display: none;
+  }
+  .detail-share-icon {
+    width: 19px;
+    height: 19px;
+    flex-basis: 19px;
+  }
+}
