@@ -138,7 +138,6 @@ export default function VehiclesWorkspace({ contentHtml, view, recordId, canDele
       {detail
         ? <VehicleDetailActionMount contentHtml={contentHtml} recordId={recordId} canDelete={canDelete}/>
         : <ReactButtonContent contentHtml={contentHtml} />}
-      <footer className="vehicles-react-footnote">Os dados exibidos respeitam a cidade ativa e as permissões da sua conta. A apresentação moderna não altera registros nem vínculos.</footer>
     </div>
   );
 }
