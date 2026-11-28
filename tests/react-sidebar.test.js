@@ -58,6 +58,6 @@ test('menu lateral abre com gesto horizontal da borda esquerda no mobile', () =>
 
 test('cache e versão do app são atualizados para a nova interface', () => {
   assert.match(index, /styles\.css\?v=167/);
-  assert.match(serviceWorker, /cadastro-app-shell-v140/);
-  assert.equal(JSON.parse(pkg).version, '2.52.1');
+  assert.match(serviceWorker, /cadastro-app-shell-v141/);
+  assert.equal(JSON.parse(pkg).version, '2.52.2');
 });
