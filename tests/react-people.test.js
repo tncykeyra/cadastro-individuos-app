@@ -8,12 +8,12 @@ const [main, component, styles] = await Promise.all([
   readFile(new URL('../src/react/people-workspace.css', import.meta.url), 'utf8')
 ]);
 
-test('aba Indivíduos usa workspace React e mantém alternância reversível', () => {
+test('aba Indivíduos usa workspace React sem botão de retorno à interface clássica', () => {
   assert.match(main, /PEOPLE_UI_MODE_KEY/);
   assert.match(main, /renderPeopleWorkspace\(pageContent,'list'\)/);
   assert.match(main, /renderPeopleWorkspace\([\s\S]*?'detail',id\)/);
-  assert.match(main, /setPeopleUiMode\('classic'\)/);
-  assert.match(component, /Voltar à interface clássica/);
+  assert.doesNotMatch(main, /onSwitchClassic/);
+  assert.doesNotMatch(component, /Voltar à interface clássica/);
   assert.match(component, /dangerouslySetInnerHTML/);
 });
 
