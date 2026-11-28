@@ -73,7 +73,6 @@ export default function LegacyPageWorkspace({ contentHtml, pageTitle }) {
 
   const isAuthentication = /auth-wrap|auth-card|firstAccessForm|googleLogin/.test(contentHtml);
   return <div className="legacy-react-workspace" data-react-workspace="true" data-page-title={pageTitle || ''}>
-    {!isAuthentication && <div className="legacy-react-workspace-indicator" aria-hidden="true"><span/>Interface integrada ao React</div>}
     <div ref={hostRef} className="legacy-react-content" dangerouslySetInnerHTML={{ __html: contentHtml }} />
     {portals.map(({ key, mount, props, markup }) => <React.Fragment key={key}>
       {createPortal(<Button {...props} dangerouslySetInnerHTML={{ __html: markup }} />, mount, key)}
