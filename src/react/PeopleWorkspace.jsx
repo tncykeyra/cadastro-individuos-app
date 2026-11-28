@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Button } from './ui-system.jsx';
 import './people-workspace.css';
 
 function buttonPropsFromMarkup(button) {
@@ -87,7 +88,7 @@ export default function PeopleWorkspace({ contentHtml, view = 'list', onSwitchCl
       </div>
       <div className="people-react-tools">
         <span className="people-react-context"><span className="people-react-context-dot" />{detail ? 'Registro selecionado' : 'Base municipal'}</span>
-        <button className="people-react-switch" type="button" onClick={onSwitchClassic}>Voltar à interface clássica</button>
+        <Button variant="secondary" size="sm" className="people-react-switch" type="button" onClick={onSwitchClassic}>Voltar à interface clássica</Button>
       </div>
     </header>
     <PeopleReactContent key={contentHtml} contentHtml={contentHtml} />
