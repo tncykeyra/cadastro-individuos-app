@@ -42,11 +42,15 @@ function PeopleReactContent({ contentHtml }) {
   const hostRef = useRef(null);
   const keyRef = useRef(0);
   const [portals, setPortals] = useState([]);
+  const mountsRef = useRef(new Set());
   useLayoutEffect(() => {
     const host = hostRef.current;
     const mountButtons = scope => {
       const additions = collectButtons(scope, () => 'people-react-button-' + (++keyRef.current), host);
-      if (additions.length) setPortals(current => [...current, ...additions]);
+      if (additions.length) {
+        additions.forEach(({ mount }) => mountsRef.current.add(mount));
+        setPortals(current => [...current, ...additions]);
+      }
     };
     mountButtons(host);
     mountButtons(document.getElementById('recordDialog'));
@@ -58,7 +62,8 @@ function PeopleReactContent({ contentHtml }) {
     observer.observe(document.body, { childList: true, subtree: true });
     return () => {
       observer.disconnect();
-      portals.forEach(({ mount }) => mount.remove());
+      mountsRef.current.forEach(mount => mount.remove());
+      mountsRef.current.clear();
     };
   }, [contentHtml]);
   return <>
