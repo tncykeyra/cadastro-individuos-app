@@ -26,6 +26,30 @@ function Metric({ icon, label, value, detail, onClick }) {
   </Tag>;
 }
 
+
+export function CityDashboardLoading({ cityName }) {
+  return <main className="city-react-loading-screen" role="status" aria-live="polite" aria-label="Carregando painel da cidade">
+    <section className="city-react-loading-card">
+      <div className="city-react-loader-visual" aria-hidden="true">
+        <span className="city-react-loader-orbit city-react-loader-orbit-one"/>
+        <span className="city-react-loader-orbit city-react-loader-orbit-two"/>
+        <span className="city-react-loader-core"><Icon type="file"/></span>
+        <i className="city-react-loader-dot city-react-loader-dot-one"/>
+        <i className="city-react-loader-dot city-react-loader-dot-two"/>
+        <i className="city-react-loader-dot city-react-loader-dot-three"/>
+      </div>
+      <span className="city-react-loading-eyebrow">CADASTRO DE INDIVÍDUOS</span>
+      <h1>Preparando seu painel</h1>
+      <p>Estamos organizando os indicadores de <strong>{cityName || 'sua cidade'}</strong>.</p>
+      <div className="city-react-loading-track" aria-hidden="true"><span/></div>
+      <span className="city-react-loading-caption">Consultando dados e atualizando informações…</span>
+      <div className="city-react-loading-skeletons" aria-hidden="true">
+        <i/><i/><i/><i/>
+      </div>
+    </section>
+  </main>;
+}
+
 export default function CityDashboard({
   cityName, roleLabel, stats, photoStats, pendingIdentityCount, pendingVehiclePlateCount,
   busy = false, error = '', onRefresh, onNavigate,
