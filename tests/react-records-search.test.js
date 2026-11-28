@@ -39,11 +39,11 @@ test('pesquisa mantém a raiz React e não rouba o foco durante atualizações',
 
 
 test('alfabeto fica logo abaixo da pesquisa em uma faixa horizontal deslizável', () => {
-  assert.match(component, /react-records-search-wrap[\\s\\S]*?react-records-search[\\s\\S]*?react-record-letters/);
+  assert.match(component, /react-records-search-wrap[\s\S]*?react-records-search[\s\S]*?react-record-letters/);
   assert.match(component, /aria-label="Filtrar indivíduos pela inicial"/);
-  assert.match(component, /letters\\.map\\(item => <Button/);
-  assert.doesNotMatch(component, /react-records-toolbar[\\s\\S]{0,220}react-record-letters/);
-  assert.match(css, /react-record-letters\\{[^}]*overflow-x:auto[^}]*flex-wrap:nowrap/);
+  assert.match(component, /letters\.map\(item => <Button/);
+  assert.doesNotMatch(component, /react-records-toolbar[\s\S]{0,220}react-record-letters/);
+  assert.match(css, /react-record-letters\{[^}]*overflow-x:auto[^}]*flex-wrap:nowrap/);
   assert.match(css, /-webkit-overflow-scrolling:touch/);
-  assert.match(css, /react-record-letters \\.ui-button\\{flex:0 0 auto/);
+  assert.match(css, /react-record-letters \.ui-button\{flex:0 0 auto/);
 });
