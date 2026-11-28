@@ -80,14 +80,14 @@ export default function PeopleWorkspace({ contentHtml, view = 'list' }) {
   return <div className={'people-react-shell ' + (detail ? 'is-detail' : 'is-list')}>
     <header className="people-react-hero">
       <div className="people-react-heading">
-        <span className="people-react-eyebrow">{detail ? 'CONSULTA INDIVIDUAL' : 'GESTÃO DE INDIVÍDUOS'}</span>
-        <h1>{detail ? 'Ficha do indivíduo' : 'Gestão de indivíduos'}</h1>
+        {detail && <span className="people-react-eyebrow">CONSULTA INDIVIDUAL</span>}
+        <h1>{detail ? 'Ficha do indivíduo' : 'Indivíduos'}</h1>
         <p>{detail
           ? 'Identificação, informações complementares, vínculos e veículos associados em uma única consulta.'
           : 'Consulte e gerencie os registros individuais, com acesso organizado aos dados de identificação e aos vínculos associados.'}</p>
       </div>
       <div className="people-react-tools">
-        <span className="people-react-context"><span className="people-react-context-dot" />{detail ? 'Registro selecionado' : 'Base municipal'}</span>
+        {detail && <span className="people-react-context"><span className="people-react-context-dot" />Registro selecionado</span>}
       </div>
     </header>
     <PeopleReactContent key={contentHtml} contentHtml={contentHtml} />
