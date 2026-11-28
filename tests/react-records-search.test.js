@@ -28,3 +28,11 @@ test('cards React formatam CPF e preservam foto e abertura da ficha', () => {
   assert.match(component, /record\.photos\?\.find/);
   assert.match(component, /onOpen\(record\.id, entity\)/);
 });
+
+test('pesquisa mantém a raiz React e não rouba o foco durante atualizações', async () => {
+  assert.match(main, /if\(!peopleReactRoot\)peopleReactRoot=createRoot\(root\)/);
+  assert.match(main, /if\(!vehicleReactRoot\)vehicleReactRoot=createRoot\(root\)/);
+  assert.doesNotMatch(main, /if\(peopleReactRoot\)\{peopleReactRoot\.unmount\(\);peopleReactRoot=null\}[\s\S]{0,160}const renderRoot=createRoot\(root\)/);
+  assert.doesNotMatch(main, /root\.focus\(\{preventScroll:true\}\);\s*}\s*async function renderRecords\(\)/);
+  assert.match(component, /type="text" inputMode="search" enterKeyHint="search"/);
+});
