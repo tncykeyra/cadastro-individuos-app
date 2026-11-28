@@ -1522,12 +1522,76 @@ async function refreshDashboardPhotoStats(){
   dashboardPhotoStatsPromise=request;dashboardPhotoStatsPromiseCityId=cityId;
   try{return await request}finally{if(dashboardPhotoStatsPromise===request){dashboardPhotoStatsPromise=null;dashboardPhotoStatsPromiseCityId=null}}
 }
-let dashboardRenderToken=0;
+let cityDashboardRoot=null;
+const CITY_DASHBOARD_MODE_KEY='cadastro-painel-cidade-mode-v1';
+function getCityDashboardMode(){try{return localStorage.getItem(CITY_DASHBOARD_MODE_KEY)==='classic'?'classic':'react'}catch{return 'react'}}
+function setCityDashboardMode(mode){try{localStorage.setItem(CITY_DASHBOARD_MODE_KEY,mode)}catch{}}
 async function renderDashboard(){
+  if(getCityDashboardMode()==='classic')return renderDashboardClassic();
+  return renderDashboardReact();
+}
+async function renderDashboardReact(){
+  const token=++dashboardRenderToken,cityId=state.activeCityId,root=$('#mainContent');
+  if(!cityId||!root)return renderDashboardClassic();
+  root.innerHTML='<section class="dashboard-intro"><h1>Painel da cidade</h1><p>Preparando o painel moderno…</p></section><div class="city-react-loading" role="status">Carregando indicadores da cidade…</div>';
+  const cachedPhotoStats=dashboardPhotoStatsCacheCityId===cityId?dashboardPhotoStatsCache:null;
+  const stalePhotoStats=!cachedPhotoStats||Date.now()-dashboardPhotoStatsAt>30000;
+  const [peopleResult,cpfResult,vehicleResult,warrantResult,identityResult]=await Promise.all([
+    state.client.from('people').select('id',{count:'exact',head:true}).is('archived_at',null).eq('city_id',cityId),
+    state.client.from('people').select('id',{count:'exact',head:true}).is('archived_at',null).eq('city_id',cityId).not('cpf_digits','is',null).neq('cpf_digits',''),
+    state.client.from('vehicles').select('id',{count:'exact',head:true}).is('archived_at',null).eq('city_id',cityId),
+    state.client.rpc('count_active_arrest_warrants'),
+    isAdmin()?state.client.from('person_identity_change_proposals').select('id',{count:'exact',head:true}).eq('city_id',cityId).eq('status','pending'):Promise.resolve({count:0,error:null})
+  ]);
+  if(token!==dashboardRenderToken||state.page!=='dashboard'||state.activeCityId!==cityId)return;
+  if(isAdmin()){state.pendingIdentityCount=identityResult.error?null:Number(identityResult.count||0);nav()}
+  const failed=[peopleResult,cpfResult,vehicleResult,warrantResult].find(result=>result.error);
+  const stats={people:failed?null:Number(peopleResult.count||0),cpf:failed?null:Number(cpfResult.count||0),vehicles:failed?null:Number(vehicleResult.count||0),warrants:failed?null:Number(warrantResult.data||0)};
+  const dashboardCityName=state.cities.find(city=>city.id===cityId)?.name||'Cidade ativa';
+  const role=isMasterAdmin()?'Master':isAdmin()?'Administrador':state.cityRole==='operator'?'Operador':'Acesso autorizado';
+  try{
+    const [{createRoot},{default:React},{default:CityDashboard}]=await Promise.all([import('react-dom/client'),import('react'),import('./react/CityDashboard.jsx')]);
+    if(token!==dashboardRenderToken||state.page!=='dashboard'||state.activeCityId!==cityId)return;
+    if(cityDashboardRoot){cityDashboardRoot.unmount();cityDashboardRoot=null}
+    cityDashboardRoot=createRoot(root);
+    cityDashboardRoot.render(React.createElement(CityDashboard,{
+      cityName:dashboardCityName,roleLabel:role,stats,photoStats:cachedPhotoStats,
+      pendingIdentityCount:identityResult.error?state.pendingIdentityCount:identityResult.count,
+      pendingVehiclePlateCount:state.pendingVehiclePlateCount,
+      error:failed?'Não foi possível atualizar todos os indicadores. Tente novamente.':'',
+      onRefresh:()=>{void renderDashboardReact()},
+      onNavigate:async(page,teamPage)=>{
+        if(cityDashboardRoot){cityDashboardRoot.unmount();cityDashboardRoot=null}
+        state.page=page;if(teamPage)state.teamPage=teamPage;await loadPage();
+      },
+      onSwitchClassic:()=>{
+        setCityDashboardMode('classic');
+        if(cityDashboardRoot){cityDashboardRoot.unmount();cityDashboardRoot=null}
+        void renderDashboardClassic();
+      }
+    }));
+    if(stalePhotoStats)void refreshDashboardPhotoStats().then(photoStats=>{
+      if(photoStats&&state.page==='dashboard'&&state.activeCityId===cityId&&getCityDashboardMode()==='react')void renderDashboardReact();
+    });
+  }catch(error){
+    console.error('Não foi possível abrir o painel React. O painel clássico será usado.',error);
+    setCityDashboardMode('classic');
+    if(cityDashboardRoot){cityDashboardRoot.unmount();cityDashboardRoot=null}
+    await renderDashboardClassic();
+    toast('O painel moderno não pôde ser carregado. O painel clássico foi mantido.');
+  }
+}
+let dashboardRenderToken=0;
+async function renderDashboardClassic(){
   const token=++dashboardRenderToken,photoStats=dashboardPhotoStatsCacheCityId===state.activeCityId?dashboardPhotoStatsCache:null,stale=!photoStats||Date.now()-dashboardPhotoStatsAt>30000,photoCount=photoStats&&photoStats.complete&&photoStats.count!==null?Number(photoStats.count).toLocaleString('pt-BR'):'…';
   const vehiclePlateAlertMarkup=isAdmin()?'<button id="dashboardVehiclePlateAlert" class="dashboard-proposal-alert" data-page="team" data-team-page="identity"'+(Number(state.pendingVehiclePlateCount)?'':' hidden')+'><span class="dashboard-proposal-icon">!</span><span><strong>Sugestões de placa de veículo</strong><small><span id="dashboardVehiclePlateCount">'+(state.pendingVehiclePlateCount||0)+'</span> aguardando revisão administrativa</small></span><span aria-hidden="true">›</span></button>':'';const proposalAlertMarkup=isAdmin()?'<button id="dashboardIdentityAlert" class="dashboard-proposal-alert" data-page="team" data-team-page="identity" hidden><span class="dashboard-proposal-icon">!</span><span><strong>Sugestões de nome e CPF</strong><small><span id="dashboardIdentityCount">0</span> aguardando revisão administrativa</small></span><span aria-hidden="true">›</span></button>':'';
   const dashboardCityName=state.cities.find(city=>city.id===state.activeCityId)?.name||'Cidade ativa';
-  frame('<section class="dashboard-intro"><h1>Painel da cidade</h1><p>'+esc(dashboardCityName)+' · Resumo dos cadastros ativos.</p></section><div class="dashboard-cards"><section class="dashboard-card dashboard-person-card"><button type="button" class="dashboard-person-main" data-page="people"><span class="dashboard-icon">'+personIcon()+'</span><span class="dashboard-label">Indivíduos cadastrados</span><strong id="dashboardPeopleCount">…</strong><span class="dashboard-substats"><span class="dashboard-substat"><strong id="dashboardPhotoCount">'+photoCount+'</strong><small>Com foto</small></span><span class="dashboard-substat"><strong id="dashboardCpfCount">…</strong><small>Com CPF cadastrado</small></span></span><span class="dashboard-count-note" id="dashboardCountNote"'+(photoStats?.complete?' hidden':'')+'>'+(photoStats&&!photoStats.complete?'Contagem de fotos indisponível agora.':'Atualizando fotos em segundo plano…')+'</span><span class="dashboard-link">Abrir cadastros →</span></button>'+proposalAlertMarkup+vehiclePlateAlertMarkup+'</section><button class="dashboard-card" data-page="vehicles"><span class="dashboard-icon">'+carIcon()+'</span><span class="dashboard-label">Veículos cadastrados</span><strong id="dashboardVehicleCount">…</strong><span class="dashboard-link">Abrir veículos →</span></button><button class="dashboard-card" data-page="warrants"><span class="dashboard-icon" aria-hidden="true">⚖</span><span class="dashboard-label">Mandados de prisão ativos</span><strong id="dashboardWarrantCount">…</strong><span class="dashboard-link">Abrir mandados →</span></button></div>');
+  frame('<section class="dashboard-intro"><h1>Painel da cidade</h1><p>'+esc(dashboardCityName)+' · Resumo dos cadastros ativos.</p><button type="button" id="dashboardReactSwitch" class="dashboard-react-switch">Experimentar painel moderno</button></section><div class="dashboard-cards"><section class="dashboard-card dashboard-person-card"><button type="button" class="dashboard-person-main" data-page="people"><span class="dashboard-icon">'+personIcon()+'</span><span class="dashboard-label">Indivíduos cadastrados</span><strong id="dashboardPeopleCount">…</strong><span class="dashboard-substats"><span class="dashboard-substat"><strong id="dashboardPhotoCount">'+photoCount+'</strong><small>Com foto</small></span><span class="dashboard-substat"><strong id="dashboardCpfCount">…</strong><small>Com CPF cadastrado</small></span></span><span class="dashboard-count-note" id="dashboardCountNote"'+(photoStats?.complete?' hidden':'')+'>'+(photoStats&&!photoStats.complete?'Contagem de fotos indisponível agora.':'Atualizando fotos em segundo plano…')+'</span><span class="dashboard-link">Abrir cadastros →</span></button>'+proposalAlertMarkup+vehiclePlateAlertMarkup+'</section><button class="dashboard-card" data-page="vehicles"><span class="dashboard-icon">'+carIcon()+'</span><span class="dashboard-label">Veículos cadastrados</span><strong id="dashboardVehicleCount">…</strong><span class="dashboard-link">Abrir veículos →</span></button><button class="dashboard-card" data-page="warrants"><span class="dashboard-icon" aria-hidden="true">⚖</span><span class="dashboard-label">Mandados de prisão ativos</span><strong id="dashboardWarrantCount">…</strong><span class="dashboard-link">Abrir mandados →</span></button></div>');
+  const reactSwitch=$('#dashboardReactSwitch');
+  if(reactSwitch)reactSwitch.addEventListener('click',()=>{
+    setCityDashboardMode('react');
+    void renderDashboardReact();
+  });
   if(stale)void refreshDashboardPhotoStats();
   const [peopleResult,cpfResult,vehicleResult,warrantResult,identityResult]=await Promise.all([
     state.client.from('people').select('id',{count:'exact',head:true}).is('archived_at',null).eq('city_id',state.activeCityId),
