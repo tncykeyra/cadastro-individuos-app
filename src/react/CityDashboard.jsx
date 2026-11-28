@@ -1,4 +1,5 @@
 import React from 'react';
+import { Button } from './ui-system.jsx';
 import './city-dashboard.css';
 
 const number = (value) => value === null || value === undefined ? '—' : Number(value || 0).toLocaleString('pt-BR');
@@ -45,7 +46,7 @@ export default function CityDashboard({
 
     <div className="city-react-heading">
       <div><span className="city-react-eyebrow">VISÃO GERAL</span><h2>Resumo operacional</h2><p>Indicadores dos registros ativos da unidade.</p></div>
-      <button className="city-react-refresh" type="button" onClick={onRefresh} disabled={busy}><Icon type="refresh"/>{busy ? 'Atualizando…' : 'Atualizar dados'}</button>
+      <Button variant="secondary" size="md" className="city-react-refresh" type="button" onClick={onRefresh} disabled={busy} leftIcon={<Icon type="refresh"/>}>{busy ? 'Atualizando…' : 'Atualizar dados'}</Button>
     </div>
 
     <div className="city-react-metrics">
