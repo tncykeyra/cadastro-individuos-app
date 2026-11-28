@@ -35,7 +35,7 @@ test('cards grandes de veículos permanecem grandes inclusive no mobile', () => 
 
 test('versão, cache e atualização do service worker acompanham a correção', () => {
   assert.equal(JSON.parse(pkg).version, '2.52.11');
-  assert.match(worker, /cadastro-app-shell-v148/);
-  assert.match(main, /sw\.js\?v=115/);
+  assert.match(worker, /cadastro-app-shell-v149/);
+  assert.match(main, /sw\.js\?v=116/);
   assert.match(index, /card-density\.css\?v=2/);
 });
