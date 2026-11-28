@@ -7,8 +7,6 @@
 .vehicles-react-tools{display:flex;flex-direction:column;align-items:flex-end;gap:10px;flex:0 0 auto}
 .vehicles-react-context{display:flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid var(--v-line);border-radius:99px;background:var(--v-bg);font-size:.72rem;font-weight:750}
 .vehicles-react-context-dot{width:7px;height:7px;border-radius:50%;background:#75847b;box-shadow:0 0 0 3px #75847b20}
-.vehicles-react-switch{padding:9px 12px;border:1px solid var(--v-line);border-radius:10px;color:var(--v-ink);background:var(--v-bg);font:inherit;font-size:.76rem;font-weight:750;cursor:pointer;transition:border-color .15s,transform .15s}
-.vehicles-react-switch:hover{border-color:var(--brand);transform:translateY(-1px)}
 .vehicles-react-content{min-width:0}
 .vehicles-react-content>.page-intro{align-items:center;margin:0 0 18px;padding:0 2px 16px;border-bottom:1px solid var(--v-line)}
 .vehicles-react-content>.page-intro h1{margin:0 0 5px;font-size:1.15rem;letter-spacing:-.02em}
@@ -58,10 +56,9 @@
 :root[data-theme="dark"] .vehicles-react-shell .vehicles-react-hero{background:linear-gradient(125deg,var(--surface),var(--page));box-shadow:none}
 :root[data-theme="dark"] .vehicles-react-content .vehicle-card,:root[data-theme="dark"] .vehicles-react-content .detail-hero,:root[data-theme="dark"] .vehicles-react-content .detail-sections>.info,:root[data-theme="dark"] .vehicles-react-content>.list .list-row{background:var(--v-bg);color:var(--v-ink);box-shadow:none}
 :root[data-theme="dark"] .vehicles-react-content .vehicle-card .vehicle-placeholder{background:var(--page)}
-:root[data-theme="dark"] .vehicles-react-shell .vehicles-react-switch{background:var(--v-bg);color:var(--v-ink)}
 @media(max-width:760px){.vehicles-react-shell .vehicles-react-hero{align-items:stretch;flex-direction:column;padding:18px;border-radius:16px}.vehicles-react-shell .vehicles-react-tools{align-items:flex-start}.vehicles-react-content>.page-intro{align-items:flex-start;flex-direction:column}.vehicles-react-content .page-actions{width:100%}.vehicles-react-content .page-actions .button{flex:1}.vehicles-react-shell.is-detail .vehicles-react-content .detail-hero{grid-template-columns:1fr;padding:16px}.vehicles-react-shell.is-detail .vehicles-react-content .detail-hero .record-gallery-detail{max-width:100%;width:min(100%,460px)}}
 @media(max-width:520px){.vehicles-react-content .vehicle-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.vehicles-react-content .vehicle-card .card-photo-gallery,.vehicles-react-content .vehicle-card .vehicle-placeholder{height:122px;min-height:122px}.vehicles-react-content .vehicle-card-copy{padding:12px}.vehicles-react-content .vehicle-card-copy h3{font-size:.9rem}.vehicles-react-content .vehicle-card-copy p{font-size:.69rem}.vehicles-react-shell.is-detail .vehicles-react-content .detail-sections{grid-template-columns:1fr}.vehicles-react-shell.is-detail .vehicles-react-content .detail-sections>.info:last-child{grid-column:auto}.vehicles-react-shell.is-detail .vehicles-react-content .detail-title{align-items:flex-start;flex-direction:column}.vehicles-react-shell.is-detail .vehicles-react-content .detail-actions{width:100%}.vehicles-react-shell.is-detail .vehicles-react-content .detail-actions .button{flex:1}.vehicles-react-shell.is-detail .vehicles-react-content .association-section-heading{align-items:flex-start;flex-direction:column}.vehicles-react-shell .vehicle-classic-switch{justify-content:flex-start}}
-@media(prefers-reduced-motion:reduce){.vehicles-react-content .vehicle-card,.vehicles-react-content>.list .list-row,.vehicles-react-shell .vehicles-react-switch{transition:none}}
+@media(prefers-reduced-motion:reduce){.vehicles-react-content .vehicle-card,.vehicles-react-content>.list .list-row{transition:none}}
 
 
 /* Galeria dos cards: foto principal e miniaturas em áreas independentes. */
