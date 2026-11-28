@@ -2619,7 +2619,7 @@ document.addEventListener('click',async e=>{const button=e.target.closest('[data
   window.addEventListener('focus',()=>{void checkForAppUpdate();applyAvailableUpdate()});
   document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('close',applyAvailableUpdate));
   new MutationObserver(applyAvailableUpdate).observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
-  const registerAppWorker=()=>navigator.serviceWorker.register(import.meta.env.BASE_URL+'sw.js?v=111',{updateViaCache:'none'}).then(registration=>registration.update()).catch(()=>{});
+  const registerAppWorker=()=>navigator.serviceWorker.register(import.meta.env.BASE_URL+'sw.js?v=112',{updateViaCache:'none'}).then(registration=>registration.update()).catch(()=>{});
   void registerAppWorker();
   window.addEventListener('online',()=>{void checkForAppUpdate()});
   window.addEventListener('pageshow',()=>{void checkForAppUpdate()});
