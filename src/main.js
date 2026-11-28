@@ -10,6 +10,7 @@ import { renderFiscalizationPage, wireFiscalizationActions } from './fiscalizati
 import { renderVehicleInterestPage, wireVehicleInterestActions } from './vehicle-interest.js';
 import { renderIntelligentEntry, parseIntelligentText, parseIntelligentBundle, inspectRecords, getSmartPersonSearchTerms, duplicateReviewPairKey } from './intelligent-tools.js';
 import { renderSystemTestsPanel, refreshSystemTestsPanel } from './system-tests-panel.js';
+import { mountAssociationDialog } from './react/VehiclesWorkspace.jsx';
 
 let ocrEnginePromise;
 async function processOcrFiles(...args){
@@ -2093,7 +2094,12 @@ async function showLinkForm(entity,id){
   const targetField=isPerson
     ?'<div class="field full"><label for="vehicleAssociationSearch">Pesquisar veículo pela placa</label><div class="plate-input-row"><input id="vehicleAssociationSearch" type="search" autocomplete="off" placeholder="Digite a placa (AAA0000 ou AAA0A00)"><button class="button search-button" type="button" data-search-associated-vehicle aria-label="Pesquisar veículo pela placa">⌕</button></div><input id="linkTarget" name="target" type="hidden"><div id="vehicleAssociationResults" class="association-search-results" role="listbox"></div><button class="button secondary small association-search-create" type="button" data-create-associated-vehicle>＋ Cadastrar veículo</button></div>'
     :'<div class="field full"><label for="personAssociationSearch">Pesquisar pessoa por nome, CPF ou RG</label><div class="plate-input-row"><input id="personAssociationSearch" type="search" autocomplete="off" placeholder="Digite nome, CPF ou RG"><button class="button search-button" type="button" data-search-associated-person aria-label="Pesquisar pessoa">⌕</button></div><input id="linkTarget" name="target" type="hidden"><div id="personAssociationResults" class="association-search-results" role="listbox"></div></div>';
-  d.innerHTML='<div class="dialog-inner"><div class="dialog-head"><h2>Associar '+(isPerson?'veículo à pessoa':'pessoa ao veículo')+'</h2><button class="close" data-close>×</button></div><form id="linkForm"><div class="form-grid">'+targetField+'<div class="field"><label for="relation">Relação</label><select id="relation" name="relation"><option value="driver">Condutor</option><option value="owner">Proprietário</option><option value="associated">Associado</option></select></div>'+field('Notas do vínculo','notes','','text',true)+'</div></form><div class="dialog-actions"><button class="button secondary" data-close type="button">Cancelar</button><button class="button" type="submit" form="linkForm">Associar</button></div></div>';
+  d.__associationReactRoot?.unmount?.();
+  d.__associationReactRoot=mountAssociationDialog(d,{
+    isPerson,
+    targetFieldHtml:targetField,
+    notesFieldHtml:field('Notas do vínculo','notes','','text',true)
+  });
   d.showModal();
   const associationThumb=(record,icon)=>'<span class="association-result-thumb"><img data-association-photo="'+esc(record.id)+'" alt="" loading="lazy" decoding="async" hidden><span class="association-result-placeholder" aria-hidden="true">'+icon+'</span></span>';
   const hydrateAssociationThumbs=async (entity,records,container)=>{
