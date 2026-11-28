@@ -296,8 +296,8 @@ async function renderVehicleWorkspace(contentHtml,view='list',recordId=null,vehi
     settleLoadedCardPhotos(root);
   }catch(error){
     console.error('Falha ao carregar o workspace React de veículos.',error);
-    frame(contentHtml);
-    toast('O módulo de veículos foi aberto no contêiner React de compatibilidade. Tente atualizar o aplicativo.');
+    frame(contentHtml||('<div class="error-box">Não foi possível abrir a ficha React do veículo '+esc(vehicleOptions.detailData?.vehicle?.plate||'')+'. Seus dados permanecem preservados. <button class="button secondary" type="button" data-back>Voltar para veículos</button></div>'));
+    toast('A ficha React não pôde ser carregada. Tente atualizar o aplicativo.');
   }
 }
 async function renderPeopleWorkspace(contentHtml,view='list',recordId=null){
