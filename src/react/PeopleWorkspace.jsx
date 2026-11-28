@@ -75,7 +75,7 @@ function PeopleReactContent({ contentHtml }) {
   </>;
 }
 
-export default function PeopleWorkspace({ contentHtml, view = 'list', onSwitchClassic }) {
+export default function PeopleWorkspace({ contentHtml, view = 'list' }) {
   const detail = view === 'detail';
   return <div className={'people-react-shell ' + (detail ? 'is-detail' : 'is-list')}>
     <header className="people-react-hero">
@@ -88,7 +88,6 @@ export default function PeopleWorkspace({ contentHtml, view = 'list', onSwitchCl
       </div>
       <div className="people-react-tools">
         <span className="people-react-context"><span className="people-react-context-dot" />{detail ? 'Registro selecionado' : 'Base municipal'}</span>
-        <Button className="people-react-switch" type="button" onClick={onSwitchClassic}>Voltar à interface clássica</Button>
       </div>
     </header>
     <PeopleReactContent key={contentHtml} contentHtml={contentHtml} />

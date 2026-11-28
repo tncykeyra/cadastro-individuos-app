@@ -8,12 +8,11 @@ const [main, component, styles] = await Promise.all([
   readFile(new URL('../styles.css', import.meta.url), 'utf8')
 ]);
 
-test('aba Mandados usa workspace React e mantém modo clássico reversível', () => {
+test('aba Mandados usa workspace React sem botão de retorno à interface clássica', () => {
   assert.match(main, /WARRANTS_UI_MODE_KEY/);
   assert.match(main, /renderWarrantWorkspace\(pageHtml,warrantStats,admin\)/);
-  assert.match(main, /setWarrantsUiMode\('classic'\)/);
-  assert.match(main, /data-warrant-enable-react/);
-  assert.match(component, /Voltar à interface clássica/);
+  assert.doesNotMatch(main, /onSwitchClassic/);
+  assert.doesNotMatch(component, /Voltar à interface clássica/);
   assert.match(component, /dangerouslySetInnerHTML/);
 });
 

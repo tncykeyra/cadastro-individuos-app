@@ -99,7 +99,7 @@ function WarrantsReactContent({ contentHtml }) {
   </>;
 }
 
-export default function WarrantsWorkspace({ contentHtml, stats, admin, onSwitchClassic }) {
+export default function WarrantsWorkspace({ contentHtml, stats, admin }) {
   return <div className="warrants-react-shell">
     <header className="warrants-react-hero">
       <div>
@@ -109,7 +109,6 @@ export default function WarrantsWorkspace({ contentHtml, stats, admin, onSwitchC
       </div>
       <div className="warrants-react-hero-side">
         <span className="warrants-react-role">{admin ? 'Área administrativa' : 'Consulta operacional'}</span>
-        <Button className="warrants-react-switch" type="button" onClick={onSwitchClassic}>Voltar à interface clássica</Button>
       </div>
     </header>
 

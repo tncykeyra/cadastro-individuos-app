@@ -23,17 +23,14 @@ test('Prévia React apresenta acessos rápidos e identificação da cidade', asy
   assert.ok(app.includes("setPage('vehicles')"));
 });
 
-test('Painel integrado preserva dados, atalhos e opção de retorno ao clássico', async () => {
+test('Painel integrado preserva dados e atalhos sem oferecer retorno à interface clássica', async () => {
   const dashboard = await readFile(dashboardUrl, 'utf8');
   const main = await readFile(mainUrl, 'utf8');
-  for (const label of ['Indivíduos cadastrados','Indivíduos com foto','Veículos cadastrados','Mandados ativos','Voltar ao painel clássico']) {
+  for (const label of ['Indivíduos cadastrados','Indivíduos com foto','Veículos cadastrados','Mandados ativos']) {
     assert.ok(dashboard.includes(label), 'Elemento ausente no painel: ' + label);
   }
-  assert.ok(main.includes("const CITY_DASHBOARD_MODE_KEY='cadastro-painel-cidade-mode-v1'"));
-  assert.ok(main.includes("localStorage.getItem(CITY_DASHBOARD_MODE_KEY)==='classic'"));
-  assert.ok(main.includes('async function renderDashboardClassic()'));
-  assert.ok(main.includes('async function renderDashboardReact()'));
-  assert.ok(main.includes('Experimentar painel moderno'));
+  assert.ok(!dashboard.includes('Voltar ao painel clássico'));
+  assert.ok(!main.includes('onSwitchClassic'));
 });
 
 test('Estilos preservam a paleta institucional e oferecem layout responsivo', async () => {

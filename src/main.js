@@ -271,7 +271,6 @@ async function renderVehicleWorkspace(contentHtml,view='list',recordId=null,vehi
     releaseLegacyPageRoot();vehicleReactRoot=createRoot(root);
     flushSync(()=>vehicleReactRoot.render(React.createElement(VehiclesWorkspace,{
       contentHtml,view,recordId,canDelete:Boolean(vehicleOptions.canDelete),
-      onSwitchClassic:()=>{setVehiclesUiMode('classic');if(vehicleReactRoot){vehicleReactRoot.unmount();vehicleReactRoot=null}if(view==='detail')void openVehicle(recordId,true);else void renderRecords()}
     })));
     root.focus({preventScroll:true});
     settleLoadedCardPhotos(root);
@@ -299,7 +298,6 @@ async function renderPeopleWorkspace(contentHtml,view='list',recordId=null){
     releaseLegacyPageRoot();peopleReactRoot=createRoot(root);
     flushSync(()=>peopleReactRoot.render(React.createElement(PeopleWorkspace,{
       contentHtml,view,
-      onSwitchClassic:()=>{setPeopleUiMode('classic');if(peopleReactRoot){peopleReactRoot.unmount();peopleReactRoot=null}if(view==='detail')void openPerson(recordId,true);else void renderRecords()}
     })));
     root.focus({preventScroll:true});
     settleLoadedCardPhotos(root);
@@ -324,7 +322,6 @@ async function renderWarrantWorkspace(contentHtml,stats,admin){
     releaseLegacyPageRoot();warrantReactRoot=createRoot(root);
     flushSync(()=>warrantReactRoot.render(React.createElement(WarrantsWorkspace,{
       contentHtml,stats,admin,
-      onSwitchClassic:()=>{setWarrantsUiMode('classic');if(warrantReactRoot){warrantReactRoot.unmount();warrantReactRoot=null}void renderWarrants()}
     })));
     root.focus({preventScroll:true});
   }catch(error){
@@ -1668,11 +1665,6 @@ async function renderDashboardReact(){
         if(cityDashboardRoot){cityDashboardRoot.unmount();cityDashboardRoot=null}
         state.page=page;if(teamPage)state.teamPage=teamPage;await loadPage();
       },
-      onSwitchClassic:()=>{
-        setCityDashboardMode('classic');
-        if(cityDashboardRoot){cityDashboardRoot.unmount();cityDashboardRoot=null}
-        void renderDashboardClassic();
-      }
     }));
     if(stalePhotoStats)void refreshDashboardPhotoStats().then(photoStats=>{
       if(photoStats&&state.page==='dashboard'&&state.activeCityId===cityId&&getCityDashboardMode()==='react')void renderDashboardReact();
@@ -2346,7 +2338,6 @@ async function renderCities(){
   onCreate:async name=>{const {error}=await state.client.rpc('master_create_city',{p_name:name});if(error)throw error;await loadCityContext();toast('Cidade criada e ativada.');await renderCities()},
   onAssign:async(userId,cityRoles)=>{const {error}=await state.client.rpc('master_replace_user_city_roles',{p_user_id:userId,p_city_roles:cityRoles});if(error)throw error;toast('Perfis de acesso atualizados por cidade.');await renderCities()},
   onRemove:async(userId,cityId)=>{if(!confirm('Remover o acesso deste usuário à cidade?'))return;const {error}=await state.client.rpc('remove_city_user',{p_user_id:userId,p_city_id:cityId});if(error)throw error;toast('Acesso removido.');await renderCities()},
-  onSwitchClassic:async()=>{setCitiesUiMode('classic');if(citiesReactRoot){citiesReactRoot.unmount();citiesReactRoot=null}await renderCitiesClassic()}
  };
  flushSync(()=>citiesReactRoot.render(React.createElement(CitiesWorkspace,{cityCatalog:cities||[],profiles:profiles||[],members:members||[],...callbacks})));
  root.focus({preventScroll:true});

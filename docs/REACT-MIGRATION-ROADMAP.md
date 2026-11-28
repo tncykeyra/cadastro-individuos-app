@@ -69,3 +69,8 @@ A aplicação ainda possui fluxos de apresentação imperativa em `src/main.js` 
 ## Estado
 
 A versão 2.45.0 amplia a montagem React para as páginas genéricas e padroniza seus botões. A versão 2.44.1 iniciou a migração transversal com o viewport global de notificações em React. Os diálogos, galerias, formulários, importações e exportações ainda exigem migração por fluxo, com validação própria. Esta entrega não declara concluída a etapa 6 nem a migração estrutural de todas as telas. A migração restante deve seguir os lotes acima, evitando uma troca ampla que possa interromper o serviço.
+
+
+## 2026-11-28 — Remoção dos controles de retorno ao clássico
+
+Foram removidos das áreas Painel da Cidade, Indivíduos, Veículos, Mandados e Cidades e Acessos todos os botões visíveis que permitiam retornar à interface clássica. As ações de navegação, consulta, edição, associação e administração permanecem preservadas. A camada clássica permanece apenas como mecanismo interno de contingência caso algum módulo React não possa ser carregado; não há controle de usuário para alternar para ela.

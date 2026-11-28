@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import Button from './ui/Button.jsx';
 import './cities-workspace.css';
-export default function CitiesWorkspace({cityCatalog=[],profiles=[],members=[],onActivate,onCreate,onAssign,onRemove,onSwitchClassic}){
+export default function CitiesWorkspace({cityCatalog=[],profiles=[],members=[],onActivate,onCreate,onAssign,onRemove}){
  const[selectedUser,setSelectedUser]=useState(''),[cityRoles,setCityRoles]=useState({}),[newCityName,setNewCityName]=useState(''),[busy,setBusy]=useState(''),[actionError,setActionError]=useState('');
  const activeCities=useMemo(()=>cityCatalog.filter(c=>c.active),[cityCatalog]);
  const users=useMemo(()=>profiles.filter(p=>['operator','admin'].includes(p.role)),[profiles]);
@@ -11,7 +11,7 @@ export default function CitiesWorkspace({cityCatalog=[],profiles=[],members=[],o
  const create=e=>{e.preventDefault();const name=newCityName.trim();if(name){setNewCityName('');void run('create',()=>onCreate(name))}};
  const assign=e=>{e.preventDefault();const selected=activeCities.filter(c=>cityRoles[c.id]?.checked);if(selectedUser&&selected.length)void run('assign',()=>onAssign(selectedUser,selected.map(c=>({city_id:c.id,role:cityRoles[c.id]?.role==='admin'?'admin':'operator'}))))};
  return <div className="cities-react-workspace">
-  <header className="cities-react-heading"><div><span className="react-eyebrow">ADMINISTRAÇÃO MASTER</span><h1>Cidades e acessos</h1><p>Gerencie as cidades disponíveis e os vínculos de acesso de cada usuário.</p></div><Button className="button secondary small" type="button" onClick={onSwitchClassic}>Usar interface clássica</Button></header>
+  <header className="cities-react-heading"><div><span className="react-eyebrow">ADMINISTRAÇÃO MASTER</span><h1>Cidades e acessos</h1><p>Gerencie as cidades disponíveis e os vínculos de acesso de cada usuário.</p></div></header>
   {actionError&&<div className="react-alert error" role="alert">{actionError}</div>}<div className="cities-react-grid">
    <section className="panel cities-react-panel"><div className="cities-react-section-title"><div><span className="react-eyebrow">ESTRUTURA</span><h2>Cidades cadastradas</h2></div><span className="cities-react-count">{cityCatalog.length}</span></div>
     <div className="cities-react-list">{cityCatalog.length?cityCatalog.map(city=>{const cityMembers=members.filter(m=>m.city_id===city.id),expanded=Boolean(cityRoles['expanded:'+city.id]?.checked);return <article className="cities-react-item" key={city.id}><div className="cities-react-item-head"><Button className="cities-react-city-toggle" type="button" aria-expanded={expanded} onClick={()=>update('expanded:'+city.id,{checked:!expanded})}><span><strong>{city.name}</strong><small>{Number(city.assigned_users||0)} usuário(s) ativo(s)</small></span><span aria-hidden="true">{expanded?'⌃':'⌄'}</span></Button><span className={'cities-react-status '+(city.active?'active':'inactive')}>{city.active?'Ativa':'Inativa'}</span>{!city.active&&<Button className="button small" type="button" disabled={busy==='activate:'+city.id} onClick={()=>void run('activate:'+city.id,()=>onActivate(city.id))}>Ativar</Button>}</div>

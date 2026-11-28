@@ -119,7 +119,7 @@ function VehicleDetailActionMount({ contentHtml, recordId, canDelete }) {
   return <div ref={hostRef} className="vehicles-react-content" dangerouslySetInnerHTML={{ __html: contentHtml }} />;
 }
 
-export default function VehiclesWorkspace({ contentHtml, view, onSwitchClassic, recordId, canDelete = false }) {
+export default function VehiclesWorkspace({ contentHtml, view, recordId, canDelete = false }) {
   const detail = view === 'detail';
   return (
     <div className={'vehicles-react-shell ' + (detail ? 'is-detail' : 'is-list')}>
@@ -133,7 +133,6 @@ export default function VehiclesWorkspace({ contentHtml, view, onSwitchClassic, 
         </div>
         <div className="vehicles-react-tools">
           <span className="vehicles-react-context"><span aria-hidden="true" className="vehicles-react-context-dot" /> {detail ? 'Registro selecionado' : 'Base municipal'}</span>
-          <Button className="vehicles-react-switch" type="button" onClick={onSwitchClassic}>Voltar à interface clássica</Button>
         </div>
       </header>
       {detail
