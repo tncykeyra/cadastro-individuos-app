@@ -37,6 +37,7 @@ test('todos os botões da área Mandados são montados pelo React, inclusive aç
   assert.match(component, /new MutationObserver/);
   assert.match(component, /closest\('\.warrants-react-shell'\)/);
   assert.match(component, /closest\('#recordDialog'\)/);
+  assert.match(component, /form\[id\^="warrant"\]/);
   assert.match(component, /data-warrants-react-owned/);
   assert.match(component, /WarrantsReactContent contentHtml=\{contentHtml\}/);
 });
