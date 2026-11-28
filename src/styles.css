@@ -857,3 +857,26 @@ main :where(pre,code,.info-value,.card-meta,.form-help,.error-message,.success-m
 @media(max-width:899px){.drawer{z-index:9;top:66px;width:min(86vw,330px);padding:18px 16px 28px;border-radius:0 18px 18px 0;box-shadow:0 18px 55px #111b2430}.drawer.open{box-shadow:0 18px 55px #111b2460}.drawer-backdrop{z-index:8;position:fixed;inset:66px 0 0;border:0;background:#10191e70;backdrop-filter:blur(2px);opacity:0;animation:sidebar-backdrop-in .25s ease forwards}.react-sidebar-item{min-height:49px;font-size:.94rem}.react-sidebar-item-arrow{opacity:.55;transform:none}}
 @keyframes sidebar-backdrop-in{to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.drawer,.react-sidebar-item,.react-sidebar-icon,.react-sidebar-item-arrow,.react-sidebar-item:before,.drawer-backdrop{transition:none!important;animation:none!important}}
+
+/* Shared visual system: React modules and legacy-compatible screens. */
+:root{--ui-control-height:42px;--ui-control-radius:10px;--ui-control-radius-sm:8px;--ui-focus-ring:0 0 0 3px color-mix(in srgb,var(--brand) 22%,transparent);--ui-motion:160ms cubic-bezier(.2,.7,.2,1)}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--ui-control-height);padding:0 15px;border:1px solid transparent;border-radius:var(--ui-control-radius);background:var(--brand);color:#fff;font:inherit;font-size:.9rem;font-weight:700;line-height:1.2;text-align:center;text-decoration:none;white-space:nowrap;cursor:pointer;box-shadow:0 1px 2px #1721270d;transition:background var(--ui-motion),border-color var(--ui-motion),color var(--ui-motion),box-shadow var(--ui-motion),transform var(--ui-motion)}
+.button:hover:not(:disabled){background:var(--brand-dark);box-shadow:0 4px 12px #17212714;transform:translateY(-1px)}
+.button:active:not(:disabled){transform:translateY(0)}
+.button.secondary{border-color:var(--line);background:var(--surface);color:var(--brand-dark);box-shadow:none}
+.button.secondary:hover:not(:disabled){border-color:color-mix(in srgb,var(--brand) 38%,var(--line));background:var(--soft);color:var(--ink)}
+.button.danger{border-color:#b83c45;background:#b83c45;color:#fff}
+.button.danger:hover:not(:disabled){border-color:#9e3038;background:#9e3038}
+.button.success{border-color:#198754;background:#198754;color:#fff}
+.button.success:hover:not(:disabled){border-color:#157347;background:#157347}
+.button.small{min-height:34px;padding:0 11px;border-radius:var(--ui-control-radius-sm);font-size:.82rem}
+.button:disabled,.button[aria-disabled="true"]{opacity:.56;cursor:not-allowed;box-shadow:none;transform:none}
+.button:focus-visible,.icon-button:focus-visible,.nav-item:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:0;box-shadow:var(--ui-focus-ring)}
+.search,.field input,.field textarea,.field select,input.search,select,textarea{border-radius:var(--ui-control-radius-sm)}
+.field input,.field textarea,.field select{min-height:var(--ui-control-height);border:1px solid var(--line);background:var(--surface);color:var(--ink);transition:border-color var(--ui-motion),box-shadow var(--ui-motion)}
+.field input:focus,.field textarea:focus,.field select:focus,.search:focus{border-color:color-mix(in srgb,var(--brand) 58%,var(--line));outline:0;box-shadow:var(--ui-focus-ring)}
+.field label{color:var(--ink);line-height:1.35}.dialog-actions{flex-wrap:wrap}
+:root[data-theme="dark"] .dialog-head,:root[data-theme="dark"] .dialog-actions{background:var(--surface)}
+:root[data-theme="dark"] .field input,:root[data-theme="dark"] .field textarea,:root[data-theme="dark"] .field select{background:var(--soft);color:var(--ink);border-color:var(--line)}
+@media(max-width:620px){.button{min-height:42px;padding-inline:13px}.button.small{min-height:36px;padding-inline:10px}.dialog-actions .button{flex:1 1 auto}}
+@media(prefers-reduced-motion:reduce){.button,.field input,.field textarea,.field select{transition:none!important}}
