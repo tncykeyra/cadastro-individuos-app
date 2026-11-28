@@ -3,6 +3,7 @@ import Button from './ui/Button.jsx';
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import './vehicles-workspace.css';
+import VehicleDetail from './VehicleDetail.jsx';
 
 function ShareIcon() {
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.7 6.8-4.1M8.6 13.3l6.8 4.1"/></svg>;
@@ -119,7 +120,7 @@ function VehicleDetailActionMount({ contentHtml, recordId, canDelete }) {
   return <div ref={hostRef} className="vehicles-react-content" dangerouslySetInnerHTML={{ __html: contentHtml }} />;
 }
 
-export default function VehiclesWorkspace({ contentHtml, view, recordId, canDelete = false }) {
+export default function VehiclesWorkspace({ contentHtml, view, recordId, canDelete = false, detailData = null }) {
   const detail = view === 'detail';
   return (
     <div className={'vehicles-react-shell ' + (detail ? 'is-detail' : 'is-list')}>
@@ -136,7 +137,9 @@ export default function VehiclesWorkspace({ contentHtml, view, recordId, canDele
         </div>
       </header>
       {detail
-        ? <VehicleDetailActionMount contentHtml={contentHtml} recordId={recordId} canDelete={canDelete}/>
+        ? detailData
+          ? <VehicleDetail {...detailData} recordId={recordId} canDelete={canDelete} />
+          : <VehicleDetailActionMount contentHtml={contentHtml} recordId={recordId} canDelete={canDelete}/>
         : <ReactButtonContent contentHtml={contentHtml} />}
     </div>
   );
