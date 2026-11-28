@@ -826,3 +826,34 @@ main :where(pre,code,.info-value,.card-meta,.form-help,.error-message,.success-m
 .drive-pdf-progress{margin-top:1.25rem;padding:1rem;border:1px solid var(--line,#d8dddf);border-radius:14px;background:var(--soft,#f7f8f8)}
 .drive-pdf-progress h3{margin:.1rem 0 .65rem}
 @media(max-width:600px){.camera-flash-controls{justify-content:stretch}.camera-flash-controls .button{flex:1;min-width:8rem}.drive-pdf-progress .button-row{display:grid;grid-template-columns:1fr}}
+
+/* Navegação lateral React: transições, hierarquia visual e acessibilidade. */
+.drawer{overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;transition:transform .32s cubic-bezier(.22,1,.36,1),box-shadow .32s ease}
+.drawer.open{box-shadow:0 18px 55px #111b24a8}
+.drawer-brand{position:relative}
+.react-sidebar-section-label{margin:21px 0 9px;padding:0 10px;color:var(--muted);font-size:.66rem;font-weight:800;letter-spacing:.13em}
+.react-sidebar-items{display:grid;gap:5px}
+.react-sidebar-item{position:relative;isolation:isolate;display:flex;align-items:center;gap:12px;width:100%;min-height:46px;padding:10px 12px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--ink);text-align:left;font:inherit;font-weight:600;cursor:pointer;overflow:hidden;transition:background .2s ease,color .2s ease,border-color .2s ease,transform .2s ease,box-shadow .2s ease;animation:sidebar-item-in .38s both;animation-delay:calc(var(--sidebar-index,0)*32ms)}
+.react-sidebar-item:before{position:absolute;inset:0 auto 0 0;width:3px;border-radius:0 4px 4px 0;background:var(--brand);content:"";transform:scaleY(0);transition:transform .22s ease}
+.react-sidebar-item:hover{background:color-mix(in srgb,var(--brand) 8%,var(--surface));border-color:color-mix(in srgb,var(--brand) 12%,var(--line));transform:translateX(3px)}
+.react-sidebar-item.active{background:color-mix(in srgb,var(--brand) 12%,var(--surface));border-color:color-mix(in srgb,var(--brand) 16%,var(--line));color:var(--brand-dark);box-shadow:0 3px 12px #1721270a}
+.react-sidebar-item.active:before{transform:scaleY(1)}
+.react-sidebar-icon{position:relative;display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:9px;background:color-mix(in srgb,var(--brand) 8%,var(--surface));color:var(--brand);font-size:1.12rem;transition:background .2s ease,color .2s ease,transform .2s ease}
+.react-sidebar-icon svg{width:19px;height:19px;max-width:100%;max-height:100%;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.react-sidebar-item.active .react-sidebar-icon{background:var(--brand);color:#fff;transform:scale(1.04)}
+.react-sidebar-item-label{flex:1;min-width:0;line-height:1.25}
+.react-sidebar-item-arrow{opacity:0;transform:translateX(-5px);font-size:1.35rem;color:var(--muted);transition:opacity .2s ease,transform .2s ease}
+.react-sidebar-item:hover .react-sidebar-item-arrow,.react-sidebar-item.active .react-sidebar-item-arrow{opacity:.8;transform:translateX(0)}
+.react-sidebar-city-switcher{display:grid;gap:7px;margin:4px 0 12px;padding:12px;border:1px solid var(--line);border-radius:13px;background:color-mix(in srgb,var(--soft) 72%,var(--surface))}
+.react-sidebar-city-switcher label,.react-sidebar-city-label small{font-size:.72rem;font-weight:700;color:var(--muted)}
+.react-sidebar-city-switcher select{width:100%;min-width:0;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink);font:inherit;font-size:.86rem}
+.react-sidebar-city-label{display:grid;gap:4px;margin:7px 2px 14px;padding:10px 12px;border-left:3px solid var(--brand);border-radius:0 9px 9px 0;background:color-mix(in srgb,var(--brand) 6%,var(--surface))}
+.react-sidebar-city-label strong{font-size:.9rem}
+.react-sidebar-footer{margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.react-sidebar-help{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border:1px solid color-mix(in srgb,var(--brand) 30%,var(--line));border-radius:50%;color:var(--brand);font-weight:800}
+@keyframes sidebar-item-in{from{opacity:0;transform:translateX(-9px)}to{opacity:1;transform:translateX(0)}}
+.drawer:not(.open) .react-sidebar-item{animation:none}
+@media(min-width:900px){.drawer{padding:19px 14px}.react-sidebar-section-label{margin-top:24px}.react-sidebar-item{min-height:45px;font-size:.9rem}}
+@media(max-width:899px){.drawer{z-index:9;top:66px;width:min(86vw,330px);padding:18px 16px 28px;border-radius:0 18px 18px 0;box-shadow:0 18px 55px #111b2430}.drawer.open{box-shadow:0 18px 55px #111b2460}.drawer-backdrop{z-index:8;position:fixed;inset:66px 0 0;border:0;background:#10191e70;backdrop-filter:blur(2px);opacity:0;animation:sidebar-backdrop-in .25s ease forwards}.react-sidebar-item{min-height:49px;font-size:.94rem}.react-sidebar-item-arrow{opacity:.55;transform:none}}
+@keyframes sidebar-backdrop-in{to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.drawer,.react-sidebar-item,.react-sidebar-icon,.react-sidebar-item-arrow,.react-sidebar-item:before,.drawer-backdrop{transition:none!important;animation:none!important}}
