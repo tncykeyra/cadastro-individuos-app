@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Button from './ui/Button.jsx';
 import { supabase, supabaseConfigured } from './supabase.js';
 import { renderVehicleInterestPage, wireVehicleInterestActions } from '../vehicle-interest.js';
 import { renderFiscalizationPage, wireFiscalizationActions } from '../fiscalization.js';
@@ -21,9 +22,9 @@ function Login({ onLogin, busy, error }) {
         <h1>Entre no sistema</h1>
         <p>Use a mesma conta Google autorizada no aplicativo atual.</p>
         {error && <div className="react-alert error" role="alert">{error}</div>}
-        <button className="react-primary react-login-button" type="button" onClick={onLogin} disabled={busy}>
+        <Button className="react-primary react-login-button" type="button" onClick={onLogin} disabled={busy}>
           <span aria-hidden="true">G</span>{busy ? 'Conectando…' : 'Continuar com Google'}
-        </button>
+        </Button>
         <small className="react-auth-foot">Acesso protegido pelas permissões já configuradas no Supabase.</small>
       </section>
     </main>
@@ -315,7 +316,7 @@ export default function App() {
     return <main className="react-auth-page"><section className="react-auth-card"><Brand /><span className="react-eyebrow">CONFIGURAÇÃO NECESSÁRIA</span><h1>Conecte o Supabase</h1><p>Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no ambiente de execução. Use somente a chave pública publishable/anon.</p><div className="react-alert">Nenhuma chave foi incluída no código. A versão React ainda não está conectada.</div></section></main>;
   }
   if (loading) return <main className="react-auth-page"><section className="react-auth-card"><Brand /><p>Validando sua sessão e suas permissões…</p></section></main>;
-  if (accessBlocked) return <main className="react-auth-page"><section className="react-auth-card"><Brand /><span className="react-eyebrow">ACESSO NÃO LIBERADO</span><h1>Não foi possível acessar</h1><div className="react-alert error" role="alert">{error}</div><button className="react-primary react-login-button" type="button" onClick={() => void supabase.auth.signOut()}>Sair da conta</button></section></main>;
+  if (accessBlocked) return <main className="react-auth-page"><section className="react-auth-card"><Brand /><span className="react-eyebrow">ACESSO NÃO LIBERADO</span><h1>Não foi possível acessar</h1><div className="react-alert error" role="alert">{error}</div><Button className="react-primary react-login-button" type="button" onClick={() => void supabase.auth.signOut()}>Sair da conta</Button></section></main>;
   if (!session || !activeCity) return <Login onLogin={login} busy={busy} error={error} />;
 
   return (
@@ -324,15 +325,15 @@ export default function App() {
         <Brand />
         <nav aria-label="Navegação principal">
           <span className="react-nav-caption">MENU PRINCIPAL</span>
-          <button className={'react-nav-item ' + (page === 'dashboard' ? 'active' : '')} onClick={() => { setPage('dashboard'); setSelected(null); }}><span>▦</span>Painel da cidade</button>
-          <button className={'react-nav-item ' + (page === 'people' ? 'active' : '')} onClick={() => { setPage('people'); setSelected(null); setSearch(''); }}><span>♙</span>Indivíduos</button>
-          <button className={'react-nav-item ' + (page === 'vehicles' ? 'active' : '')} onClick={() => { setPage('vehicles'); setSelected(null); setSearch(''); }}><span>⌑</span>Veículos</button>
-          <button className={'react-nav-item ' + (page === 'vehicleInterest' ? 'active' : '')} onClick={() => { setPage('vehicleInterest'); setSelected(null); }}><span>🚘</span>Veículos de interesse</button>
-          {activeCity.id === '10000000-0000-4000-8000-000000000001' && <button className={'react-nav-item ' + (page === 'fiscalization' ? 'active' : '')} onClick={() => { setPage('fiscalization'); setSelected(null); }}><span>🚦</span>Fiscalização</button>}
-          <button className="react-nav-item" disabled title="Próxima etapa da migração"><span>⚖</span>Mandados <small>em migração</small></button>
-          <button className="react-nav-item" disabled title="Próxima etapa da migração"><span>✦</span>Cadastro inteligente <small>em migração</small></button>
-          {isAdmin && <><button className="react-nav-item" disabled title="Próxima etapa da migração"><span>⌕</span>Revisão inteligente <small>em migração</small></button><button className="react-nav-item" disabled title="Próxima etapa da migração"><span>↺</span>Histórico <small>em migração</small></button><button className="react-nav-item" disabled title="Próxima etapa da migração"><span>♧</span>Usuários <small>em migração</small></button></>}
-          {profile?.role === 'master' && <button className="react-nav-item" disabled title="Próxima etapa da migração"><span>⌖</span>Cidades e acessos <small>em migração</small></button>}
+          <Button className={'react-nav-item ' + (page === 'dashboard' ? 'active' : '')} onClick={() => { setPage('dashboard'); setSelected(null); }}><span>▦</span>Painel da cidade</Button>
+          <Button className={'react-nav-item ' + (page === 'people' ? 'active' : '')} onClick={() => { setPage('people'); setSelected(null); setSearch(''); }}><span>♙</span>Indivíduos</Button>
+          <Button className={'react-nav-item ' + (page === 'vehicles' ? 'active' : '')} onClick={() => { setPage('vehicles'); setSelected(null); setSearch(''); }}><span>⌑</span>Veículos</Button>
+          <Button className={'react-nav-item ' + (page === 'vehicleInterest' ? 'active' : '')} onClick={() => { setPage('vehicleInterest'); setSelected(null); }}><span>🚘</span>Veículos de interesse</Button>
+          {activeCity.id === '10000000-0000-4000-8000-000000000001' && <Button className={'react-nav-item ' + (page === 'fiscalization' ? 'active' : '')} onClick={() => { setPage('fiscalization'); setSelected(null); }}><span>🚦</span>Fiscalização</Button>}
+          <Button className="react-nav-item" disabled title="Próxima etapa da migração"><span>⚖</span>Mandados <small>em migração</small></Button>
+          <Button className="react-nav-item" disabled title="Próxima etapa da migração"><span>✦</span>Cadastro inteligente <small>em migração</small></Button>
+          {isAdmin && <><Button className="react-nav-item" disabled title="Próxima etapa da migração"><span>⌕</span>Revisão inteligente <small>em migração</small></Button><Button className="react-nav-item" disabled title="Próxima etapa da migração"><span>↺</span>Histórico <small>em migração</small></Button><Button className="react-nav-item" disabled title="Próxima etapa da migração"><span>♧</span>Usuários <small>em migração</small></Button></>}
+          {profile?.role === 'master' && <Button className="react-nav-item" disabled title="Próxima etapa da migração"><span>⌖</span>Cidades e acessos <small>em migração</small></Button>}
         </nav>
         <div className="react-sidebar-footer">Acesso restrito · Uso autorizado</div>
       </aside>
@@ -342,9 +343,9 @@ export default function App() {
           <div><span className="react-eyebrow">ÁREA DE TRABALHO</span><strong>{{ dashboard: 'Painel da cidade', people: 'Indivíduos', vehicles: 'Veículos', vehicleInterest: 'Veículos de interesse', fiscalization: 'Fiscalização' }[page] || 'Cadastro de Indivíduos'}</strong></div>
           <div className="react-top-actions">
             {cities.length > 1 && <select aria-label="Cidade ativa" value={activeCity.id} onChange={(event) => void changeCity(event.target.value)} disabled={busy}>{cities.map((city) => <option key={city.id} value={city.id}>{city.name}</option>)}</select>}
-            <button className="react-icon-button" type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Alternar tema">{theme === 'dark' ? '☀' : '◐'}</button>
+            <Button className="react-icon-button" type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Alternar tema">{theme === 'dark' ? '☀' : '◐'}</Button>
             <div className="react-user"><span className="react-avatar">{displayName.slice(0, 1).toUpperCase()}</span><span><strong>{displayName}</strong><small>{activeCity.name} · {activeCity.role}</small></span></div>
-            <button className="react-logout" type="button" onClick={() => void supabase.auth.signOut()}>Sair</button>
+            <Button className="react-logout" type="button" onClick={() => void supabase.auth.signOut()}>Sair</Button>
           </div>
         </header>
 
@@ -352,7 +353,7 @@ export default function App() {
           {error && <div className="react-alert error" role="alert">{error}</div>}
           <div className="react-page-heading">
             <div className="react-heading-copy"><span className="react-eyebrow">{page === 'dashboard' ? 'CENTRAL OPERACIONAL' : activeCity.name.toUpperCase()}</span><h1>{selected ? 'Detalhes do cadastro' : ({ dashboard: 'Painel da cidade', people: 'Indivíduos cadastrados', vehicles: 'Veículos cadastrados', vehicleInterest: 'Veículos de interesse', fiscalization: 'Materiais de fiscalização' }[page] || 'Cadastro de Indivíduos')}</h1><p>{page === 'dashboard' ? 'Acompanhe os principais indicadores e acesse os módulos da unidade.' : 'Consulta protegida pelo mesmo acesso do sistema atual.'}</p></div>
-            {page === 'dashboard' && <button className="react-refresh-button" type="button" onClick={() => void loadDashboard()} disabled={busy} aria-busy={busy}><DashboardIcon name="refresh" />{busy ? 'Atualizando…' : 'Atualizar dados'}</button>}
+            {page === 'dashboard' && <Button className="react-refresh-button" type="button" onClick={() => void loadDashboard()} disabled={busy} aria-busy={busy}><DashboardIcon name="refresh" />{busy ? 'Atualizando…' : 'Atualizar dados'}</Button>}
           </div>
 
           {(page === 'vehicleInterest' || page === 'fiscalization') && <LegacyFeature page={page} activeCity={activeCity} session={session} isAdmin={isAdmin} />}
@@ -381,10 +382,10 @@ export default function App() {
                 <section className="react-panel react-shortcuts-panel">
                   <div className="react-section-heading"><div><span className="react-eyebrow">NAVEGAÇÃO</span><h2>Acesso rápido</h2></div></div>
                   <div className="react-quick-grid">
-                    <button className="react-quick-action" onClick={() => setPage('people')}><span className="react-quick-icon"><DashboardIcon name="people" /></span><span><strong>Indivíduos</strong><small>Pesquisar cadastros</small></span><DashboardIcon name="arrow" /></button>
-                    <button className="react-quick-action" onClick={() => setPage('vehicles')}><span className="react-quick-icon"><DashboardIcon name="vehicle" /></span><span><strong>Veículos</strong><small>Consultar registros</small></span><DashboardIcon name="arrow" /></button>
-                    <button className="react-quick-action" onClick={() => setPage('vehicleInterest')}><span className="react-quick-icon"><DashboardIcon name="shield" /></span><span><strong>Veículos de interesse</strong><small>Consultar módulo</small></span><DashboardIcon name="arrow" /></button>
-                    {activeCity.id === '10000000-0000-4000-8000-000000000001' && <button className="react-quick-action" onClick={() => setPage('fiscalization')}><span className="react-quick-icon"><DashboardIcon name="document" /></span><span><strong>Fiscalização</strong><small>Acessar materiais</small></span><DashboardIcon name="arrow" /></button>}
+                    <Button className="react-quick-action" onClick={() => setPage('people')}><span className="react-quick-icon"><DashboardIcon name="people" /></span><span><strong>Indivíduos</strong><small>Pesquisar cadastros</small></span><DashboardIcon name="arrow" /></Button>
+                    <Button className="react-quick-action" onClick={() => setPage('vehicles')}><span className="react-quick-icon"><DashboardIcon name="vehicle" /></span><span><strong>Veículos</strong><small>Consultar registros</small></span><DashboardIcon name="arrow" /></Button>
+                    <Button className="react-quick-action" onClick={() => setPage('vehicleInterest')}><span className="react-quick-icon"><DashboardIcon name="shield" /></span><span><strong>Veículos de interesse</strong><small>Consultar módulo</small></span><DashboardIcon name="arrow" /></Button>
+                    {activeCity.id === '10000000-0000-4000-8000-000000000001' && <Button className="react-quick-action" onClick={() => setPage('fiscalization')}><span className="react-quick-icon"><DashboardIcon name="document" /></span><span><strong>Fiscalização</strong><small>Acessar materiais</small></span><DashboardIcon name="arrow" /></Button>}
                   </div>
                 </section>
               </div>
@@ -392,9 +393,9 @@ export default function App() {
             </div>
           )}
 
-          {(page === 'people' || page === 'vehicles') && !selected && <section className="react-panel"><div className="react-list-heading"><div><span className="react-eyebrow">PESQUISA</span><h2>{page === 'people' ? 'Localizar indivíduo' : 'Localizar veículo'}</h2></div><span className="react-count">{number(visibleRecords.length)} resultado(s)</span></div><input className="react-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={page === 'people' ? 'Nome, CPF, RG ou matrícula' : 'Placa, marca, modelo ou cor'} aria-label="Pesquisar registros" /><p className="react-helper">A pesquisa respeita a cidade ativa e as regras de acesso do banco.</p>{busy && <p className="react-loading-inline">Consultando…</p>}{!busy && visibleRecords.length === 0 && <EmptyState title="Nenhum registro encontrado" detail="Confira os termos da pesquisa ou tente novamente." />}{visibleRecords.length > 0 && <div className="react-record-list">{visibleRecords.map((record) => <button className="react-record-row" key={record.id} onClick={() => void openDetail(record.id)}><span className="react-record-avatar">{page === 'people' ? '♙' : '⌑'}</span><span className="react-record-copy"><strong>{page === 'people' ? record.full_name : record.plate}</strong><small>{page === 'people' ? ['CPF: ' + (record.cpf_digits || '—'), 'RG: ' + (record.rg || '—')].join(' · ') : [record.make, record.model, record.color].filter(Boolean).join(' · ') || 'Dados complementares não informados'}</small></span><span className="react-record-arrow">›</span></button>)}</div>}</section>}
+          {(page === 'people' || page === 'vehicles') && !selected && <section className="react-panel"><div className="react-list-heading"><div><span className="react-eyebrow">PESQUISA</span><h2>{page === 'people' ? 'Localizar indivíduo' : 'Localizar veículo'}</h2></div><span className="react-count">{number(visibleRecords.length)} resultado(s)</span></div><input className="react-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={page === 'people' ? 'Nome, CPF, RG ou matrícula' : 'Placa, marca, modelo ou cor'} aria-label="Pesquisar registros" /><p className="react-helper">A pesquisa respeita a cidade ativa e as regras de acesso do banco.</p>{busy && <p className="react-loading-inline">Consultando…</p>}{!busy && visibleRecords.length === 0 && <EmptyState title="Nenhum registro encontrado" detail="Confira os termos da pesquisa ou tente novamente." />}{visibleRecords.length > 0 && <div className="react-record-list">{visibleRecords.map((record) => <Button className="react-record-row" key={record.id} onClick={() => void openDetail(record.id)}><span className="react-record-avatar">{page === 'people' ? '♙' : '⌑'}</span><span className="react-record-copy"><strong>{page === 'people' ? record.full_name : record.plate}</strong><small>{page === 'people' ? ['CPF: ' + (record.cpf_digits || '—'), 'RG: ' + (record.rg || '—')].join(' · ') : [record.make, record.model, record.color].filter(Boolean).join(' · ') || 'Dados complementares não informados'}</small></span><span className="react-record-arrow">›</span></Button>)}</div>}</section>}
 
-          {selected && <section className="react-panel react-detail"><button className="react-back" onClick={() => setSelected(null)}>← Voltar à lista</button><span className="react-eyebrow">CONSULTA INDIVIDUAL</span><h2>{selected.kind === 'people' ? selected.data.full_name : selected.data.plate}</h2><div className="react-detail-grid">{Object.entries(selected.data).filter(([key, value]) => !['id', 'created_at'].includes(key) && value !== null && value !== '').map(([key, value]) => <div className="react-detail-field" key={key}><small>{({ full_name: 'Nome completo', cpf_digits: 'CPF', rg: 'RG', registration: 'Matrícula', alias: 'Apelido / vulgo', birthday: 'Nascimento', address_primary: 'Endereço principal', address_secondary: 'Endereço secundário', occurrence_notes: 'Crimes / anotações de ocorrência', occurrence_reference: 'Referência da ocorrência', notes: 'Anotações', plate: 'Placa', make: 'Marca', model: 'Modelo', color: 'Cor' })[key] || key}</small><strong>{key === 'birthday' ? date(value) : String(value)}</strong></div>)}</div><small className="react-detail-date">Cadastro criado em {selected.data.created_at ? new Date(selected.data.created_at).toLocaleString('pt-BR') : '—'}</small></section>}
+          {selected && <section className="react-panel react-detail"><Button className="react-back" onClick={() => setSelected(null)}>← Voltar à lista</Button><span className="react-eyebrow">CONSULTA INDIVIDUAL</span><h2>{selected.kind === 'people' ? selected.data.full_name : selected.data.plate}</h2><div className="react-detail-grid">{Object.entries(selected.data).filter(([key, value]) => !['id', 'created_at'].includes(key) && value !== null && value !== '').map(([key, value]) => <div className="react-detail-field" key={key}><small>{({ full_name: 'Nome completo', cpf_digits: 'CPF', rg: 'RG', registration: 'Matrícula', alias: 'Apelido / vulgo', birthday: 'Nascimento', address_primary: 'Endereço principal', address_secondary: 'Endereço secundário', occurrence_notes: 'Crimes / anotações de ocorrência', occurrence_reference: 'Referência da ocorrência', notes: 'Anotações', plate: 'Placa', make: 'Marca', model: 'Modelo', color: 'Cor' })[key] || key}</small><strong>{key === 'birthday' ? date(value) : String(value)}</strong></div>)}</div><small className="react-detail-date">Cadastro criado em {selected.data.created_at ? new Date(selected.data.created_at).toLocaleString('pt-BR') : '—'}</small></section>}
           {!['vehicleInterest', 'fiscalization'].includes(page) && <p className="react-readonly-note">Etapa de consulta: esta interface não cria, edita, arquiva nem exclui registros.</p>}
         </section>
       </main>
