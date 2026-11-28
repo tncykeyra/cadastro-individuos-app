@@ -1124,7 +1124,7 @@ async function saveWarrantPdfBatch(){
   if(warrantPdfBatchSaving) return;
   if(!warrantPdfBatch.length)throw new Error('Selecione ao menos um PDF.');
   warrantPdfBatchSaving=true;
-  const initialCount=warrantPdfBatch.length;let saved=0,failed=0,partial=0,reviewCount=0,duplicateCount=0;
+  const initialCount=warrantPdfBatch.length;let saved=0,failed=0,partial=0,reviewCount=0,duplicateCount=0;const failureDetails=[];
   const fields=['full_name','cpf','person_rg','birth_date','person_address_primary','source_agency','source_reference','person_filiation','person_process_information'];
   const prepared=warrantPdfBatch.map((entry,index)=>{
     const row=document.querySelector('[data-warrant-pdf-batch-row="'+index+'"]'),editedValues={};
@@ -1158,14 +1158,14 @@ async function saveWarrantPdfBatch(){
           entry.status=result.duplicatePending?'Possível duplicidade preservada para revisão administrativa.':'Mandado e PDF salvos.'+result.reviewMessage;
           await deletePersistedWarrantQueueEntry(entry);
           warrantBatchStatus(index,entry.status);
-        }catch(error){failed++;entry.status='Não concluído: '+msg(error);warrantBatchStatus(index,entry.status)}
+        }catch(error){failed++;const detail=msg(error);failureDetails.push(entry.file.name+': '+detail);entry.status='Não concluído: '+detail;warrantBatchStatus(index,entry.status)}
       }
     }));
   }finally{warrantPdfBatchSaving=false}
   warrantPdfBatch=warrantPdfBatch.filter(entry=>!entry.saved);
   if(saved)warrantSearchResults.clear();
   await refreshWarrantReviewBadge();await renderWarrants();
-  toast(saved+' arquivo(s) processado(s).'+(duplicateCount?' '+duplicateCount+' possível(is) duplicidade(s) preservada(s) para revisão administrativa.':'')+(reviewCount?' Confira as revisões administrativas pendentes na lista.':'')+(partial?' '+partial+' mandado(s) foram criados, mas o vínculo do PDF precisa de nova tentativa.':'')+(failed?' '+failed+' arquivo(s) permaneceram na fila para correção.':''));
+  toast(saved+' arquivo(s) processado(s).'+(duplicateCount?' '+duplicateCount+' possível(is) duplicidade(s) preservada(s) para revisão administrativa.':'')+(reviewCount?' Confira as revisões administrativas pendentes na lista.':'')+(partial?' '+partial+' mandado(s) foram criados, mas o vínculo do PDF precisa de nova tentativa.':'')+(failed?' '+failed+' arquivo(s) permaneceram na fila para correção. Detalhes: '+failureDetails.slice(0,3).join(' | ').slice(0,420):''));
 }
 async function submitWarrantReport(event){
   event.preventDefault();const form=event.target,warrantId=form.dataset.warrantId,values=Object.fromEntries(new FormData(form).entries());

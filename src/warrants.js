@@ -335,7 +335,7 @@ export function extractWarrantPersonSuggestions(text) {
   const address_primary = warrantOcrField(lines, /(?:endere[cç]o(?:\s+residencial)?(?:\s*\(s\))?|resid[eê]ncia|logradouro)\s*/i, { maxLines: 3, maxLength: 1000 });
   const filiation = warrantOcrBlock(lines, /filia[cç][aã]o\s*[:\-]?\s*/i, { maxLines: 8, maxLength: 2000 });
   const process_information = warrantOcrBlock(lines, /(?:informa[cç][oõ]es|dados)\s+processuais\s*[:\-]?\s*/i, { maxLines: 20, maxLength: 12000 });
-  const processMatch = source.match(/(?:n[uú]mero\s+do\s+processo|processo\s*(?:n[º°.]|n[uú]mero|#))\s*[:#\-]?\s*([0-9][0-9./-]{5,50})/i)
+  const processMatch = source.match(/(?:n[uú]mero\s+do\s+processo|processo)\s*(?:n[º°.]|n[uú]mero|#)?\s*[:#\-]?\s*([0-9][0-9./\-\s]{5,50})/i)
     || source.match(/\b(\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4})\b/);
   return {
     ...base,
