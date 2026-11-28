@@ -2400,7 +2400,34 @@ function crimesDisplayText(value){
 }
 function info(title,value,wide=false){if(!value)return '';const address=/^Endereço/.test(title),content=address?'<a href="https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(value)+'" target="_blank" rel="noopener noreferrer">'+esc(value)+' ↗</a>':esc(value);return '<section class="info-box '+(wide?'wide':'')+'"><div class="info-label">'+esc(title)+'</div><div class="info-value">'+content+'</div></section>'}
 function infoWithCopy(title,value,copyValue){if(!value)return '';return '<section class="info-box"><div class="info-label info-label-copy"><span>'+esc(title)+'</span><button class="copy-info-button" type="button" data-copy-info="'+esc(copyValue||'')+'" data-copy-label="'+esc(title)+'" title="Copiar '+esc(title)+'" aria-label="Copiar '+esc(title)+'">⧉</button></div><div class="info-value">'+esc(value)+'</div></section>'}
-async function openVehicle(id,restoring=false){if(!restoring&&!(state.page==='vehicles'&&state.selected===id))pushAppRoute();state.page='vehicles';state.selected=id;saveLastView();loadingPage('Abrindo cadastro do veículo…');const {data:v,error}=await state.client.from('vehicles').select('*').eq('id',id).single();if(error){toast(msg(error));return}const {data:links,error:le}=await state.client.from('person_vehicle_links').select('id,relation,notes,active,people(id,full_name,cpf_digits,rg,photo_path,archived_at)').eq('vehicle_id',id).order('created_at',{ascending:false});if(le){toast(msg(le));return}await Promise.all((links||[]).map(async link=>{if(link.people)link.people.photo_url=await signedPhoto(link.people.photo_path)}));const photos=await galleryPhotos('vehicles',v);let plateSuggestion=null;try{let pendingPlateQuery=state.client.from('vehicle_plate_change_proposals').select('id,current_plate,proposed_plate,created_at,requested_by').eq('vehicle_id',id).eq('status','pending').order('created_at',{ascending:false}).limit(1);if(!isAdmin())pendingPlateQuery=pendingPlateQuery.eq('requested_by',state.session.user.id);const {data:pendingPlates,error:pendingPlateError}=await pendingPlateQuery;const pendingPlate=pendingPlates?.[0];if(!pendingPlateError&&pendingPlate){const admin=isAdmin();plateSuggestion={current:pendingPlate.current_plate,proposed:pendingPlate.proposed_plate,isAdmin:admin}}}catch{}nav();await renderVehicleWorkspace('','detail',id,{canDelete:isAdmin(),detailData:{vehicle:v,photos,links,plateSuggestion}});saveLastView();}
+async function openVehicle(id,restoring=false){
+  if(!restoring&&!(state.page==='vehicles'&&state.selected===id))pushAppRoute();
+  state.page='vehicles';state.selected=id;saveLastView();
+  loadingPage('Abrindo cadastro do veículo…');
+  try{
+    const {data:v,error}=await state.client.from('vehicles').select('*').eq('id',id).single();
+    if(error)throw error;
+    const {data:links,error:le}=await state.client.from('person_vehicle_links').select('id,relation,notes,active,people(id,full_name,cpf_digits,rg,photo_path,archived_at)').eq('vehicle_id',id).order('created_at',{ascending:false});
+    if(le)throw le;
+    await Promise.all((links||[]).map(async link=>{if(link.people)link.people.photo_url=await signedPhoto(link.people.photo_path)}));
+    const photos=await galleryPhotos('vehicles',v);
+    let plateSuggestion=null;
+    try{
+      let pendingPlateQuery=state.client.from('vehicle_plate_change_proposals').select('id,current_plate,proposed_plate,created_at,requested_by').eq('vehicle_id',id).eq('status','pending').order('created_at',{ascending:false}).limit(1);
+      if(!isAdmin())pendingPlateQuery=pendingPlateQuery.eq('requested_by',state.session.user.id);
+      const {data:pendingPlates,error:pendingPlateError}=await pendingPlateQuery;
+      const pendingPlate=pendingPlates?.[0];
+      if(!pendingPlateError&&pendingPlate){const admin=isAdmin();plateSuggestion={current:pendingPlate.current_plate,proposed:pendingPlate.proposed_plate,isAdmin:admin}}
+    }catch{}
+    nav();
+    await renderVehicleWorkspace('','detail',id,{canDelete:isAdmin(),detailData:{vehicle:v,photos,links,plateSuggestion}});
+    saveLastView();
+  }catch(error){
+    console.error('Não foi possível abrir a ficha do veículo.',error);
+    toast(msg(error));
+    await loadPage();
+  }
+}
 async function copyToClipboard(value,message){try{await navigator.clipboard.writeText(value);toast(message)}catch{const input=document.createElement('textarea');input.value=value;input.setAttribute('readonly','');input.style.position='fixed';input.style.opacity='0';document.body.append(input);input.select();const copied=document.execCommand('copy');input.remove();toast(copied?message:'Não foi possível copiar automaticamente.')}} 
 function generateTemporaryPassword(){const groups=['ABCDEFGHJKLMNPQRSTUVWXYZ','abcdefghijkmnopqrstuvwxyz','23456789','!@#$%'];const alphabet=groups.join('');const bytes=crypto.getRandomValues(new Uint8Array(36));const chars=groups.map((group,index)=>group[bytes[index]%group.length]);for(let i=4;i<20;i++)chars.push(alphabet[bytes[i]%alphabet.length]);for(let i=chars.length-1;i>0;i--){const j=bytes[20+(i%(bytes.length-20))]%(i+1);[chars[i],chars[j]]=[chars[j],chars[i]]}return chars.join('')}
 const CITIES_UI_MODE_KEY='cadastro-cidades-interface-v1';
