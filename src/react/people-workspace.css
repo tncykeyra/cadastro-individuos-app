@@ -35,3 +35,13 @@
 .people-classic-switch>span{color:var(--muted);font-size:.76rem;font-weight:700}
 @media(max-width:700px){.people-react-shell .people-react-hero{align-items:stretch;flex-direction:column;gap:14px;padding:18px;margin-bottom:17px}.people-react-tools{align-items:flex-start;flex-direction:row;justify-content:space-between;flex-wrap:wrap}.people-react-heading h1{font-size:1.75rem}.people-react-content>.page-intro{align-items:flex-start;gap:12px}.people-react-content .detail-hero{grid-template-columns:minmax(0,1fr);gap:15px}.people-react-content .detail-actions{justify-content:flex-start}.people-react-content .detail-sections{grid-template-columns:minmax(0,1fr)}.people-react-content .list-row{gap:9px}}
 @media(prefers-reduced-motion:reduce){.people-react-shell *{scroll-behavior:auto!important;transition:none!important}}
+
+/* Ação de compartilhar da ficha individual */
+.people-react-content .detail-actions .people-share-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#198754!important;border:1px solid #198754!important;color:#fff!important}
+.people-react-content .detail-actions .people-share-button:hover{background:#157347!important;border-color:#157347!important}
+.people-react-content .detail-actions .people-share-button .share-icon{width:18px;height:18px;margin:0;stroke:#fff;stroke-width:2.2}
+@media(max-width:700px){
+  .people-react-content .detail-actions .people-share-button{width:42px;height:42px;min-width:42px;padding:0;border-radius:12px;font-size:0;line-height:0}
+  .people-react-content .detail-actions .people-share-button .share-icon{width:20px;height:20px;flex:0 0 20px}
+  .people-react-content .detail-actions .people-share-button .people-share-button-label{display:none}
+}
