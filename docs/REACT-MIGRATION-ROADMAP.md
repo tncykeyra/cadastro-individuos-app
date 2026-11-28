@@ -22,6 +22,12 @@ Migrar a interface do Cadastro Criminal para React por etapas verificáveis, sem
 - Listagem e ficha de veículos, com retorno à interface clássica.
 - Área de mandados, com retorno à interface clássica.
 
+## Tipografia desktop — versão 2.47.0
+
+- Aumenta a escala tipográfica apenas em telas com largura a partir de 900px, com incremento adicional em monitores a partir de 1400px.
+- Melhora a leitura de navegação, títulos, textos, tabelas, metadados, formulários e botões, sem alterar a escala do mobile.
+- A alteração é feita em folha de estilo isolada e não muda cores, regras de negócio, permissões ou dados.
+
 ## Cidades e acessos em React nativo — versão 2.46.0
 
 - A tela master de Cidades e acessos foi convertida em componente React nativo, com estado controlado para seleção de usuário, cidades e perfil por cidade.

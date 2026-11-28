@@ -15,7 +15,7 @@ const files = [
 const modules = await Promise.all(files.map(file =>
   readFile(new URL('../src/react/' + file, import.meta.url), 'utf8')
 ));
-const [button, styles, main, index, serviceWorker, pkg, roadmap, toast, legacyCss] = await Promise.all([
+const [button, styles, main, index, serviceWorker, pkg, roadmap, toast, legacyCss, desktopTypography] = await Promise.all([
   readFile(new URL('../src/react/ui/Button.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/react/ui-system.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
@@ -25,6 +25,7 @@ const [button, styles, main, index, serviceWorker, pkg, roadmap, toast, legacyCs
   readFile(new URL('../docs/REACT-MIGRATION-ROADMAP.md', import.meta.url), 'utf8'),
   readFile(new URL('../src/react/ui/ToastViewport.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/react/legacy-page-workspace.css', import.meta.url), 'utf8'),
+  readFile(new URL('../src/react/desktop-typography.css', import.meta.url), 'utf8'),
 ]);
 
 test('componentes React de produção usam o botão compartilhado', () => {
@@ -62,9 +63,9 @@ test('integração mantém ações e contratos de navegação e formulário exis
 });
 
 test('versão e cache foram atualizados e o plano de migração explicita as áreas restantes', () => {
-  assert.equal(JSON.parse(pkg).version, '2.46.0');
-  assert.match(index, /styles\.css\?v=162/);
-  assert.match(serviceWorker, /cadastro-app-shell-v116/);
+  assert.equal(JSON.parse(pkg).version, '2.47.0');
+  assert.match(index, /styles\.css\?v=163/);
+  assert.match(serviceWorker, /cadastro-app-shell-v117/);
   for (const module of ['Autenticação','Cadastro Inteligente','Usuários','Histórico','Veículos de interesse','Fiscalização','ponte de compatibilidade']) {
     assert.ok(roadmap.includes(module), 'área da migração documentada: ' + module);
   }
@@ -77,4 +78,13 @@ test('workspace de cidades mantém ações e retorno clássico em React', async 
   assert.match(cities, /onAssign/);
   assert.match(cities, /onRemove/);
   assert.match(cities, /Usar interface clássica/);
+});
+
+test('tipografia ampliada somente no desktop e preserva o layout mobile', () => {
+  assert.match(main, /desktop-typography\.css/);
+  assert.match(desktopTypography, /@media \(min-width: 900px\)/);
+  assert.match(desktopTypography, /html \{ font-size: 17px; \}/);
+  assert.match(desktopTypography, /@media \(min-width: 1400px\)/);
+  assert.match(desktopTypography, /#mainContent td/);
+  assert.match(desktopTypography, /#mainContent :is\(input, select, textarea\)/);
 });

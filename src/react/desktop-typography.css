@@ -1,0 +1,93 @@
+/* Escala tipográfica para monitores e notebooks.
+   A regra só atua em desktop; a experiência mobile permanece inalterada. */
+@media (min-width: 900px) {
+  html { font-size: 17px; }
+  body { line-height: 1.5; }
+
+  .top-title { font-size: 1.3rem; }
+  .drawer-brand strong { font-size: 1.05rem; }
+  .drawer-brand small { font-size: .84rem; }
+  .side-nav .nav-item { font-size: 1rem; line-height: 1.35; }
+  .privacy-note { font-size: .82rem; }
+
+  main { font-size: 1rem; }
+  #mainContent p,
+  #mainContent li,
+  #mainContent td,
+  #mainContent th,
+  #mainContent .info-value,
+  #mainContent .row-subtitle,
+  #mainContent .card-meta,
+  #mainContent .muted,
+  #mainContent .info-label,
+  #mainContent .dashboard-label,
+  #mainContent .dashboard-link,
+  #mainContent .dashboard-count-note,
+  #mainContent .dashboard-substat small,
+  #mainContent .warrants-react-metric span,
+  #mainContent .warrants-react-metric small {
+    font-size: .96rem;
+    line-height: 1.5;
+  }
+
+  #mainContent small,
+  #recordDialog small {
+    font-size: .82rem;
+    line-height: 1.45;
+  }
+
+  #mainContent :is(label, .field label, .info-label, .stat span, .revision-id, .diff-row span) {
+    font-size: .92rem;
+  }
+
+  #mainContent :is(input, select, textarea),
+  #recordDialog :is(input, select, textarea) {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  #mainContent :is(button, .button),
+  #recordDialog :is(button, .button),
+  button.button,
+  .ui-button.button {
+    font-size: .96rem;
+  }
+
+  #mainContent button.button.small,
+  #mainContent .ui-button.button.small,
+  #recordDialog button.button.small {
+    font-size: .88rem;
+  }
+
+  #mainContent :is(.page-intro h1, .dashboard-intro h1, .detail-title h1) {
+    line-height: 1.16;
+  }
+
+  #mainContent :is(.section-heading h2, .result-heading, .dialog-head h2) {
+    font-size: 1.38rem;
+    line-height: 1.25;
+  }
+
+  #mainContent .person-card h3,
+  #mainContent .row-title,
+  #mainContent .site-card h3 {
+    font-size: 1.14rem;
+    line-height: 1.35;
+  }
+
+  #mainContent :is(.stat strong, .dashboard-substat strong) {
+    font-size: 1.25rem;
+  }
+
+  #mainContent .warrants-react-metric strong {
+    font-size: 1.8rem;
+  }
+
+  #recordDialog .dialog-head h2 {
+    font-size: 1.45rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  html { font-size: 17.5px; }
+}
