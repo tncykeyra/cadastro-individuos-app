@@ -1,1 +1,51 @@
-.react-records-module{display:grid;gap:18px;color:var(--ink,#20272b)}.react-records-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px}.react-records-heading h1{margin:6px 0;font-size:clamp(25px,3vw,34px);letter-spacing:-.035em}.react-records-heading p{margin:0;color:var(--muted,#687176);font-size:14px}.react-records-eyebrow{font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--muted,#687176)}.react-records-actions{display:flex;gap:9px;flex-wrap:wrap}.react-records-search{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 14px;border:1px solid var(--line,#dfe3e5);border-radius:12px;background:var(--surface,#fff)}.react-records-search>span{font-size:23px;color:var(--muted,#687176)}.react-records-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:inherit;font:inherit}.react-records-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.react-record-letters{display:flex;gap:4px;flex-wrap:wrap}.react-record-letters .ui-button{min-width:34px;padding-inline:7px}.react-record-page-size{display:flex;align-items:center;gap:7px;color:var(--muted,#687176);font-size:13px}.react-record-page-size select{min-height:36px;padding:0 8px;border:1px solid var(--line,#dfe3e5);border-radius:8px;background:var(--surface,#fff);color:inherit}.react-record-results{display:grid;gap:12px}.react-record-results-heading{display:flex;justify-content:space-between;gap:12px;align-items:center}.react-record-results-heading span{font-size:12px;color:var(--muted,#687176)}.react-record-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:12px}.react-record-card{display:flex;align-items:center;gap:12px;min-width:0;padding:12px;border:1px solid var(--line,#dfe3e5);border-radius:13px;background:var(--surface,#fff);color:inherit;text-align:left;cursor:pointer;transition:border-color .15s,transform .15s,box-shadow .15s}.react-record-card:hover{border-color:var(--brand,#50595e);transform:translateY(-1px);box-shadow:0 5px 18px #0000000c}.react-record-card-media{display:grid;place-items:center;flex:0 0 54px;width:54px;height:54px;overflow:hidden;border-radius:10px;background:var(--soft,#eef0f1);color:var(--brand,#50595e);font-size:24px}.react-record-card-media img{width:100%;height:100%;object-fit:cover}.react-record-card-copy{display:grid;gap:5px;min-width:0;flex:1}.react-record-card-copy strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}.react-record-card-copy small{color:var(--muted,#687176);font-size:11px;line-height:1.4}.react-record-card-copy .react-record-warning{color:#9a5b00}.react-record-card-arrow{font-size:22px;color:var(--muted,#687176)}.react-record-empty{display:grid;gap:5px;justify-items:center;padding:42px 18px;border:1px dashed var(--line,#dfe3e5);border-radius:13px;color:var(--muted,#687176);text-align:center}.react-record-empty strong{color:inherit}.react-record-pagination{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap}.react-record-pagination span{font-size:12px;color:var(--muted,#687176)}.react-related-records{display:grid;gap:12px;padding-top:18px;border-top:1px solid var(--line,#dfe3e5)}.react-related-records h2{margin:0;font-size:17px}@media(max-width:700px){.react-records-heading{align-items:stretch;flex-direction:column}.react-records-actions{display:grid;grid-template-columns:1fr 1fr}.react-record-letters{max-height:86px;overflow:auto}.react-record-grid{grid-template-columns:1fr}.react-record-card{min-height:76px}.react-record-pagination{justify-content:space-between}.react-record-pagination span{order:-1;width:100%;text-align:center}}
+.react-records-module{display:grid;gap:18px;color:var(--ink,#20272b)}
+.react-records-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px}
+.react-records-heading h1{margin:6px 0;font-size:clamp(25px,3vw,34px);letter-spacing:-.035em}
+.react-records-heading p{margin:0;color:var(--muted,#687176);font-size:14px}
+.react-records-eyebrow{font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--muted,#687176)}
+.react-records-actions{display:flex;gap:9px;flex-wrap:wrap}
+.react-records-search{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 14px;border:1px solid var(--line,#dfe3e5);border-radius:12px;background:var(--surface,#fff)}
+.react-records-search>span{font-size:23px;color:var(--muted,#687176)}
+.react-records-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:inherit;font:inherit}
+.react-records-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.react-record-letters{display:flex;gap:4px;flex-wrap:wrap}
+.react-record-letters .ui-button{min-width:34px;padding-inline:7px}
+.react-record-page-size{display:flex;align-items:center;gap:7px;color:var(--muted,#687176);font-size:13px}
+.react-record-page-size select{min-height:36px;padding:0 8px;border:1px solid var(--line,#dfe3e5);border-radius:8px;background:var(--surface,#fff);color:inherit}
+.react-record-results{display:grid;gap:12px}
+.react-record-results-heading{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.react-record-results-heading span{font-size:12px;color:var(--muted,#687176)}
+.react-record-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:14px}
+.react-record-card{appearance:none;display:flex;flex-direction:column;align-items:stretch;gap:0;position:relative;min-width:0;min-height:100%;padding:10px;border:1px solid var(--line,#dfe3e5);border-radius:16px;background:var(--surface,#fff);color:var(--ink,#20272b);text-align:left;cursor:pointer;overflow:hidden;transition:border-color .16s,transform .16s,box-shadow .16s}
+.react-record-card:hover{border-color:var(--brand,#50595e);transform:translateY(-2px);box-shadow:0 8px 24px #00000012}
+.react-record-card:focus-visible{outline:3px solid color-mix(in srgb,var(--brand,#50595e) 35%,transparent);outline-offset:2px}
+.react-record-card-media{display:grid;place-items:center;flex:0 0 auto;width:100%;height:150px;overflow:hidden;border-radius:11px;background:var(--soft,#eef0f1);color:var(--brand,#50595e);font-size:34px}
+.react-record-card-media img{display:block;width:100%;height:100%;object-fit:cover;object-position:center 20%}
+.react-record-card.is-person .react-record-card-media{height:auto;aspect-ratio:3/4;max-height:290px}
+.react-record-card.is-vehicle{flex-direction:row;align-items:center;gap:12px;min-height:86px;padding:12px}
+.react-record-card.is-vehicle .react-record-card-media{width:76px;height:62px;flex:0 0 76px}
+.react-record-card-copy{display:grid;gap:5px;min-width:0;width:100%;padding:10px 4px 3px}
+.react-record-card-copy strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;line-height:1.35}
+.react-record-card-copy small{display:block;color:var(--muted,#687176);font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.react-record-card-copy .react-record-warning{color:#9a5b00;font-weight:700}
+.react-record-card-arrow{position:absolute;right:15px;bottom:14px;font-size:21px;color:var(--muted,#687176)}
+.react-record-card.is-vehicle .react-record-card-copy{padding:0 22px 0 0}
+.react-record-card.is-vehicle .react-record-card-arrow{top:50%;bottom:auto;transform:translateY(-50%)}
+.react-record-empty{display:grid;gap:5px;justify-items:center;padding:42px 18px;border:1px dashed var(--line,#dfe3e5);border-radius:13px;color:var(--muted,#687176);text-align:center}
+.react-record-empty strong{color:inherit}
+.react-record-pagination{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap}
+.react-record-pagination span{font-size:12px;color:var(--muted,#687176)}
+.react-related-records{display:grid;gap:12px;padding-top:18px;border-top:1px solid var(--line,#dfe3e5)}
+.react-related-records h2{margin:0;font-size:17px}
+@media(max-width:700px){.react-records-heading{align-items:stretch;flex-direction:column}.react-records-actions{display:grid;grid-template-columns:1fr 1fr}.react-record-letters{max-height:86px;overflow:auto}.react-record-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.react-record-card{padding:8px;border-radius:14px}.react-record-card.is-person .react-record-card-media{max-height:none}.react-record-card-copy{padding:9px 3px 2px}.react-record-card-copy strong{font-size:13px}.react-record-card-copy small{font-size:10px}.react-record-card-arrow{right:10px;bottom:10px}.react-record-card.is-vehicle{min-height:76px;padding:9px}.react-record-card.is-vehicle .react-record-card-media{width:58px;height:54px;flex-basis:58px}.react-record-card.is-vehicle .react-record-card-copy{padding:0 15px 0 0}.react-record-pagination{justify-content:space-between}.react-record-pagination span{order:-1;width:100%;text-align:center}}
+@media(max-width:360px){.react-record-grid{grid-template-columns:1fr}.react-record-card.is-person{display:grid;grid-template-columns:82px minmax(0,1fr);align-items:center;gap:10px}.react-record-card.is-person .react-record-card-media{aspect-ratio:3/4;height:108px}.react-record-card.is-person .react-record-card-copy{padding:4px 18px 4px 0}.react-record-card.is-person .react-record-card-arrow{top:50%;bottom:auto;transform:translateY(-50%)}}
+
+.react-records-search-wrap{display:grid;gap:6px;min-width:0}
+.react-records-search{display:flex;align-items:center;gap:10px;min-height:50px;padding:5px 6px 5px 14px;border:1px solid var(--line,#dfe3e5);border-radius:12px;background:var(--surface,#fff);color:var(--ink,#20272b)}
+.react-records-search>span{flex:0 0 auto;font-size:25px;line-height:1;color:var(--muted,#687176)}
+.react-records-search input{flex:1 1 auto;width:100%;min-width:0;min-height:38px;padding:6px 2px;border:0;outline:0;background:transparent;color:inherit;font:inherit;font-size:14px}
+.react-records-search input:focus-visible{outline:0}
+.react-record-search-button{flex:0 0 auto;min-height:38px;padding:8px 13px;white-space:nowrap}
+.react-record-search-button>span:first-child{font-size:18px;line-height:1}
+.react-record-search-hint{min-height:16px;margin:0 3px;color:var(--muted,#687176);font-size:11px;line-height:1.4}
+@media(max-width:480px){.react-records-search{gap:7px;padding-left:10px}.react-record-search-button{min-width:40px;padding:8px 10px}.react-record-search-button>span:last-child{display:none}}

@@ -10,21 +10,24 @@ const formatCpf = value => {
 function RecordCard({ entity, record, onOpen }) {
   const isPerson = entity === 'people';
   const title = isPerson ? record.full_name || 'Nome não informado' : record.plate || 'Placa não informada';
-  const subtitle = isPerson
-    ? ['CPF: ' + formatCpf(record.cpf_digits), 'RG: ' + (record.rg || '—')].join(' · ')
-    : [record.make, record.model, record.color].filter(Boolean).join(' · ') || 'Dados complementares não informados';
+  const formattedCpf = formatCpf(record.cpf_digits);
   const cover = record.photos?.find(photo => photo.is_cover && photo.url) || record.photos?.find(photo => photo.url);
+  const metadata = isPerson
+    ? [record.alias ? 'Vulgo: ' + record.alias : null, record.rg ? 'RG: ' + record.rg : null].filter(Boolean)
+    : [record.make, record.model, record.color].filter(Boolean);
   return (
-    <button className={'react-record-card ' + (isPerson ? 'is-person' : 'is-vehicle')} type="button" onClick={() => onOpen(record.id, entity)}>
-      <span className="react-record-card-media">
+    <button className={'react-record-card ' + (isPerson ? 'is-person person-card' : 'is-vehicle')} type="button" onClick={() => onOpen(record.id, entity)} aria-label={'Abrir ficha de ' + title}>
+      <span className={'react-record-card-media ' + (isPerson ? 'avatar' : '')}>
         {cover?.url
           ? <img src={cover.url} alt={isPerson ? 'Foto de ' + title : 'Foto do veículo'} loading="lazy" />
           : <span aria-hidden="true">{isPerson ? '♙' : '⌑'}</span>}
       </span>
       <span className="react-record-card-copy">
         <strong>{title}</strong>
-        <small>{subtitle}</small>
-        {isPerson && Number(record.warrant_alert_count) > 0 && <small className="react-record-warning">Aviso de mandado de prisão. Confira na fonte oficial.</small>}
+        {isPerson
+          ? <><small>CPF: {formattedCpf}</small>{metadata.map((item,index)=><small key={index}>{item}</small>)}</>
+          : <small>{metadata.join(' · ') || 'Dados complementares não informados'}</small>}
+        {isPerson && Number(record.warrant_alert_count) > 0 && <small className="react-record-warning">⚠ Aviso de mandado. Confira na fonte oficial.</small>}
       </span>
       <span className="react-record-card-arrow" aria-hidden="true">›</span>
     </button>
@@ -68,12 +71,35 @@ export default function RecordsList({
         </div>
       </header>
 
-      <label className="react-records-search">
-        <span aria-hidden="true">⌕</span>
-        <input type="search" value={searchValue} onChange={event => { setSearchValue(event.target.value); onSearch(event.target.value); }}
-          placeholder={people ? 'Buscar indivíduo, endereço, CPF ou placa' : 'Buscar placa, modelo, pessoa, CPF ou endereço'}
-          aria-label={people ? 'Pesquisar indivíduos' : 'Pesquisar veículos'} />
-      </label>
+      <div className="react-records-search-wrap">
+        <label className="react-records-search">
+          <span aria-hidden="true">⌕</span>
+          <input type="search" value={searchValue}
+            onChange={event => {
+              const nextValue = event.target.value;
+              setSearchValue(nextValue);
+              if (!nextValue.trim() && query.trim()) onSearch('');
+            }}
+            onKeyDown={event => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                onSearch(searchValue);
+              }
+            }}
+            placeholder={people ? 'Buscar indivíduo, endereço, CPF ou placa' : 'Buscar placa, modelo, pessoa, CPF ou endereço'}
+            aria-label={people ? 'Pesquisar indivíduos' : 'Pesquisar veículos'} />
+          <Button className="react-record-search-button" aria-label="Pesquisar" title="Pesquisar" onClick={() => onSearch(searchValue)}>
+            <span aria-hidden="true">⌕</span><span>Pesquisar</span>
+          </Button>
+        </label>
+        {searchValue.trim() && <p className="react-record-search-hint" role="status" aria-live="polite">
+          {searchValue.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/gi, '').length < 3
+            ? 'Digite ao menos 3 caracteres úteis.'
+            : searchValue.trim() === query.trim()
+              ? 'Pesquisa concluída.'
+              : 'Pressione Enter ou toque em Pesquisar para consultar.'}
+        </p>}
+      </div>
 
       <div className="react-records-toolbar">
         {people && <div className="react-record-letters" aria-label="Filtrar por inicial">
