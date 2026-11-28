@@ -45,8 +45,8 @@ test('modo miniatura fica limitado aos cartões das duas abas', () => {
 test('versão, cache e atualização do service worker acompanham a correção', () => {
   assert.equal(JSON.parse(pkg).version, '2.52.14');
   assert.match(worker, /cadastro-app-shell-v152/);
-  assert.match(main, /sw\.js\?v=118/);
-  assert.match(index, /card-density\.css\?v=4/);
+  assert.match(main, /sw\.js\?v=119/);
+  assert.match(index, /card-density\.css\?v=5/);
 });
 
 
