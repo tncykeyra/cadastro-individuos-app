@@ -22,6 +22,14 @@ Migrar a interface do Cadastro Criminal para React por etapas verificáveis, sem
 - Listagem e ficha de veículos, com retorno à interface clássica.
 - Área de mandados, com retorno à interface clássica.
 
+## Cidades e acessos em React nativo — versão 2.46.0
+
+- A tela master de Cidades e acessos foi convertida em componente React nativo, com estado controlado para seleção de usuário, cidades e perfil por cidade.
+- A interface permite expandir os usuários vinculados, ativar cidades, criar cidades, atribuir ou substituir vínculos e remover acessos. As operações usam as consultas e RPCs já existentes.
+- A verificação de administrador master permanece no controlador antes da leitura e montagem da tela. Nenhuma tabela, RPC, política RLS ou migration foi alterada.
+- O retorno à interface clássica mantém disponível o fluxo anterior.
+- O layout é responsivo para desktop e mobile e utiliza o botão compartilhado do sistema visual.
+
 ## Camada React transversal — versão 2.45.0
 
 - As páginas genéricas que ainda eram inseridas diretamente pelo controlador legado agora são montadas dentro de `LegacyPageWorkspace`, sob uma raiz React.

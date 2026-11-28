@@ -39,6 +39,6 @@ test('menu lateral possui animações, responsividade e respeito à preferência
 
 test('cache e versão do app são atualizados para a nova interface', () => {
   assert.match(index, /styles\.css\?v=161/);
-  assert.match(serviceWorker, /cadastro-app-shell-v115/);
-  assert.equal(JSON.parse(pkg).version, '2.45.0');
+  assert.match(serviceWorker, /cadastro-app-shell-v116/);
+  assert.equal(JSON.parse(pkg).version, '2.46.0');
 });
