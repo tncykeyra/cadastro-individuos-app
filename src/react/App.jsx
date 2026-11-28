@@ -40,6 +40,8 @@ function DashboardIcon({ name }) {
     shield: <><path d="M12 3 19 6v5c0 4.5-2.8 7.7-7 10-4.2-2.3-7-5.5-7-10V6z" /><path d="m9 12 2 2 4-4" /></>,
     arrow: <><path d="M5 12h14m-6-6 6 6-6 6" /></>,
     refresh: <><path d="M20 7v5h-5M4 17v-5h5" /><path d="M5.5 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.5-3" /></>,
+    sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></>,
+    moon: <path d="M20.2 15.4A8.2 8.2 0 0 1 8.6 3.8 8.5 8.5 0 1 0 20.2 15.4Z"/>,
   };
   return <svg className="react-dashboard-icon" viewBox="0 0 24 24" aria-hidden="true" {...common}>{drawings[name] || drawings.document}</svg>;
 }
@@ -343,7 +345,7 @@ export default function App() {
           <div><span className="react-eyebrow">ÁREA DE TRABALHO</span><strong>{{ dashboard: 'Painel da cidade', people: 'Indivíduos', vehicles: 'Veículos', vehicleInterest: 'Veículos de interesse', fiscalization: 'Fiscalização' }[page] || 'Cadastro de Indivíduos'}</strong></div>
           <div className="react-top-actions">
             {cities.length > 1 && <select aria-label="Cidade ativa" value={activeCity.id} onChange={(event) => void changeCity(event.target.value)} disabled={busy}>{cities.map((city) => <option key={city.id} value={city.id}>{city.name}</option>)}</select>}
-            <Button className="react-icon-button" type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Alternar tema">{theme === 'dark' ? '☀' : '◐'}</Button>
+            <Button className="react-icon-button" type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Alternar tema"><DashboardIcon name={theme === 'dark' ? 'sun' : 'moon'} /></Button>
             <div className="react-user"><span className="react-avatar">{displayName.slice(0, 1).toUpperCase()}</span><span><strong>{displayName}</strong><small>{activeCity.name} · {activeCity.role}</small></span></div>
             <Button className="react-logout" type="button" onClick={() => void supabase.auth.signOut()}>Sair</Button>
           </div>
