@@ -17,6 +17,7 @@ import { renderSystemTestsPanel, refreshSystemTestsPanel } from './system-tests-
 import { mountAssociationDialog } from './react/VehiclesWorkspace.jsx';
 import { renderSidebar } from './react/Sidebar.jsx';
 import './react/ui-system.css';
+import './react/desktop-typography.css';
 import { mountToastViewport } from './react/ui/ToastViewport.jsx';
 
 let ocrEnginePromise;
