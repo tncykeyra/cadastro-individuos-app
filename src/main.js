@@ -334,7 +334,7 @@ async function renderPeopleWorkspace(contentHtml,view='list',recordId=null,detai
     const [{createRoot},{flushSync},{default:React},{default:PeopleWorkspace},{default:PersonDetail}]=await Promise.all([import('react-dom/client'),import('react-dom'),import('react'),import('./react/PeopleWorkspace.jsx'),import('./react/PersonDetail.jsx')]);
     if(peopleReactRoot){peopleReactRoot.unmount();peopleReactRoot=null}
     releaseLegacyPageRoot();peopleReactRoot=createRoot(root);
-    flushSync(()=>peopleReactRoot.render(detailData?React.createElement(PersonDetail,detailData):React.createElement(PeopleWorkspace,{contentHtml,view})));
+    flushSync(()=>peopleReactRoot.render(detailData?React.createElement(PersonDetail,{...detailData,onShare:id=>generateRecordPdf('people',id)}):React.createElement(PeopleWorkspace,{contentHtml,view})));
     root.focus({preventScroll:true});
     settleLoadedCardPhotos(root);
   }catch(error){
