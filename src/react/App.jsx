@@ -1,8 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Button from './ui/Button.jsx';
 import { supabase, supabaseConfigured } from './supabase.js';
-import { renderVehicleInterestPage, wireVehicleInterestActions } from '../vehicle-interest.js';
-import { renderFiscalizationPage, wireFiscalizationActions } from '../fiscalization.js';
 import './react.css';
 
 const number = (value) => Number(value || 0).toLocaleString('pt-BR');
@@ -76,6 +74,7 @@ function LegacyFeature({ page, activeCity, session, isAdmin }) {
       return error ? '' : data?.signedUrl || '';
     };
     const loadVehicleInterest = async () => {
+      const { renderVehicleInterestPage, wireVehicleInterestActions } = await import('../vehicle-interest.js');
       const markup = await renderVehicleInterestPage(supabase, {
         cityId: activeCity.id, cityName: activeCity.name || '', userId: session.user.id, resolvePhoto,
       });
@@ -87,6 +86,7 @@ function LegacyFeature({ page, activeCity, session, isAdmin }) {
       });
     };
     const loadFiscalization = async () => {
+      const { renderFiscalizationPage, wireFiscalizationActions } = await import('../fiscalization.js');
       const markup = await renderFiscalizationPage(supabase, isAdmin);
       if (alive) root.innerHTML = markup;
     };
@@ -126,6 +126,7 @@ export default function App() {
   const [selected, setSelected] = useState(null);
   const [search, setSearch] = useState('');
   const [stats, setStats] = useState({ people: null, cpf: null, vehicles: null, warrants: null });
+  const recordsRequestRef = useRef(0);
   const [theme, setTheme] = useState(() => {
     try { return localStorage.getItem('cadastro-criminal-appearance-v1') || 'light'; } catch { return 'light'; }
   });
@@ -230,6 +231,7 @@ export default function App() {
 
   const loadRecords = useCallback(async (kind, term) => {
     if (!activeCity?.id) return;
+    const requestId = ++recordsRequestRef.current;
     setBusy(true);
     setError('');
     setSelected(null);
@@ -249,26 +251,31 @@ export default function App() {
           .order(kind === 'people' ? 'full_name' : 'plate').limit(50);
       }
       if (result.error) throw result.error;
+      if (requestId !== recordsRequestRef.current) return;
       setRecords(result.data || []);
     } catch (loadError) {
+      if (requestId !== recordsRequestRef.current) return;
       setRecords([]);
       setError(cleanError(loadError));
     } finally {
-      setBusy(false);
+      if (requestId === recordsRequestRef.current) setBusy(false);
     }
   }, [activeCity]);
 
   useEffect(() => {
-    if (!session || !activeCity) return;
-    if (page === 'dashboard') void loadDashboard();
-    if (page === 'people' || page === 'vehicles') void loadRecords(page, search);
-  }, [session, activeCity, page, loadDashboard, loadRecords]);
-
-  useEffect(() => {
-    if (!session || !activeCity || !['people', 'vehicles'].includes(page)) return undefined;
-    const timer = setTimeout(() => void loadRecords(page, search), 300);
-    return () => clearTimeout(timer);
-  }, [search, page, session, activeCity, loadRecords]);
+    if (!session || !activeCity) return undefined;
+    if (page === 'dashboard') {
+      void loadDashboard();
+      return undefined;
+    }
+    if (!['people', 'vehicles'].includes(page)) return undefined;
+    const timer = setTimeout(() => void loadRecords(page, search), search.trim() ? 250 : 0);
+    return () => {
+      clearTimeout(timer);
+      recordsRequestRef.current += 1;
+      setBusy(false);
+    };
+  }, [session, activeCity, page, search, loadDashboard, loadRecords]);
 
   const openDetail = async (id) => {
     setBusy(true);
@@ -314,7 +321,6 @@ export default function App() {
     setBusy(false);
   };
 
-  const visibleRecords = useMemo(() => records, [records]);
   const cpfCoverage = stats.people > 0 && stats.cpf !== null ? Math.min(100, Math.round((stats.cpf / stats.people) * 100)) : 0;
 
   if (!supabaseConfigured) {
@@ -398,7 +404,7 @@ export default function App() {
             </div>
           )}
 
-          {(page === 'people' || page === 'vehicles') && !selected && <section className="react-panel"><div className="react-list-heading"><div><span className="react-eyebrow">PESQUISA</span><h2>{page === 'people' ? 'Localizar indivíduo' : 'Localizar veículo'}</h2></div><span className="react-count">{number(visibleRecords.length)} resultado(s)</span></div><div className="react-search-wrap"><DashboardIcon name="search" /><input className="react-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={page === 'people' ? 'Nome, CPF, RG ou matrícula' : 'Placa, marca, modelo ou cor'} aria-label="Pesquisar registros" /></div><p className="react-helper">A pesquisa respeita a cidade ativa e as regras de acesso do banco.</p>{busy && <p className="react-loading-inline">Consultando…</p>}{!busy && visibleRecords.length === 0 && <EmptyState title="Nenhum registro encontrado" detail="Confira os termos da pesquisa ou tente novamente." />}{visibleRecords.length > 0 && <div className="react-record-list">{visibleRecords.map((record) => <Button className="react-record-row" key={record.id} onClick={() => void openDetail(record.id)}><span className="react-record-avatar"><DashboardIcon name={page === 'people' ? 'people' : 'vehicle'} /></span><span className="react-record-copy"><strong>{page === 'people' ? record.full_name : record.plate}</strong><small>{page === 'people' ? ['CPF: ' + (record.cpf_digits || '—'), 'RG: ' + (record.rg || '—')].join(' · ') : [record.make, record.model, record.color].filter(Boolean).join(' · ') || 'Dados complementares não informados'}</small></span><span className="react-record-arrow"><DashboardIcon name="arrow" /></span></Button>)}</div>}</section>}
+          {(page === 'people' || page === 'vehicles') && !selected && <section className="react-panel"><div className="react-list-heading"><div><span className="react-eyebrow">PESQUISA</span><h2>{page === 'people' ? 'Localizar indivíduo' : 'Localizar veículo'}</h2></div><span className="react-count">{number(records.length)} resultado(s)</span></div><div className="react-search-wrap"><DashboardIcon name="search" /><input className="react-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={page === 'people' ? 'Nome, CPF, RG ou matrícula' : 'Placa, marca, modelo ou cor'} aria-label="Pesquisar registros" /></div><p className="react-helper">A pesquisa respeita a cidade ativa e as regras de acesso do banco.</p>{busy && <p className="react-loading-inline">Consultando…</p>}{!busy && visibleRecords.length === 0 && <EmptyState title="Nenhum registro encontrado" detail="Confira os termos da pesquisa ou tente novamente." />}{visibleRecords.length > 0 && <div className="react-record-list">{records.map((record) => <Button className="react-record-row" key={record.id} onClick={() => void openDetail(record.id)}><span className="react-record-avatar"><DashboardIcon name={page === 'people' ? 'people' : 'vehicle'} /></span><span className="react-record-copy"><strong>{page === 'people' ? record.full_name : record.plate}</strong><small>{page === 'people' ? ['CPF: ' + (record.cpf_digits || '—'), 'RG: ' + (record.rg || '—')].join(' · ') : [record.make, record.model, record.color].filter(Boolean).join(' · ') || 'Dados complementares não informados'}</small></span><span className="react-record-arrow"><DashboardIcon name="arrow" /></span></Button>)}</div>}</section>}
 
           {selected && <section className="react-panel react-detail"><Button className="react-back" onClick={() => setSelected(null)}><DashboardIcon name="arrow" /> Voltar à lista</Button><span className="react-eyebrow">CONSULTA INDIVIDUAL</span><h2>{selected.kind === 'people' ? selected.data.full_name : selected.data.plate}</h2><div className="react-detail-grid">{Object.entries(selected.data).filter(([key, value]) => !['id', 'created_at'].includes(key) && value !== null && value !== '').map(([key, value]) => <div className="react-detail-field" key={key}><small>{({ full_name: 'Nome completo', cpf_digits: 'CPF', rg: 'RG', registration: 'Matrícula', alias: 'Apelido / vulgo', birthday: 'Nascimento', address_primary: 'Endereço principal', address_secondary: 'Endereço secundário', occurrence_notes: 'Crimes / anotações de ocorrência', occurrence_reference: 'Referência da ocorrência', notes: 'Anotações', plate: 'Placa', make: 'Marca', model: 'Modelo', color: 'Cor' })[key] || key}</small><strong>{key === 'birthday' ? date(value) : String(value)}</strong></div>)}</div><small className="react-detail-date">Cadastro criado em {selected.data.created_at ? new Date(selected.data.created_at).toLocaleString('pt-BR') : '—'}</small></section>}
           {!['vehicleInterest', 'fiscalization'].includes(page) && <p className="react-readonly-note">Etapa de consulta: esta interface não cria, edita, arquiva nem exclui registros.</p>}
