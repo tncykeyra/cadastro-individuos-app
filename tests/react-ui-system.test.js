@@ -13,7 +13,7 @@ const files = [
 const modules = await Promise.all(files.map(file =>
   readFile(new URL('../src/react/' + file, import.meta.url), 'utf8')
 ));
-const [button, styles, main, index, serviceWorker, pkg, roadmap] = await Promise.all([
+const [button, styles, main, index, serviceWorker, pkg, roadmap, toast] = await Promise.all([
   readFile(new URL('../src/react/ui/Button.jsx', import.meta.url), 'utf8'),
   readFile(new URL('../src/react/ui-system.css', import.meta.url), 'utf8'),
   readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
@@ -21,6 +21,7 @@ const [button, styles, main, index, serviceWorker, pkg, roadmap] = await Promise
   readFile(new URL('../public/sw.js', import.meta.url), 'utf8'),
   readFile(new URL('../package.json', import.meta.url), 'utf8'),
   readFile(new URL('../docs/REACT-MIGRATION-ROADMAP.md', import.meta.url), 'utf8'),
+  readFile(new URL('../src/react/ui/ToastViewport.jsx', import.meta.url), 'utf8'),
 ]);
 
 test('componentes React de produção usam o botão compartilhado', () => {
@@ -47,12 +48,17 @@ test('integração mantém ações e contratos de navegação e formulário exis
     assert.ok(main.includes(marker), 'contrato preservado: ' + marker);
   }
   assert.match(main, /ui-system\.css/);
+  assert.match(main, /mountToastViewport\(\$\('#toast'\)\)/);
+  assert.match(main, /app:toast/);
+  assert.match(toast, /aria-live="polite"/);
+  assert.match(toast, /window\.addEventListener\('app:toast'/);
+  assert.match(toast, /clearTimeout/);
 });
 
 test('versão e cache foram atualizados e o plano de migração explicita as áreas restantes', () => {
-  assert.equal(JSON.parse(pkg).version, '2.44.0');
-  assert.match(index, /styles\.css\?v=159/);
-  assert.match(serviceWorker, /cadastro-app-shell-v113/);
+  assert.equal(JSON.parse(pkg).version, '2.44.1');
+  assert.match(index, /styles\.css\?v=160/);
+  assert.match(serviceWorker, /cadastro-app-shell-v114/);
   for (const module of ['Autenticação','Cadastro Inteligente','Usuários','Histórico','Veículos de interesse','Fiscalização']) {
     assert.ok(roadmap.includes(module), 'área da migração documentada: ' + module);
   }
