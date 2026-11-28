@@ -74,3 +74,16 @@ A versão 2.45.0 amplia a montagem React para as páginas genéricas e padroniza
 ## 2026-11-28 — Remoção dos controles de retorno ao clássico
 
 Foram removidos das áreas Painel da Cidade, Indivíduos, Veículos, Mandados e Cidades e Acessos todos os botões visíveis que permitiam retornar à interface clássica. As ações de navegação, consulta, edição, associação e administração permanecem preservadas. A camada clássica permanece apenas como mecanismo interno de contingência caso algum módulo React não possa ser carregado; não há controle de usuário para alternar para ela.
+
+
+## 2026-11-28 — React como interface padrão para todos os usuários
+
+- Preferências locais antigas de interface clássica deixam de determinar a tela. Painel, indivíduos, veículos e mandados são direcionados aos workspaces React para todos os usuários autenticados.
+- Em falha de carregamento de um workspace específico, a tela permanece dentro do contêiner React de compatibilidade. Não há alternância automática para um modo clássico selecionável pelo usuário.
+- O alerta de sugestões de alteração de nome/CPF foi convertido em componente React. O texto informa quantidade, explica a revisão e esclarece que os dados só mudam após decisão administrativa. Fechar o aviso registra as sugestões exibidas como vistas para aquele usuário.
+- Indicadores no menu lateral exibem a quantidade real de pendências (até 99+) e rótulos acessíveis. O indicador do administrador master também apresenta contagem.
+- O balão global de notificações passa a ser exclusivamente React, com descarte manual, tempo de leitura maior, melhor adaptação ao celular e respeito a áreas seguras da tela.
+
+### Limite estrutural que permanece documentado
+
+A interface de todos os módulos está sob montagem React, mas algumas telas secundárias ainda usam HTML gerado pelo controlador legado dentro de `LegacyPageWorkspace` (`dangerouslySetInnerHTML`). Isso inclui partes de autenticação, cadastro inteligente, revisão/manutenção, usuários, histórico, veículos de interesse, fiscalização e diálogos/formulários auxiliares. Esses fluxos ainda precisam ser reescritos como componentes React nativos, em etapas com testes de equivalência. Esta publicação não deve ser descrita como conversão integral de cada formulário e regra de negócio para JSX.
