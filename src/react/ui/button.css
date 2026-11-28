@@ -1,0 +1,15 @@
+/* Base visual compartilhada por todos os botões React. */
+.ui-button{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:42px;padding:10px 16px;border:1px solid var(--brand,#50595e);border-radius:10px;background:var(--brand,#50595e);color:#fff;font:inherit;font-size:.88rem;font-weight:700;line-height:1.2;text-align:center;text-decoration:none;white-space:normal;overflow-wrap:anywhere;cursor:pointer;transition:background .16s,border-color .16s,color .16s,box-shadow .16s,transform .16s}
+.ui-button:hover:not(:disabled){background:var(--brand-dark,#3e474c);border-color:var(--brand-dark,#3e474c);color:#fff}
+.ui-button:active:not(:disabled){transform:translateY(1px)}
+.ui-button:focus-visible{outline:3px solid color-mix(in srgb,var(--brand,#50595e) 35%,transparent);outline-offset:2px}
+.ui-button:disabled{opacity:.52;cursor:not-allowed;transform:none}
+.ui-button--primary{background:var(--brand,#50595e);border-color:var(--brand,#50595e);color:#fff}
+.ui-button--secondary{background:var(--surface,#fff);border-color:var(--line,#dfe3e5);color:var(--brand-dark,#3e474c)}
+.ui-button--secondary:hover:not(:disabled){background:var(--soft,#f0f1f2);border-color:var(--brand,#50595e);color:var(--brand-dark,#3e474c)}
+.ui-button--danger{background:#a73535;border-color:#a73535;color:#fff}
+.ui-button--danger:hover:not(:disabled){background:#872929;border-color:#872929}
+.ui-button--small{min-height:34px;padding:7px 11px;font-size:.78rem}
+.ui-button--icon-only{width:40px;min-width:40px;height:40px;padding:7px}
+.ui-button--loading{cursor:progress}
+@media(max-width:620px){.ui-button{min-height:42px;padding:10px 12px;font-size:.84rem}.ui-button--small{min-height:36px;padding:7px 10px;font-size:.77rem}}
