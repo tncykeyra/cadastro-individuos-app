@@ -1,9 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Button from './ui/Button.jsx';
 import { createRoot } from 'react-dom/client';
 import { flushSync } from 'react-dom';
 import './vehicles-workspace.css';
-import CardDensityControl, { getCardDensity } from './CardDensityControl.jsx';
+import CardDensityControl, { getCardDensity, saveCardDensity } from './CardDensityControl.jsx';
 import VehicleDetail from './VehicleDetail.jsx';
 
 function ShareIcon() {
@@ -123,8 +123,10 @@ function VehicleDetailActionMount({ contentHtml, recordId, canDelete }) {
 
 export default function VehiclesWorkspace({ contentHtml, view, recordId, canDelete = false, detailData = null }) {
   const detail = view === 'detail';
+  const [density, setDensity] = useState(getCardDensity);
+  const changeDensity = value => setDensity(saveCardDensity(value));
   return (
-    <div className={'vehicles-react-shell ' + (detail ? 'is-detail' : 'is-list')} data-card-density={getCardDensity()}>
+    <div className={'vehicles-react-shell ' + (detail ? 'is-detail' : 'is-list')} data-card-density={density}>
       <header className="vehicles-react-hero">
         <div className="vehicles-react-heading">
           {detail && <span className="vehicles-react-eyebrow">CONSULTA DE VEÍCULO</span>}
@@ -135,7 +137,7 @@ export default function VehiclesWorkspace({ contentHtml, view, recordId, canDele
         </div>
         <div className="vehicles-react-tools">
           {detail && <span className="vehicles-react-context"><span aria-hidden="true" className="vehicles-react-context-dot" />Registro selecionado</span>}
-          {!detail && <CardDensityControl />}
+          {!detail && <CardDensityControl value={density} onChange={changeDensity} />}
         </div>
       </header>
       {detail
