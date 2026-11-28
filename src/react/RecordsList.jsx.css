@@ -50,3 +50,37 @@
 .react-record-search-button>span:first-child{font-size:18px;line-height:1}
 .react-record-search-hint{min-height:16px;margin:0 3px;color:var(--muted,#687176);font-size:11px;line-height:1.4}
 @media(max-width:480px){.react-records-search{gap:7px;padding-left:10px}.react-record-search-button{min-width:40px;padding:8px 10px}.react-record-search-button>span:last-child{display:none}}
+
+
+/* Densidade dos cartões da listagem React usada efetivamente nas abas. */
+.react-records-actions{align-items:center}
+.react-records-module .card-density-control{flex:0 0 auto}
+.react-records-module[data-card-density="large"] .react-record-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr))!important;align-items:stretch}
+.react-records-module[data-card-density="large"] .react-record-card.is-vehicle{display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;gap:0!important;width:100%!important;min-width:0!important;min-height:100%!important;padding:10px!important}
+.react-records-module[data-card-density="large"] .react-record-card.is-vehicle .react-record-card-media{display:grid!important;place-items:center!important;width:100%!important;height:auto!important;min-height:0!important;max-height:290px!important;flex:0 0 auto!important;aspect-ratio:3/4!important;border-radius:11px!important;overflow:hidden!important}
+.react-records-module[data-card-density="large"] .react-record-card.is-vehicle .react-record-card-media img{width:100%!important;height:100%!important;object-fit:cover!important;object-position:center 50%!important}
+.react-records-module[data-card-density="large"] .react-record-card.is-vehicle .react-record-card-copy{width:100%!important;min-width:0!important;padding:10px 4px 5px!important}
+.react-records-module[data-card-density="large"] .react-record-card.is-vehicle .react-record-card-copy strong{font-size:14px!important}
+.react-records-module[data-card-density="large"] .react-record-card.is-vehicle .react-record-card-copy small{font-size:11px!important;white-space:normal!important}
+.react-records-module[data-card-density="large"] .react-record-card.is-vehicle .react-record-card-arrow{top:auto!important;right:12px!important;bottom:12px!important;transform:none!important}
+.react-records-module[data-card-density="compact"] .react-record-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,170px),1fr))!important;gap:9px!important}
+.react-records-module[data-card-density="compact"] .react-record-card.is-vehicle{display:grid!important;grid-template-columns:76px minmax(0,1fr)!important;align-items:center!important;gap:9px!important;min-height:92px!important;padding:8px!important;border-radius:12px!important}
+.react-records-module[data-card-density="compact"] .react-record-card.is-vehicle .react-record-card-media{width:76px!important;height:76px!important;min-width:76px!important;min-height:76px!important;max-height:76px!important;flex:0 0 76px!important;aspect-ratio:1/1!important;border-radius:9px!important}
+.react-records-module[data-card-density="compact"] .react-record-card.is-vehicle .react-record-card-copy{min-width:0!important;padding:4px 18px 4px 0!important}
+.react-records-module[data-card-density="compact"] .react-record-card.is-vehicle .react-record-card-copy strong{font-size:12px!important}
+.react-records-module[data-card-density="compact"] .react-record-card.is-vehicle .react-record-card-copy small{font-size:10px!important}
+.react-records-module[data-card-density="compact"] .react-record-card.is-vehicle .react-record-card-arrow{top:50%!important;right:10px!important;bottom:auto!important;transform:translateY(-50%)!important}
+@media(max-width:700px){
+ .react-records-actions{display:flex!important;align-items:center!important;justify-content:space-between!important;flex-wrap:wrap!important;gap:8px!important}
+ .react-records-actions>.ui-button{flex:1 1 110px}
+ .react-records-module[data-card-density="large"] .react-record-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ .react-records-module[data-card-density="large"] .react-record-card.is-vehicle{padding:8px!important;border-radius:14px!important}
+ .react-records-module[data-card-density="large"] .react-record-card.is-vehicle .react-record-card-media{max-height:none!important}
+ .react-records-module[data-card-density="large"] .react-record-card.is-vehicle .react-record-card-copy{padding:9px 3px 4px!important}
+ .react-records-module[data-card-density="compact"] .react-record-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+ .react-records-module[data-card-density="compact"] .react-record-card.is-vehicle{grid-template-columns:58px minmax(0,1fr)!important;gap:5px!important;min-height:72px!important;padding:5px!important}
+ .react-records-module[data-card-density="compact"] .react-record-card.is-vehicle .react-record-card-media{width:58px!important;height:58px!important;min-width:58px!important;min-height:58px!important;max-height:58px!important;flex-basis:58px!important}
+ .react-records-module[data-card-density="compact"] .react-record-card.is-vehicle .react-record-card-copy{padding:4px 14px 4px 0!important}
+ .react-records-module[data-card-density="compact"] .react-record-card.is-vehicle .react-record-card-copy strong{font-size:10px!important}
+ .react-records-module[data-card-density="compact"] .react-record-card.is-vehicle .react-record-card-copy small{font-size:9px!important}
+}
