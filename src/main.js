@@ -1558,7 +1558,7 @@ async function renderDashboardReact(){
     cityDashboardRoot.render(React.createElement(CityDashboard,{
       cityName:dashboardCityName,roleLabel:role,stats,photoStats:cachedPhotoStats,
       pendingIdentityCount:identityResult.error?state.pendingIdentityCount:identityResult.count,
-      pendingVehiclePlateCount:state.pendingVehiclePlateCount,
+      pendingVehiclePlateCount:isAdmin()?state.pendingVehiclePlateCount:0,
       error:failed?'Não foi possível atualizar todos os indicadores. Tente novamente.':'',
       onRefresh:()=>{void renderDashboardReact()},
       onNavigate:async(page,teamPage)=>{
