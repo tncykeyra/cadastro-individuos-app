@@ -39,5 +39,20 @@ Tornar React a arquitetura padrão de todos os módulos da aplicação, removend
 - Testes automatizados e build de produção aprovados.
 - Sem regressão no Supabase e sem dados fictícios.
 
+## Progresso da migração
+
+### Concluído nesta branch
+- Listagens de Indivíduos e Veículos em componentes React nativos.
+- Ficha de Veículo em JSX nativo: galeria de fotos, dados de identificação, aviso de sugestão de placa, pessoas associadas e ações de compartilhar, editar, excluir, associar e desativar vínculo.
+- A ficha nativa reutiliza os serviços e as rotinas de negócio existentes. As ações continuam conectadas aos manipuladores atuais.
+- Nenhuma tabela, RPC, política RLS, registro ou arquivo do Supabase foi alterado.
+- O fallback de erro mantém uma ação de retorno caso o carregamento do componente React falhe.
+
+### Ainda pendente
+- Formulários React nativos de indivíduos e veículos, incluindo validação de duplicidade, etapas, fotos, câmera e OCR.
+- Ficha completa de Indivíduos e seus vínculos, sugestões, alertas de mandados e verificações entre cidades.
+- Migração integral de Mandados/OCR, Inteligência, Fiscalização, Veículos de interesse, Administração, Histórico e relatórios.
+- Testes funcionais em navegador desktop e mobile para esta nova ficha, além dos testes automatizados.
+
 ## Estratégia de entrega
 Migrar por módulos em branches/PRs pequenos baseados na main atual. Manter cada etapa isolada e testável. Só concluir a migração e ativar o React como padrão depois que todos os critérios de aceite forem atendidos. O deploy final deve ser validado no GitHub Pages.
