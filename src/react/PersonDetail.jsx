@@ -29,7 +29,7 @@ function Gallery({ photos = [] }) {
         <img src={photo.url} alt={'Miniatura '+(index+1)} loading="lazy"/><span>{photo.is_cover?'Capa':index+1}</span>
       </button>)}
     </div>}
-  </section></div></div>;
+  </section>;
 }
 
 function Info({label,value,wide=false,copy}) {
@@ -41,45 +41,66 @@ function Info({label,value,wide=false,copy}) {
 }
 
 export default function PersonDetail({person,photos=[],vehicles=[],canDelete=false,identityHtml='',warrantHtml='',crossCityHtml='',relationshipsHtml=''}) {
-  const name = person.full_name || 'Nome não informado';
-  const addresses = [person.address_primary,person.address_secondary,...(Array.isArray(person.additional_addresses)?person.additional_addresses:[])].map(value=>String(value||'').trim()).filter(Boolean);
-  return <div className="people-react-shell is-detail"><header className="people-react-hero"><div className="people-react-heading"><span className="people-react-eyebrow">CONSULTA INDIVIDUAL</span><h1>Ficha do indivíduo</h1><p>Identificação, informações complementares, vínculos e veículos associados em uma única consulta.</p></div><div className="people-react-tools"><span className="people-react-context"><span className="people-react-context-dot"/>Registro selecionado</span></div></header><div className="people-react-content"><section className="person-native-detail">
-    <Button variant="secondary" size="small" type="button" data-back>← Voltar para indivíduos</Button>
-    <div className="detail-hero">
-      <div><Gallery photos={photos}/></div>
-      <div>
-        <div className="detail-title"><div className="detail-name-copy"><h1>{name}</h1><button className="copy-info-button" type="button" data-copy-info={name} data-copy-label="Nome" title="Copiar nome" aria-label="Copiar nome">⧉</button></div>
-          <div className="detail-actions">
-            <Button size="small" className="people-share-button" type="button" data-record-pdf={'people:'+person.id} title="Compartilhar ficha do indivíduo" aria-label="Compartilhar ficha do indivíduo"><span aria-hidden="true">↗</span><span className="people-share-button-label">Compartilhar</span></Button>
-            <Button type="button" data-edit-person={person.id}>✎ Editar</Button>
-            {canDelete && <Button variant="danger" type="button" data-delete-record={'people:'+person.id}>Excluir</Button>}
+  const name = person?.full_name || 'Nome não informado';
+  const addresses = [person?.address_primary,person?.address_secondary,...(Array.isArray(person?.additional_addresses)?person.additional_addresses:[])].map(value=>String(value||'').trim()).filter(Boolean);
+  return <div className="people-react-shell is-detail">
+    <header className="people-react-hero">
+      <div className="people-react-heading">
+        <span className="people-react-eyebrow">CONSULTA INDIVIDUAL</span>
+        <h1>Ficha do indivíduo</h1>
+        <p>Identificação, informações complementares, vínculos e veículos associados em uma única consulta.</p>
+      </div>
+      <div className="people-react-tools"><span className="people-react-context"><span className="people-react-context-dot"/>Registro selecionado</span></div>
+    </header>
+    <div className="people-react-content">
+      <section className="person-native-detail">
+        <Button variant="secondary" size="small" type="button" data-back>← Voltar para indivíduos</Button>
+        <div className="detail-hero">
+          <div><Gallery photos={photos}/></div>
+          <div>
+            <div className="detail-title">
+              <div className="detail-name-copy">
+                <h1>{name}</h1>
+                <button className="copy-info-button" type="button" data-copy-info={name} data-copy-label="Nome" title="Copiar nome" aria-label="Copiar nome">⧉</button>
+              </div>
+              <div className="detail-actions">
+                <Button size="small" className="people-share-button" type="button" data-record-pdf={'people:'+person.id} title="Compartilhar ficha do indivíduo" aria-label="Compartilhar ficha do indivíduo"><span aria-hidden="true">↗</span><span className="people-share-button-label">Compartilhar</span></Button>
+                <Button type="button" data-edit-person={person.id}>✎ Editar</Button>
+                {canDelete && <Button variant="danger" type="button" data-delete-record={'people:'+person.id}>Excluir</Button>}
+              </div>
+            </div>
+            <p className="muted">Registro criado em {person.created_at ? new Date(person.created_at).toLocaleDateString('pt-BR') : '—'}</p>
+            {identityHtml && <div dangerouslySetInnerHTML={{__html:identityHtml}}/>}
           </div>
         </div>
-        <p className="muted">Registro criado em {person.created_at ? new Date(person.created_at).toLocaleDateString('pt-BR') : '—'}</p>
-        {identityHtml && <div dangerouslySetInnerHTML={{__html:identityHtml}}/>}
-      </div>
+        {warrantHtml && <div dangerouslySetInnerHTML={{__html:warrantHtml}}/>}
+        {crossCityHtml && <div dangerouslySetInnerHTML={{__html:crossCityHtml}}/>}
+        <div className="detail-sections">
+          <Info label="CPF" value={person.cpf_digits?cpf(person.cpf_digits):'—'} copy={person.cpf_digits}/>
+          <Info label="RG" value={person.rg} copy={person.rg}/>
+          <Info label="Matrícula" value={person.registration}/>
+          <Info label="Apelido/Vulgo" value={person.alias}/>
+          <Info label="Aniversário" value={date(person.birthday)}/>
+          {addresses.map((address,index)=><Info key={index} label={'Endereço '+(index+1)} value={<a href={'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address)} target="_blank" rel="noopener noreferrer">{address} ↗</a>} wide/>)}
+          <Info label="Anotações" value={person.notes} wide/>
+          <Info label="Crimes" value={person.occurrence_notes} wide/>
+          <Info label="Referência da ocorrência" value={person.occurrence_reference} wide/>
+        </div>
+        {relationshipsHtml && <div dangerouslySetInnerHTML={{__html:relationshipsHtml}}/>}
+        <section className="person-relationships vehicle-relationships">
+          <div className="section-heading association-section-heading">
+            <h2>Veículos associados</h2>
+            <Button size="small" type="button" data-link-person={person.id}>＋ Associar veículo</Button>
+          </div>
+          <div className="list">
+            {vehicles.length ? vehicles.map(link=><div className={'list-row'+(!link.active?' inactive':'')} key={link.id} data-open-vehicle={link.vehicles?.id}>
+              <div className="vehicle-thumb">{link.vehicles?.photo_url?<img className="linked-vehicle-photo" src={link.vehicles.photo_url} loading="lazy" decoding="async" alt={'Foto do veículo '+(link.vehicles.plate||'')}/>:<span aria-hidden="true">▰</span>}</div>
+              <div><div className="row-title">{link.vehicles?.plate||'Veículo removido'}</div><div className="row-subtitle">{[link.vehicles?.make,link.vehicles?.model,link.vehicles?.color].filter(Boolean).join(' · ')}{link.active?'':' · inativo'}</div></div>
+              {link.active && <Button variant="secondary" size="small" type="button" className="more-button" data-unlink={link.id} title="Desativar vínculo" aria-label="Desativar vínculo">×</Button>}
+            </div>) : <div className="empty">Nenhum veículo associado.</div>}
+          </div>
+        </section>
+      </section>
     </div>
-    {warrantHtml && <div dangerouslySetInnerHTML={{__html:warrantHtml}}/>}
-    {crossCityHtml && <div dangerouslySetInnerHTML={{__html:crossCityHtml}}/>}
-    <div className="detail-sections">
-      <Info label="CPF" value={person.cpf_digits?cpf(person.cpf_digits):'—'} copy={person.cpf_digits}/>
-      <Info label="RG" value={person.rg} copy={person.rg}/>
-      <Info label="Matrícula" value={person.registration}/>
-      <Info label="Apelido/Vulgo" value={person.alias}/>
-      <Info label="Aniversário" value={date(person.birthday)}/>
-      {addresses.map((address,index)=><Info key={index} label={'Endereço '+(index+1)} value={<a href={'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address)} target="_blank" rel="noopener noreferrer">{address} ↗</a>} wide/>)}
-      <Info label="Anotações" value={person.notes} wide/>
-      <Info label="Crimes" value={person.occurrence_notes} wide/>
-      <Info label="Referência da ocorrência" value={person.occurrence_reference} wide/>
-    </div>
-    {relationshipsHtml && <div dangerouslySetInnerHTML={{__html:relationshipsHtml}}/>}
-    <section className="person-relationships vehicle-relationships">
-      <div className="section-heading association-section-heading"><h2>Veículos associados</h2><Button size="small" type="button" data-link-person={person.id}>＋ Associar veículo</Button></div>
-      <div className="list">{vehicles.length ? vehicles.map(link=><div className={'list-row'+(!link.active?' inactive':'')} key={link.id} data-open-vehicle={link.vehicles?.id}>
-        <div className="vehicle-thumb">{link.vehicles?.photo_url?<img className="linked-vehicle-photo" src={link.vehicles.photo_url} loading="lazy" decoding="async" alt={'Foto do veículo '+(link.vehicles.plate||'')}/>:<span aria-hidden="true">▰</span>}</div>
-        <div><div className="row-title">{link.vehicles?.plate||'Veículo removido'}</div><div className="row-subtitle">{[link.vehicles?.make,link.vehicles?.model,link.vehicles?.color].filter(Boolean).join(' · ')}{link.active?'':' · inativo'}</div></div>
-        {link.active && <Button variant="secondary" size="small" type="button" className="more-button" data-unlink={link.id} title="Desativar vínculo" aria-label="Desativar vínculo">×</Button>}
-      </div>) : <div className="empty">Nenhum veículo associado.</div>}</div>
-    </section>
-  </section>;
+  </div>;
 }
