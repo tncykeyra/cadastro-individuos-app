@@ -376,3 +376,92 @@
 .vehicles-react-shell.is-detail .vehicle-native-person strong{font-size:.86rem;font-weight:750}
 .vehicles-react-shell.is-detail .vehicle-native-person small{font-size:.74rem}
 @media(max-width:700px){.vehicles-react-shell.is-detail .vehicles-react-hero{align-items:stretch;flex-direction:column;gap:14px;padding:18px;margin-bottom:17px}.vehicles-react-shell.is-detail .vehicles-react-tools{align-items:flex-start;flex-direction:row;justify-content:space-between;flex-wrap:wrap}.vehicles-react-shell.is-detail .vehicles-react-heading h1{font-size:1.75rem}.vehicles-react-shell.is-detail .vehicle-native-identity{grid-template-columns:minmax(0,1fr);gap:15px;padding:15px}.vehicles-react-shell.is-detail .vehicle-native-title h2{font-size:clamp(1.7rem,7vw,2.15rem)}.vehicles-react-shell.is-detail .vehicle-native-section{padding:14px}}
+
+
+
+/* Correspondência visual da ficha React de veículos com a ficha React de indivíduos.
+   Seletores aplicados aos nomes reais usados por VehicleDetail.jsx. */
+.vehicles-react-shell.is-detail .vehicle-native-detail{
+  display:grid;gap:20px;min-width:0;color:var(--v-ink);
+}
+.vehicles-react-shell.is-detail .vehicle-native-back{
+  justify-self:start;min-height:40px;padding:9px 14px;border-radius:11px;
+}
+.vehicles-react-shell.is-detail .vehicle-native-identity{
+  display:grid;grid-template-columns:minmax(250px,.8fr) minmax(0,1.2fr);
+  align-items:center;gap:clamp(20px,3vw,32px);margin:0;padding:clamp(16px,2.4vw,24px);
+  border:1px solid var(--v-line);border-radius:18px;background:var(--v-bg);
+  box-shadow:0 8px 24px #20282d08;
+}
+.vehicles-react-shell.is-detail .vehicle-native-gallery,
+.vehicles-react-shell.is-detail .vehicle-native-photo-empty{width:100%;max-width:440px;margin:0 auto;min-width:0}
+.vehicles-react-shell.is-detail .vehicle-native-photo-stage,
+.vehicles-react-shell.is-detail .vehicle-native-photo-empty{
+  min-height:220px;aspect-ratio:4/3;border-radius:13px;background:var(--page,#f2f4f4);
+}
+.vehicles-react-shell.is-detail .vehicle-native-photo-stage>img{display:block;width:100%;height:100%;max-height:360px;object-fit:contain}
+.vehicles-react-shell.is-detail .vehicle-native-title{display:grid;align-content:center;justify-items:start;gap:10px;min-width:0}
+.vehicles-react-shell.is-detail .vehicle-native-title .vehicle-native-eyebrow{display:none}
+.vehicles-react-shell.is-detail .vehicle-native-title h2{
+  margin:0;color:var(--v-ink);font-size:clamp(1.9rem,4vw,2.65rem);
+  font-weight:850;line-height:1.12;letter-spacing:-.04em;overflow-wrap:anywhere;
+}
+.vehicles-react-shell.is-detail .vehicle-native-title>p{margin:0;color:var(--v-muted);font-size:.9rem;line-height:1.5}
+.vehicles-react-shell.is-detail .vehicle-native-section{
+  display:grid;gap:13px;min-width:0;margin:0;padding:16px;
+  border:1px solid var(--v-line);border-radius:16px;background:var(--v-bg);
+  box-shadow:0 4px 16px #20282d08;
+}
+.vehicles-react-shell.is-detail .vehicle-native-section h3{
+  margin:0;color:var(--v-ink);font-size:1.08rem;font-weight:800;letter-spacing:-.02em;
+}
+.vehicles-react-shell.is-detail .vehicle-native-info-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+}
+.vehicles-react-shell.is-detail .vehicle-native-info{
+  display:grid;align-content:start;gap:7px;min-width:0;padding:13px 15px;
+  border:1px solid var(--v-line);border-radius:12px;background:var(--v-bg);
+}
+.vehicles-react-shell.is-detail .vehicle-native-info span{
+  color:var(--v-muted);font-size:.68rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;
+}
+.vehicles-react-shell.is-detail .vehicle-native-info strong{
+  color:var(--v-ink);font-size:.9rem;font-weight:650;line-height:1.5;overflow-wrap:anywhere;white-space:pre-wrap;
+}
+.vehicles-react-shell.is-detail .vehicle-native-info.is-wide{grid-column:1/-1}
+.vehicles-react-shell.is-detail .vehicle-native-section-heading{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+}
+.vehicles-react-shell.is-detail .vehicle-native-section-heading>div{display:grid;gap:4px}
+.vehicles-react-shell.is-detail .vehicle-native-section-heading p{margin:0;color:var(--v-muted);font-size:.78rem;line-height:1.45}
+.vehicles-react-shell.is-detail .vehicle-native-section-heading>.ui-button{min-height:42px;padding:10px 16px;border-radius:11px}
+.vehicles-react-shell.is-detail .vehicle-native-links{display:grid;gap:9px}
+.vehicles-react-shell.is-detail .vehicle-native-link{
+  display:flex;align-items:center;gap:11px;min-width:0;padding:10px 12px;
+  border:1px solid var(--v-line);border-radius:13px;background:var(--v-bg);
+}
+.vehicles-react-shell.is-detail .vehicle-native-person strong{color:var(--v-ink);font-size:.86rem;font-weight:750}
+.vehicles-react-shell.is-detail .vehicle-native-person small{color:var(--v-muted);font-size:.74rem;line-height:1.45}
+.vehicles-react-shell.is-detail .vehicle-native-empty{
+  padding:22px;border:1px dashed var(--v-line);border-radius:12px;color:var(--v-muted);text-align:center;font-size:.84rem;
+}
+:root[data-theme="dark"] .vehicles-react-shell.is-detail .vehicle-native-identity,
+:root[data-theme="dark"] .vehicles-react-shell.is-detail .vehicle-native-section,
+:root[data-theme="dark"] .vehicles-react-shell.is-detail .vehicle-native-info,
+:root[data-theme="dark"] .vehicles-react-shell.is-detail .vehicle-native-link{background:var(--v-bg);color:var(--v-ink);box-shadow:none}
+@media(max-width:700px){
+  .vehicles-react-shell.is-detail .vehicles-react-hero{align-items:stretch;flex-direction:column;gap:14px;padding:18px;margin-bottom:17px}
+  .vehicles-react-shell.is-detail .vehicles-react-tools{align-items:flex-start;flex-direction:row;justify-content:space-between;flex-wrap:wrap}
+  .vehicles-react-shell.is-detail .vehicles-react-heading h1{font-size:1.75rem}
+  .vehicles-react-shell.is-detail .vehicle-native-identity{grid-template-columns:minmax(0,1fr);gap:15px;padding:15px}
+  .vehicles-react-shell.is-detail .vehicle-native-gallery,
+  .vehicles-react-shell.is-detail .vehicle-native-photo-empty{max-width:100%}
+  .vehicles-react-shell.is-detail .vehicle-native-photo-stage,
+  .vehicles-react-shell.is-detail .vehicle-native-photo-empty{min-height:190px}
+  .vehicles-react-shell.is-detail .vehicle-native-title h2{font-size:clamp(1.7rem,7vw,2.15rem)}
+  .vehicles-react-shell.is-detail .vehicle-native-section{padding:14px}
+}
+@media(max-width:420px){
+  .vehicles-react-shell.is-detail .vehicle-native-info-grid{grid-template-columns:1fr}
+  .vehicles-react-shell.is-detail .vehicle-native-info.is-wide{grid-column:auto}
+}
