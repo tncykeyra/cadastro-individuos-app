@@ -16,7 +16,6 @@ import { renderIntelligentEntry, parseIntelligentText, parseIntelligentBundle, i
 import { renderSystemTestsPanel, refreshSystemTestsPanel } from './system-tests-panel.js';
 import { mountAssociationDialog } from './react/VehiclesWorkspace.jsx';
 import { renderSidebar } from './react/Sidebar.jsx';
-import SmartFab from './react/SmartFab.jsx';
 import IdentitySuggestionAlert from './react/IdentitySuggestionAlert.jsx';
 import './react/ui-system.css';
 import './react/desktop-typography.css';
@@ -40,7 +39,7 @@ const FISCALIZATION_CITY_ID='10000000-0000-4000-8000-000000000001';
 const canUseFiscalization=()=>state.activeCityId===FISCALIZATION_CITY_ID;
 const shareIcon=()=>'<svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.7 6.8-4.1M8.6 13.3l6.8 4.1"/></svg>';
 const label={dashboard:'Painel da cidade',people:'Indivíduos',vehicles:'Veículos',warrants:'Mandados',vehicleInterest:'Veículos de interesse',fiscalization:'Fiscalização',team:'Usuários',history:'Histórico',smart:'Cadastro Inteligente',review:'Revisão Inteligente',maintenance:'Manutenção Inteligente',cities:'Cidades e acessos'};
-let smartFabRoot=null,smartFabHost=null,identityAlertRoot=null,identityAlertHost=null;
+let identityAlertRoot=null,identityAlertHost=null;
 const photoUrls=new Map(),photoUrlExpiresAt=new Map(),photoCachedKeys=new Set(),photoBlobInflight=new Map();let photoDbPromise=null;let warrantImportPreview=null;const MAX_WARRANT_PDF_BATCH=50,MAX_WARRANT_PDF_FILE_BYTES=20*1024*1024,MAX_WARRANT_PDF_BATCH_BYTES=40*1024*1024;let warrantPdfBatch=[];let warrantPdfBatchSaving=false;let warrantPdfBatchReading=false;const warrantQueueDbName='cadastro-criminal-warrant-queue-v1';let warrantQueueDbPromise=null;const warrantQueueSaveTimers=new Map();
 const msg=e=>e?.message||'Não foi possível concluir. Tente novamente.';
 function toast(text){const message=String(text??'');let classic=false;try{classic=localStorage.getItem('cadastro-criminal-toast-mode-v1')==='classic'}catch{}if(classic){const el=$('#toast');if(el){el.textContent=message;el.classList.add('show');clearTimeout(el._classicToastTimer);el._classicToastTimer=setTimeout(()=>el.classList.remove('show'),2600)}return}window.dispatchEvent(new CustomEvent('app:toast',{detail:{message}}))}
@@ -65,16 +64,6 @@ if(themeToggleButton)themeToggleButton.onclick=event=>{
   setAppearance(document.documentElement.dataset.theme==='dark'?'light':'dark');
 };
 function isMasterAdmin(){return state.profile?.role==='master'||(Array.isArray(state.cities)&&state.cities.some(city=>city?.role==='master'))}
-function renderSmartFab(allowed){
-  if(!smartFabHost){
-    smartFabHost=document.createElement('div');
-    smartFabHost.id='smartFabReactRoot';
-    document.body.append(smartFabHost);
-    smartFabRoot=createRoot(smartFabHost);
-  }
-  const visible=Boolean(allowed&&state.page!=='smart');
-  smartFabRoot.render(React.createElement(SmartFab,{visible,kind:state.page==='vehicles'?'vehicle':'person'}));
-}
 function isAdmin(){return state.cityContextReady?['admin','master'].includes(state.cityRole):state.profile?.role==='admin'}
 async function loadCityContext(){
   state.cities=[];state.activeCityId=null;state.cityRole=null;state.cityContextReady=false;state.cityAccessError='';
@@ -100,7 +89,6 @@ function nav(){
   const versionNode=$('.drawer-version');if(versionNode)versionNode.textContent='Versão '+APP_VERSION;
   const allowed=!!state.session&&['operator','admin'].includes(state.profile?.role)&&!(state.cityContextReady&&!state.cities.length);
   const admin=isAdmin(),master=isMasterAdmin();
-  renderSmartFab(allowed);
   const sideItems=allowed?[['dashboard','Painel da cidade'],['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados'],['vehicleInterest','Veículos de interesse'],...(canUseFiscalization()?[['fiscalization','Fiscalização']]:[]),['smart','Cadastro Inteligente'],...(admin?[['review','Revisão Inteligente'],['maintenance','Manutenção Inteligente'],['history','Histórico']]:[]),...(admin?[['team','Usuários']]:[]),...(master?[['cities','Cidades e acessos']]:[])]:[];
   const bottomItems=allowed?[['people','Indivíduos'],['vehicles','Veículos'],['warrants','Mandados']]:[];
   $('#bottomNav').hidden=!allowed;$('#sideNav').hidden=!allowed;$('#menuToggle').hidden=!allowed;$('#drawer').hidden=!allowed;if(!allowed){state.drawerHistory=false;$('#drawer').classList.remove('open')}
