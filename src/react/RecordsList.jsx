@@ -93,7 +93,7 @@ export default function RecordsList({
           </Button>
         </label>
         {searchValue.trim() && <p className="react-record-search-hint" role="status" aria-live="polite">
-          {searchValue.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-z0-9]/gi, '').length < 3
+          {searchValue.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/gi, '').length < 3
             ? 'Digite ao menos 3 caracteres úteis.'
             : searchValue.trim() === query.trim()
               ? 'Pesquisa concluída.'
