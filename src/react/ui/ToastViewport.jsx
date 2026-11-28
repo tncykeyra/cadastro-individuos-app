@@ -52,8 +52,18 @@ function ToastViewport() {
 
 export function mountToastViewport(host) {
   if (!host) return;
-  host.classList.remove('toast', 'show');
-  host.classList.add('react-toast-host');
-  if (!root) root = createRoot(host);
-  root.render(<ToastViewport />);
+  const applyMode = () => {
+    if (getToastMode() === 'classic') {
+      if (root) { root.unmount(); root = null; }
+      host.classList.remove('react-toast-host');
+      host.classList.add('toast');
+      return;
+    }
+    host.classList.remove('toast', 'show');
+    host.classList.add('react-toast-host');
+    if (!root) root = createRoot(host);
+    root.render(<ToastViewport />);
+  };
+  window.addEventListener('app:toast-mode-change', applyMode);
+  applyMode();
 }
