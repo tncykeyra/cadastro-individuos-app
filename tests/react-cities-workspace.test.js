@@ -23,6 +23,6 @@ test('Cidades e acessos é sempre renderizada pelo workspace React', async () =>
   assert.ok(workspace.includes('useState'));
   assert.ok(workspace.includes('onSubmit={assign}'));
   assert.ok(workspace.includes('onSubmit={create}'));
-  assert.ok(workspace.includes('city_memberships'));
+  assert.ok(workspace.includes('members.filter'));
   assert.ok(!workspace.includes('dangerouslySetInnerHTML'));
 });
