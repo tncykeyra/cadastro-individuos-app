@@ -28,7 +28,7 @@ function Metric({ icon, label, value, detail, onClick }) {
 
 export default function CityDashboard({
   cityName, roleLabel, stats, photoStats, pendingIdentityCount, pendingVehiclePlateCount,
-  busy = false, error = '', onRefresh, onNavigate, onSwitchClassic,
+  busy = false, error = '', onRefresh, onNavigate,
 }) {
   const coverage = percent(stats?.cpf, stats?.people);
   const shortcuts = [
@@ -76,6 +76,6 @@ export default function CityDashboard({
       {Number(pendingVehiclePlateCount) > 0 && <Button type="button" onClick={() => onNavigate('team','identity')}><span>!</span><span><strong>Sugestões de placa de veículo</strong><small>{number(pendingVehiclePlateCount)} aguardando revisão administrativa</small></span><Icon type="arrow"/></Button>}
     </section>}
 
-    <footer className="city-react-footer"><span>Os indicadores respeitam a cidade ativa e as permissões da sessão autenticada.</span><Button type="button" onClick={onSwitchClassic}>Voltar ao painel clássico</Button></footer>
+    <footer className="city-react-footer"><span>Os indicadores respeitam a cidade ativa e as permissões da sessão autenticada.</span></footer>
   </div>;
 }
