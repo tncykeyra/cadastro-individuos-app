@@ -39,3 +39,13 @@
 .react-related-records h2{margin:0;font-size:17px}
 @media(max-width:700px){.react-records-heading{align-items:stretch;flex-direction:column}.react-records-actions{display:grid;grid-template-columns:1fr 1fr}.react-record-letters{max-height:86px;overflow:auto}.react-record-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.react-record-card{padding:8px;border-radius:14px}.react-record-card.is-person .react-record-card-media{max-height:none}.react-record-card-copy{padding:9px 3px 2px}.react-record-card-copy strong{font-size:13px}.react-record-card-copy small{font-size:10px}.react-record-card-arrow{right:10px;bottom:10px}.react-record-card.is-vehicle{min-height:76px;padding:9px}.react-record-card.is-vehicle .react-record-card-media{width:58px;height:54px;flex-basis:58px}.react-record-card.is-vehicle .react-record-card-copy{padding:0 15px 0 0}.react-record-pagination{justify-content:space-between}.react-record-pagination span{order:-1;width:100%;text-align:center}}
 @media(max-width:360px){.react-record-grid{grid-template-columns:1fr}.react-record-card.is-person{display:grid;grid-template-columns:82px minmax(0,1fr);align-items:center;gap:10px}.react-record-card.is-person .react-record-card-media{aspect-ratio:3/4;height:108px}.react-record-card.is-person .react-record-card-copy{padding:4px 18px 4px 0}.react-record-card.is-person .react-record-card-arrow{top:50%;bottom:auto;transform:translateY(-50%)}}
+
+.react-records-search-wrap{display:grid;gap:6px;min-width:0}
+.react-records-search{display:flex;align-items:center;gap:10px;min-height:50px;padding:5px 6px 5px 14px;border:1px solid var(--line,#dfe3e5);border-radius:12px;background:var(--surface,#fff);color:var(--ink,#20272b)}
+.react-records-search>span{flex:0 0 auto;font-size:25px;line-height:1;color:var(--muted,#687176)}
+.react-records-search input{flex:1 1 auto;width:100%;min-width:0;min-height:38px;padding:6px 2px;border:0;outline:0;background:transparent;color:inherit;font:inherit;font-size:14px}
+.react-records-search input:focus-visible{outline:0}
+.react-record-search-button{flex:0 0 auto;min-height:38px;padding:8px 13px;white-space:nowrap}
+.react-record-search-button>span:first-child{font-size:18px;line-height:1}
+.react-record-search-hint{min-height:16px;margin:0 3px;color:var(--muted,#687176);font-size:11px;line-height:1.4}
+@media(max-width:480px){.react-records-search{gap:7px;padding-left:10px}.react-record-search-button{min-width:40px;padding:8px 10px}.react-record-search-button>span:last-child{display:none}}
