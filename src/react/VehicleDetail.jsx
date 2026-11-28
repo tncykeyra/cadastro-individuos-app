@@ -34,7 +34,17 @@ function Info({ label, value, wide = false }) {
 }
 
 export default function VehicleDetail({ vehicle, photos, links, plateSuggestion, recordId, canDelete }) {
-  return <section className="vehicle-native-detail">
+  return <div className="vehicles-react-shell is-detail">
+    <header className="vehicles-react-hero">
+      <div className="vehicles-react-heading">
+        <span className="vehicles-react-eyebrow">CONSULTA INDIVIDUAL</span>
+        <h1>Ficha do veículo</h1>
+        <p>Identificação, características, registros complementares e pessoas vinculadas em uma única consulta.</p>
+      </div>
+      <div className="vehicles-react-tools"><span className="vehicles-react-context"><span className="vehicles-react-context-dot"/>Registro selecionado</span></div>
+    </header>
+    <div className="vehicles-react-content">
+    <section className="vehicle-native-detail">
     <Button variant="secondary" size="small" className="vehicle-native-back" type="button" data-back>← Voltar para veículos</Button>
     <div className="vehicle-native-identity">
       <VehiclePhotoGallery photos={photos} />
@@ -70,5 +80,7 @@ export default function VehicleDetail({ vehicle, photos, links, plateSuggestion,
         {link.active && <Button type="button" variant="secondary" size="small" className="vehicle-native-unlink" data-unlink={link.id} title="Desativar vínculo" aria-label="Desativar vínculo">×</Button>}
       </article>)}</div> : <div className="vehicle-native-empty">Nenhuma pessoa associada.</div>}
     </section>
-  </section>;
+    </section>
+    </div>
+  </div>;
 }
