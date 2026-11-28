@@ -2018,7 +2018,7 @@ main,#mainContent{box-sizing:border-box;min-width:0;max-width:100%}
 @media(max-width:520px){#mainContent .maintenance-intro{align-items:stretch;flex-direction:column}#mainContent .maintenance-intro .button{justify-content:center;width:100%}#mainContent .maintenance-overview{grid-template-columns:minmax(0,1fr)}#mainContent .maintenance-overview-card:last-child{grid-column:auto}#mainContent .maintenance-panel{padding:15px}#mainContent .maintenance-panel-head{align-items:flex-start;flex-direction:column}#mainContent .maintenance-check{grid-template-columns:28px minmax(0,1fr)}#mainContent .maintenance-check-result{grid-column:2}#mainContent .maintenance-actions{display:grid;grid-template-columns:minmax(0,1fr)}#mainContent .maintenance-actions .button{white-space:normal}}
 
 /* Indicador de atividades pendentes do administrador master */
-.master-activity-alert{position:absolute;top:1px;right:0;z-index:3;display:grid;place-items:center;width:19px;height:19px;padding:0;border:2px solid #fff;border-radius:50%;background:#c62835;color:#fff;font-size:12px;font-weight:900;line-height:1;box-shadow:0 2px 6px #0004;pointer-events:none}
+.master-activity-alert{position:absolute;top:1px;right:0;z-index:3;display:grid;place-items:center;min-width:19px;height:19px;padding:0 4px;border:2px solid #fff;border-radius:999px;background:#c62835;color:#fff;font-size:10px;font-weight:900;line-height:1;box-shadow:0 2px 6px #0004;pointer-events:none;white-space:nowrap}
 .master-activity-alert[hidden]{display:none}
 
 
